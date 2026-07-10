@@ -16,76 +16,91 @@ class DesktopDashboard extends GetView<DashboardController> {
 
       return Theme(
         data: localTheme,
-        child: Builder(builder: (context) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            final colorScheme = theme.colorScheme;
 
-          return Scaffold(
-            backgroundColor: theme.scaffoldBackgroundColor,
-            body: SafeArea(
-              child: Column(
-                children: [
-                  // 1. Top Navigation Bar
-                  _buildTopBar(context, theme, colorScheme),
-
-            // 2. Main 3-Column Layout
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            return Scaffold(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              body: SafeArea(
+                child: Column(
                   children: [
-                    // Left Column (Visitor profile card & QR)
-                    Expanded(
-                      flex: 3,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            _buildSelectedVisitorCard(theme, colorScheme),
-                            const SizedBox(height: 16),
-                            _buildVisitorTabs(theme, colorScheme),
-                            const SizedBox(height: 16),
-                            _buildQrCodeCard(theme, colorScheme),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
+                    // 1. Top Navigation Bar
+                    _buildTopBar(context, theme, colorScheme),
 
-                    // Center Column (Actions grid, Related visitors, Timeline)
+                    // 2. Main 3-Column Layout
                     Expanded(
-                      flex: 4,
-                      child: SingleChildScrollView(
-                        child: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildQuickActionsGrid(context, theme, colorScheme),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: 400,
-                              child: _buildRelatedVisitorsPanel(theme, colorScheme),
+                            // Left Column (Visitor profile card & QR)
+                            Expanded(
+                              flex: 3,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    _buildSelectedVisitorCard(
+                                      theme,
+                                      colorScheme,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildVisitorTabs(theme, colorScheme),
+                                    const SizedBox(height: 16),
+                                    _buildQrCodeCard(theme, colorScheme),
+                                  ],
+                                ),
+                              ),
                             ),
-                            const SizedBox(height: 16),
-                            // A3: Timeline Card — tablet style: card penuh, bukan section scroll
-                            _buildTimelineCard(theme, colorScheme),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
+                            const SizedBox(width: 16),
 
-                    // Right Column (Host details, Occupancy statistics, ID photo, Alerts)
-                    Expanded(
-                      flex: 3,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            _buildHostInfoCard(theme, colorScheme),
-                            const SizedBox(height: 16),
-                            _buildLiveOccupancyCard(theme, colorScheme),
-                            const SizedBox(height: 16),
-                            _buildIdentityIdCard(theme, colorScheme),
-                            const SizedBox(height: 16),
-                            _buildAlertsCard(theme, colorScheme),
+                            // Center Column (Actions grid, Related visitors, Timeline)
+                            Expanded(
+                              flex: 4,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    _buildQuickActionsGrid(
+                                      context,
+                                      theme,
+                                      colorScheme,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    SizedBox(
+                                      height: 400,
+                                      child: _buildRelatedVisitorsPanel(
+                                        theme,
+                                        colorScheme,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    // A3: Timeline Card — tablet style: card penuh, bukan section scroll
+                                    _buildTimelineCard(theme, colorScheme),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Right Column (Host details, Occupancy statistics, ID photo, Alerts)
+                            Expanded(
+                              flex: 3,
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  children: [
+                                    _buildHostInfoCard(theme, colorScheme),
+                                    const SizedBox(height: 16),
+                                    _buildLiveOccupancyCard(theme, colorScheme),
+                                    const SizedBox(height: 16),
+                                    _buildIdentityIdCard(theme, colorScheme),
+                                    const SizedBox(height: 16),
+                                    _buildAlertsCard(theme, colorScheme),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -93,12 +108,9 @@ class DesktopDashboard extends GetView<DashboardController> {
                   ],
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
-      ),
-    );
-        }),
       );
     });
   }
@@ -409,8 +421,12 @@ class DesktopDashboard extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildEmptyVisitorTabsPlaceholder(ThemeData theme, ColorScheme colorScheme) {
-    final tabLabels = ['Informasi Kunjungan', 'Tujuan Kunjungan', 'Kartu', 'Riwayat'];
+  Widget _buildEmptyVisitorTabsPlaceholder(
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
+    // Shortened labels so they always fit on one line
+    final tabLabels = ['Kunjungan', 'Tujuan', 'Kartu', 'Riwayat'];
     final subtextColor = theme.brightness == Brightness.dark
         ? const Color(0xFF718096)
         : Colors.grey[400]!;
@@ -426,9 +442,19 @@ class DesktopDashboard extends GetView<DashboardController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: TextStyle(fontSize: 12, color: subtextColor, fontWeight: FontWeight.w500)),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subtextColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('-', style: TextStyle(fontSize: 12, color: subtextColor)),
+                  Text(
+                    '-',
+                    style: TextStyle(fontSize: 12, color: subtextColor),
+                  ),
                 ],
               ),
             ),
@@ -437,82 +463,116 @@ class DesktopDashboard extends GetView<DashboardController> {
       );
     }
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: theme.cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tab header row (non-interactive placeholder)
-            Row(
-              children: tabLabels.map((label) {
-                final isFirst = label == tabLabels.first;
-                return Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isFirst ? colorScheme.primary : Colors.transparent,
-                          width: 2,
+    return Obx(() {
+      final selectedIndex = controller.rxSelectedTab.value;
+      return Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: theme.cardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Tab header — tappable, single-line labels
+              Row(
+                children: tabLabels.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final label = entry.value;
+                  final isSelected = selectedIndex == idx;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => controller.rxSelectedTab.value = idx,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : Colors.transparent,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : subtextColor,
+                          ),
                         ),
                       ),
                     ),
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isFirst ? FontWeight.bold : FontWeight.normal,
-                        color: isFirst ? colorScheme.primary : subtextColor,
-                      ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              // Two-column grid of placeholder rows
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        emptyRow(Icons.people_outline, 'Kode Tamu'),
+                        emptyRow(Icons.person_outline, 'Diundang Oleh'),
+                        emptyRow(Icons.format_list_numbered, 'Nomor Tamu'),
+                        emptyRow(
+                          Icons.directions_car_outlined,
+                          'Jenis Kendaraan',
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            // Two-column grid of placeholder rows
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      emptyRow(Icons.people_outline, 'Kode Tamu'),
-                      emptyRow(Icons.person_outline, 'Diundang Oleh'),
-                      emptyRow(Icons.format_list_numbered, 'Nomor Tamu'),
-                      emptyRow(Icons.directions_car_outlined, 'Jenis Kendaraan'),
-                    ],
+                  Container(
+                    width: 1,
+                    color: theme.dividerColor,
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                ),
-                Container(width: 1, color: theme.dividerColor, margin: const EdgeInsets.symmetric(horizontal: 12)),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      emptyRow(Icons.calendar_today_outlined, 'Diundang Oleh'),
-                      emptyRow(Icons.group_outlined, 'Nama Grup'),
-                      emptyRow(Icons.assignment_turned_in_outlined, 'Status Tamu'),
-                      emptyRow(Icons.receipt_outlined, 'Nomor Plat Kendaraan'),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        emptyRow(
+                          Icons.calendar_today_outlined,
+                          'Diundang Oleh',
+                        ),
+                        emptyRow(Icons.group_outlined, 'Nama Grup'),
+                        emptyRow(
+                          Icons.assignment_turned_in_outlined,
+                          'Status Tamu',
+                        ),
+                        emptyRow(
+                          Icons.receipt_outlined,
+                          'Nomor Plat Kendaraan',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildVisitorTabs(ThemeData theme, ColorScheme colorScheme) {
     return Obx(() {
       final visitor = controller.rxSelectedVisitor.value;
-      if (visitor == null) return _buildEmptyVisitorTabsPlaceholder(theme, colorScheme);
+      if (visitor == null) {
+        return _buildEmptyVisitorTabsPlaceholder(theme, colorScheme);
+      }
 
       final selectedIndex = controller.rxSelectedTab.value;
 
@@ -720,14 +780,19 @@ class DesktopDashboard extends GetView<DashboardController> {
             ? const Color(0xFF718096)
             : Colors.grey[500]!;
         return Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           color: theme.cardColor,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Kode QR Tamu', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Kode QR Tamu',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,7 +811,11 @@ class DesktopDashboard extends GetView<DashboardController> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.document_scanner_outlined, size: 36, color: subtextColor),
+                          Icon(
+                            Icons.document_scanner_outlined,
+                            size: 36,
+                            color: subtextColor,
+                          ),
                           const SizedBox(height: 6),
                           Text(
                             'Tidak Ada\nQR/Kartu',
@@ -860,16 +929,23 @@ class DesktopDashboard extends GetView<DashboardController> {
 
   Widget _buildQrDetailRow(String label, String val) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            ),
           ),
-          Text(
-            val,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+          const Text(' : ', style: TextStyle(fontSize: 10, color: Colors.grey)),
+          Expanded(
+            child: Text(
+              val,
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -911,7 +987,11 @@ class DesktopDashboard extends GetView<DashboardController> {
                     ),
                     child: const Padding(
                       padding: EdgeInsets.all(4.0),
-                      child: Icon(Icons.edit_outlined, size: 16, color: Colors.grey),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -921,115 +1001,111 @@ class DesktopDashboard extends GetView<DashboardController> {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 2.6,
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.3,
               children: [
+                // Row 1
                 _buildActionTile(
                   Icons.qr_code_scanner,
-                  'action_scan_qr'.tr,
-                  Colors.blue,
-                  () {
-                    _showCameraChoiceBottomSheet(context);
-                  },
-                ),
-                _buildActionTile(
-                  Icons.directions_walk_rounded,
-                  'action_walkin'.tr,
-                  Colors.indigo,
-                  () {
-                    Get.snackbar(
-                      'VMS Registration',
-                      'Membuka formulir walk-in...',
-                    );
-                  },
-                ),
-                _buildActionTile(
-                  Icons.how_to_reg,
-                  'Pre-Regist',
-                  Colors.indigoAccent,
-                  () {
-                    Get.snackbar(
-                      'VMS Registration',
-                      'Membuka formulir Pre-Registration...',
-                    );
-                  },
-                ),
-                _buildActionTile(
-                  Icons.login,
-                  'action_check_in'.tr,
-                  Colors.green,
-                  () {
-                    controller.executeAction('check_in');
-                  },
-                ),
-                _buildActionTile(
-                  Icons.logout,
-                  'action_check_out'.tr,
-                  Colors.red,
-                  () {
-                    controller.executeAction('check_out');
-                  },
-                ),
-                _buildActionTile(
-                  Icons.credit_card,
-                  'action_swipe_card'.tr,
-                  Colors.purple,
-                  () {
-                    Get.snackbar('RFID Integration', 'Membaca sensor kartu...');
-                  },
-                ),
-                _buildActionTile(
-                  Icons.key,
-                  'action_access_control'.tr,
-                  Colors.orange,
-                  () {
-                    Get.snackbar(
-                      'Security Access',
-                      'Mengakses panel kontrol pintu...',
-                    );
-                  },
+                  'Scan QR',
+                  Colors.blue[700]!,
+                  () => _showCameraChoiceBottomSheet(context),
                 ),
                 _buildActionTile(
                   Icons.local_parking,
-                  'action_parking'.tr,
+                  'Parking',
                   Colors.teal,
-                  () {
-                    Get.snackbar('Parking Lot', 'Pendaftaran tiket parkir...');
-                  },
+                  () => Get.snackbar('Parking Lot', 'Pendaftaran tiket parkir...'),
                 ),
                 _buildActionTile(
                   Icons.door_sliding_outlined,
-                  'action_open_door'.tr,
-                  Colors.deepOrange,
-                  () {
-                    controller.executeAction('open_door');
-                  },
+                  'Open',
+                  const Color(0xFF8B1A1A), // dark red
+                  () => controller.executeAction('open_door'),
+                ),
+                // Row 2
+                _buildActionTile(
+                  Icons.how_to_reg,
+                  'Pra Register',
+                  Colors.blue[400]!,
+                  () => Get.snackbar('VMS Registration', 'Membuka formulir Pre-Registration...'),
                 ),
                 _buildActionTile(
-                  Icons.restore,
-                  'action_arrival_log'.tr,
-                  Colors.greenAccent[700]!,
-                  () {
-                    Get.snackbar('Log', 'Membuka log kedatangan...');
-                  },
+                  Icons.directions_walk_rounded,
+                  'Walk In',
+                  Colors.blue[600]!,
+                  () => Get.snackbar('VMS Registration', 'Membuka formulir walk-in...'),
                 ),
                 _buildActionTile(
                   Icons.update,
-                  'action_extend_visit'.tr,
-                  Colors.amber[800]!,
-                  () {
-                    controller.executeAction('extend_visit');
-                  },
+                  'Extend',
+                  Colors.amber[700]!,
+                  () => controller.executeAction('extend_visit'),
+                ),
+                _buildActionTile(
+                  Icons.restore,
+                  'Arrival',
+                  Colors.greenAccent[700]!,
+                  () => Get.snackbar('Log', 'Membuka log kedatangan...'),
+                ),
+                // Row 3
+                _buildActionTile(
+                  Icons.login,
+                  'Checkin',
+                  Colors.green[600]!,
+                  () => controller.executeAction('check_in'),
+                ),
+                _buildActionTile(
+                  Icons.logout,
+                  'Checkout',
+                  Colors.red,
+                  () => controller.executeAction('check_out'),
+                ),
+                _buildActionTile(
+                  Icons.print_outlined,
+                  'Print',
+                  Colors.blueGrey[600]!,
+                  () => Get.snackbar('Print', 'Mencetak dokumen tamu...'),
                 ),
                 _buildActionTile(
                   Icons.block,
-                  'action_blacklist'.tr,
+                  'Blacklist',
                   Colors.grey[850]!,
-                  () {
-                    controller.executeAction('blacklist');
-                  },
+                  () => controller.executeAction('blacklist'),
+                ),
+                // Row 4
+                _buildActionTile(
+                  Icons.credit_card,
+                  'Card Issuance',
+                  Colors.purple,
+                  () => Get.snackbar('RFID Integration', 'Menerbitkan kartu tamu...'),
+                ),
+                _buildActionTile(
+                  Icons.credit_card_off_outlined,
+                  'Card Return',
+                  Colors.purple[300]!,
+                  () => Get.snackbar('RFID Integration', 'Mengembalikan kartu tamu...'),
+                ),
+                _buildActionTile(
+                  Icons.edit_note_outlined,
+                  'Enable Edit',
+                  Colors.deepPurple[300]!,
+                  () => Get.snackbar('Edit Mode', 'Mode edit diaktifkan...'),
+                ),
+                // Row 5 (last row, single item)
+                _buildActionTile(
+                  Icons.key,
+                  'Access Issuance',
+                  Colors.orange,
+                  () => Get.snackbar('Security Access', 'Mengakses panel kontrol pintu...'),
+                ),
+                _buildActionTile(
+                  Icons.edit_document,
+                  'Edit Form',
+                  Colors.deepPurple[400]!,
+                  () => Get.snackbar('Edit Form', 'Membuka formulir edit tamu...'),
                 ),
               ],
             ),
@@ -1046,7 +1122,9 @@ class DesktopDashboard extends GetView<DashboardController> {
     VoidCallback onTap,
   ) {
     final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
-    final adjustedColor = (color == Colors.grey[850] && isDark) ? Colors.grey[300]! : color;
+    final adjustedColor = (color == Colors.grey[850] && isDark)
+        ? Colors.grey[300]!
+        : color;
 
     return Material(
       color: adjustedColor.withValues(alpha: 0.08),
@@ -1068,14 +1146,18 @@ class DesktopDashboard extends GetView<DashboardController> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: adjustedColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: adjustedColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -1251,26 +1333,50 @@ class DesktopDashboard extends GetView<DashboardController> {
                     children: [
                       Text(
                         '${controller.rxSelectedItems.length} dipilih',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const Spacer(),
                       TextButton.icon(
                         onPressed: () => controller.executeAction('check_in'),
-                        icon: const Icon(Icons.login, size: 14, color: Colors.green),
-                        label: const Text('Check-In', style: TextStyle(fontSize: 11, color: Colors.green)),
+                        icon: const Icon(
+                          Icons.login,
+                          size: 14,
+                          color: Colors.green,
+                        ),
+                        label: const Text(
+                          'Check-In',
+                          style: TextStyle(fontSize: 11, color: Colors.green),
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () => controller.executeAction('check_out'),
-                        icon: const Icon(Icons.logout, size: 14, color: Colors.red),
-                        label: const Text('Check-Out', style: TextStyle(fontSize: 11, color: Colors.red)),
+                        icon: const Icon(
+                          Icons.logout,
+                          size: 14,
+                          color: Colors.red,
+                        ),
+                        label: const Text(
+                          'Check-Out',
+                          style: TextStyle(fontSize: 11, color: Colors.red),
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () {
                           controller.clearSelectedItems();
                           controller.rxSelectMultiple.value = false;
                         },
-                        icon: const Icon(Icons.close, size: 14, color: Colors.grey),
-                        label: const Text('Batal', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        icon: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
+                        label: const Text(
+                          'Batal',
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
                       ),
                     ],
                   ),
@@ -1317,7 +1423,9 @@ class DesktopDashboard extends GetView<DashboardController> {
                   // Large circular profile/avatar matching image
                   CircleAvatar(
                     radius: 36,
-                    backgroundColor: const Color(0xFF78909C), // Slate blue/grey placeholder
+                    backgroundColor: const Color(
+                      0xFF78909C,
+                    ), // Slate blue/grey placeholder
                     backgroundImage: hostAvatar != null && hostAvatar.isNotEmpty
                         ? NetworkImage(hostAvatar)
                         : null,
@@ -1344,10 +1452,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                         const SizedBox(height: 2),
                         Text(
                           hostDept,
-                          style: TextStyle(
-                            color: subtextColor,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: subtextColor, fontSize: 12),
                         ),
                         const SizedBox(height: 8),
                         // Phone Row
@@ -1410,7 +1515,8 @@ class DesktopDashboard extends GetView<DashboardController> {
                       icon: Icons.chat_bubble_outline_rounded,
                       label: 'Chat',
                       bgColor: const Color(0xFF80EED2), // Mint green
-                      onTap: () => Get.snackbar('Chat', 'Mengirim chat ke host...'),
+                      onTap: () =>
+                          Get.snackbar('Chat', 'Mengirim chat ke host...'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1419,7 +1525,8 @@ class DesktopDashboard extends GetView<DashboardController> {
                       icon: Icons.mail_outline_rounded,
                       label: 'Email',
                       bgColor: const Color(0xFF9AD5FA), // Light sky blue
-                      onTap: () => Get.snackbar('Email', 'Mengirim email ke host...'),
+                      onTap: () =>
+                          Get.snackbar('Email', 'Mengirim email ke host...'),
                     ),
                   ),
                 ],
@@ -1601,7 +1708,8 @@ class DesktopDashboard extends GetView<DashboardController> {
                         width: double.infinity,
                         height: 140,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildNoIdentityImagePlaceholder(theme),
+                        errorBuilder: (_, __, ___) =>
+                            _buildNoIdentityImagePlaceholder(theme),
                       )
                     : _buildNoIdentityImagePlaceholder(theme),
               ),
@@ -1780,12 +1888,20 @@ class DesktopDashboard extends GetView<DashboardController> {
                             color: color.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(_getTimelineIcon(item['status']), color: color, size: 12),
+                          child: Icon(
+                            _getTimelineIcon(item['status']),
+                            color: color,
+                            size: 12,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Text(
                           item['time'],
-                          style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -1793,8 +1909,20 @@ class DesktopDashboard extends GetView<DashboardController> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(item['title'], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                              Text(item['desc'], style: const TextStyle(fontSize: 9, color: Colors.grey)),
+                              Text(
+                                item['title'],
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                item['desc'],
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1812,21 +1940,31 @@ class DesktopDashboard extends GetView<DashboardController> {
 
   IconData _getTimelineIcon(String? status) {
     switch (status) {
-      case 'invitation': return Icons.mail_outline;
-      case 'arrived': return Icons.face;
-      case 'checked_in': return Icons.login;
-      case 'card_issued': return Icons.credit_card;
-      default: return Icons.circle;
+      case 'invitation':
+        return Icons.mail_outline;
+      case 'arrived':
+        return Icons.face;
+      case 'checked_in':
+        return Icons.login;
+      case 'card_issued':
+        return Icons.credit_card;
+      default:
+        return Icons.circle;
     }
   }
 
   Color _getTimelineColor(String? status) {
     switch (status) {
-      case 'invitation': return Colors.blue;
-      case 'arrived': return Colors.green;
-      case 'checked_in': return Colors.teal;
-      case 'card_issued': return Colors.purple;
-      default: return Colors.grey;
+      case 'invitation':
+        return Colors.blue;
+      case 'arrived':
+        return Colors.green;
+      case 'checked_in':
+        return Colors.teal;
+      case 'card_issued':
+        return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -1914,7 +2052,7 @@ class BoxThemeFallback {
 
 ThemeData _getDashboardTheme(bool isDark) {
   final seedColor = const Color(0xFF0F62FE); // Sleek tech blue
-  
+
   if (isDark) {
     // Elegant Dark Theme
     final colorScheme = ColorScheme.dark(
@@ -1926,28 +2064,36 @@ ThemeData _getDashboardTheme(bool isDark) {
       onSecondary: Colors.black,
       surface: const Color(0xFF0F172A), // Deep Slate Navy (tailwind slate-900)
       onSurface: const Color(0xFFF8FAFC), // Off-white (slate-50)
-      surfaceContainerHighest: const Color(0xFF1E293B), // replacing surfaceVariant
+      surfaceContainerHighest: const Color(
+        0xFF1E293B,
+      ), // replacing surfaceVariant
       error: Colors.redAccent,
       onError: Colors.white,
     );
-    
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF0B0F19), // Darker slate for background
+      scaffoldBackgroundColor: const Color(
+        0xFF0B0F19,
+      ), // Darker slate for background
       cardColor: const Color(0xFF1E293B), // Slate-800 for cards
       dividerColor: const Color(0xFF334155), // Slate-700
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-        bodyMedium: const TextStyle(color: Color(0xFFCBD5E1)), // Slate-300
-        bodySmall: const TextStyle(color: Color(0xFF94A3B8)),  // Slate-400
-      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
+          .copyWith(
+            bodyMedium: const TextStyle(color: Color(0xFFCBD5E1)), // Slate-300
+            bodySmall: const TextStyle(color: Color(0xFF94A3B8)), // Slate-400
+          ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF334155), width: 1), // subtle slate border
+          side: const BorderSide(
+            color: Color(0xFF334155),
+            width: 1,
+          ), // subtle slate border
         ),
       ),
       iconTheme: const IconThemeData(color: Color(0xFF94A3B8)),
@@ -1961,12 +2107,14 @@ ThemeData _getDashboardTheme(bool isDark) {
       onSurface: Colors.black87,
       surfaceContainerHighest: const Color(0xFFF1F5F9), // Light Slate
     );
-    
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFEDF2FF), // Periwinkle-blue background
+      scaffoldBackgroundColor: const Color(
+        0xFFEDF2FF,
+      ), // Periwinkle-blue background
       cardColor: Colors.white,
       dividerColor: Colors.grey[200],
       textTheme: GoogleFonts.interTextTheme(),
@@ -1982,4 +2130,3 @@ ThemeData _getDashboardTheme(bool isDark) {
     );
   }
 }
-

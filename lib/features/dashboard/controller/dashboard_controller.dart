@@ -116,7 +116,7 @@ class DashboardController extends GetxController {
         rxIsDarkMode.value = (mode == 'dark');
       });
     } catch (_) {}
-    
+
     fetchDashboardData();
 
     // Debounce search query to automatically trigger filtering
