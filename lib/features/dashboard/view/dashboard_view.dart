@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/dashboard_controller.dart';
+import '../../../core/shared/utils/device_utils.dart';
 import '../../../core/shared/widgets/responsive_layout.dart';
 import '../../../core/shared/widgets/skeletons.dart';
 import 'desktop_dashboard.dart';
@@ -16,8 +17,9 @@ class DashboardView extends GetView<DashboardController> {
         if (controller.rxIsLoading.value) {
           return const Center(child: _DashboardLoadingScreen());
         }
-        return const ResponsiveLayout(
+        return ResponsiveLayout(
           mobile: MobileDashboard(),
+          tablet: DesktopDashboard(), // Tab A8 (800dp+) → Desktop layout
           desktop: DesktopDashboard(),
         );
       }),
@@ -32,7 +34,7 @@ class _DashboardLoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isDesktop = size.width >= 768;
+    final isDesktop = size.width >= AppDeviceUtil.kLayoutBreakpoint;
 
     if (isDesktop) {
       return Padding(

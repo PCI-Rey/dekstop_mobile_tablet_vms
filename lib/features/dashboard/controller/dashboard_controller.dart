@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_result.dart';
 import '../repository/dashboard_repository.dart';
+import '../../../core/services/storage_service.dart';
 
 class DashboardController extends GetxController {
   final DashboardRepository _dashboardRepository;
 
   DashboardController(this._dashboardRepository);
+
+  // Theme State
+  final rxIsDarkMode = false.obs;
 
   // Loading States
   final rxIsLoading = true.obs;
@@ -105,6 +109,14 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Load initial theme state locally to prevent lag
+    try {
+      final storage = Get.find<StorageService>();
+      storage.getThemeMode().then((mode) {
+        rxIsDarkMode.value = (mode == 'dark');
+      });
+    } catch (_) {}
+    
     fetchDashboardData();
 
     // Debounce search query to automatically trigger filtering
@@ -339,5 +351,13 @@ class DashboardController extends GetxController {
 
   void clearSelectedItems() {
     rxSelectedItems.clear();
+  }
+
+  void toggleTheme() {
+    rxIsDarkMode.value = !rxIsDarkMode.value;
+    try {
+      final storage = Get.find<StorageService>();
+      storage.saveThemeMode(rxIsDarkMode.value ? 'dark' : 'light');
+    } catch (_) {}
   }
 }

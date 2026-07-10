@@ -6,32 +6,31 @@ import 'core/services/storage_service.dart';
 import 'core/network/dio_client.dart';
 import 'core/shared/locales/translations.dart';
 import 'core/shared/routes/app_pages.dart';
+import 'core/shared/utils/device_utils.dart';
+import 'core/shared/utils/page_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Screen/device detection on startup to lock orientation
+  // Screen/device detection on startup to lock orientation.
+  // Gold standard:
+  //   HP Android  (Samsung A55, shortestSide ≈ 360dp) → Portrait
+  //   Tablet Android (Tab A8,   shortestSide ≈ 800dp) → Landscape
   try {
     if (GetPlatform.isMobile) {
-      // if (shortestSide >= 600) {
-      //   // Tablet: force Landscape
-      //   await SystemChrome.setPreferredOrientations([
-      //     DeviceOrientation.landscapeLeft,
-      //     DeviceOrientation.landscapeRight,
-      //   ]);
-      // } else {
-      //   // Phone: force Portrait
-      //   await SystemChrome.setPreferredOrientations([
-      //     DeviceOrientation.portraitUp,
-      //   ]);
-      // }
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-      // await SystemChrome.setPreferredOrientations([
-      //   DeviceOrientation.portraitUp,
-      // ]);
+      final isTablet = AppDeviceUtil.isTabletFromPhysicalSize();
+      if (isTablet) {
+        // Tablet: lock Landscape
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      } else {
+        // Phone: lock Portrait
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+        ]);
+      }
     }
   } catch (_) {
     // Fallback if views are not loaded
@@ -121,6 +120,8 @@ class MyApp extends StatelessWidget {
       // Page Navigation Setup
       initialRoute: AppPages.initial,
       getPages: AppPages.pages,
+      // Log every navigation to the debug console
+      navigatorObservers: [PageLogger()],
     );
   }
 }
