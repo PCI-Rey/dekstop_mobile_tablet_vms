@@ -80,7 +80,7 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.5),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),

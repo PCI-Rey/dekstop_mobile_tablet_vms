@@ -196,7 +196,7 @@ class VisitorDetailView extends StatelessWidget {
       icon: Icon(icon, size: 16),
       label: Text(label, style: const TextStyle(fontSize: 11)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         foregroundColor: color,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

@@ -21,7 +21,7 @@ class LoginView extends GetView<AuthController> {
           if (isDesktop)
             Expanded(
               child: Container(
-                color: colorScheme.primaryContainer.withOpacity(0.35),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.35),
                 child: Padding(
                   padding: const EdgeInsets.all(48.0),
                   child: Column(
@@ -31,7 +31,7 @@ class LoginView extends GetView<AuthController> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.1),
+                          color: colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Icon(
@@ -79,7 +79,7 @@ class LoginView extends GetView<AuthController> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.08),
+                              color: colorScheme.primary.withValues(alpha: 0.08),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -201,7 +201,7 @@ class LoginView extends GetView<AuthController> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: colorScheme.surfaceVariant.withOpacity(0.4),
+                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -245,7 +245,7 @@ class LoginView extends GetView<AuthController> {
                         child: Text(
                           'v${AppConstants.appVersion}',
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                           ),
                         ),
                       ),

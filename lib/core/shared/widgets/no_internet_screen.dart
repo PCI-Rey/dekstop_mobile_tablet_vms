@@ -63,7 +63,7 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.08),
+                    color: Colors.blue.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

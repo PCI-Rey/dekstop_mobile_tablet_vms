@@ -27,7 +27,7 @@ class SplashView extends GetView<AuthController> {
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
                 colors: [
-                  colorScheme.primaryContainer.withOpacity(0.4),
+                  colorScheme.primaryContainer.withValues(alpha: 0.4),
                   colorScheme.surface,
                 ],
               ),
@@ -42,11 +42,11 @@ class SplashView extends GetView<AuthController> {
                 Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.08),
+                    color: colorScheme.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.12),
+                        color: colorScheme.primary.withValues(alpha: 0.12),
                         blurRadius: 30,
                         spreadRadius: 5,
                       ),
@@ -73,7 +73,7 @@ class SplashView extends GetView<AuthController> {
                 Text(
                   AppConstants.companyName,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -94,7 +94,7 @@ class SplashView extends GetView<AuthController> {
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       minHeight: 4,
-                      backgroundColor: colorScheme.primary.withOpacity(0.12),
+                      backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
                       valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
                     ),
                   ),
@@ -104,7 +104,7 @@ class SplashView extends GetView<AuthController> {
                 Text(
                   'v${AppConstants.appVersion} (${AppConstants.buildNumber})',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 24),

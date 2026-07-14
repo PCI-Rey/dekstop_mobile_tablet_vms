@@ -43,7 +43,7 @@ class RelatedVisitorsView extends StatelessWidget {
                         child: Container(
                           height: 40,
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant.withOpacity(0.4),
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: TextFormField(
@@ -487,8 +487,8 @@ class RelatedVisitorsView extends StatelessWidget {
         width: 100,
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.06),
-          border: Border.all(color: color.withOpacity(0.12)),
+          color: color.withValues(alpha: 0.06),
+          border: Border.all(color: color.withValues(alpha: 0.12)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(

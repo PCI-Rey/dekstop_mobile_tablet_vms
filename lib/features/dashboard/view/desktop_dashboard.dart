@@ -131,7 +131,7 @@ class DesktopDashboard extends GetView<DashboardController> {
             child: Container(
               height: 40,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.4),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -230,7 +230,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.08),
+                      color: colorScheme.primary.withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -279,7 +279,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                           height: 90,
                           fit: BoxThemeFallback.imageFit,
                           errorBuilder: (_, __, ___) => Container(
-                            color: colorScheme.primary.withOpacity(0.1),
+                            color: colorScheme.primary.withValues(alpha: 0.1),
                             width: 90,
                             height: 90,
                             child: Icon(
@@ -1652,8 +1652,8 @@ class DesktopDashboard extends GetView<DashboardController> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.04),
-        border: Border.all(color: color.withOpacity(0.12), width: 1),
+        color: color.withValues(alpha: 0.04),
+        border: Border.all(color: color.withValues(alpha: 0.12), width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -2066,7 +2066,7 @@ ThemeData _getDashboardTheme(bool isDark) {
       onSurface: const Color(0xFFF8FAFC), // Off-white (slate-50)
       surfaceContainerHighest: const Color(
         0xFF1E293B,
-      ), // replacing surfaceVariant
+      ), // replacing surfaceContainerHighest
       error: Colors.redAccent,
       onError: Colors.white,
     );

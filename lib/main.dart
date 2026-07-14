@@ -8,6 +8,7 @@ import 'core/shared/locales/translations.dart';
 import 'core/shared/routes/app_pages.dart';
 import 'core/shared/utils/device_utils.dart';
 import 'core/shared/utils/page_logger.dart';
+import 'core/shared/widgets/gold_standard_scaler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,6 +113,11 @@ class MyApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system, // follow system light/dark
+      // Global layout scaling
+      builder: (context, child) {
+        if (child == null) return const SizedBox.shrink();
+        return GoldStandardScaler(child: child);
+      },
       // Localizations Setup
       translations: AppTranslations(),
       locale: const Locale('id'), // Default Indonesian

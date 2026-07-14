@@ -1,30 +1,37 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:vms_operator_tablet/main.dart';
+import 'package:vms_operator_tablet/core/shared/widgets/gold_standard_scaler.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets(
+    'GoldStandardScaler scales small screen sizes to phone gold standard',
+    (WidgetTester tester) async {
+      // Simulate a narrow device screen (e.g., width 320)
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GoldStandardScaler(
+            child: Builder(
+              builder: (context) {
+                final mediaQuery = MediaQuery.of(context);
+                // Expected width is the Gold Standard phone width (360.0)
+                expect(mediaQuery.size.width, 360.0);
+                // Expected height is scaled proportionally (568 / (320/360)) = 639.0
+                expect(mediaQuery.size.height, closeTo(639.0, 0.1));
+                return const Scaffold(body: Center(child: Text('Scaled UI')));
+              },
+            ),
+          ),
+        ),
+      );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(find.text('Scaled UI'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+      // Reset physical size and ratio to defaults
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    },
+  );
 }

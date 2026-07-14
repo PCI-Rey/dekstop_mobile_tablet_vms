@@ -79,7 +79,7 @@ class ConfigureView extends GetView<SettingController> {
                     ),
                   ),
                   selected: isSelected,
-                  selectedTileColor: colorScheme.primaryContainer.withOpacity(
+                  selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 
                     0.3,
                   ),
                   onTap: () => activeTab.value = index,
@@ -368,7 +368,7 @@ class ConfigureView extends GetView<SettingController> {
         Obx(() {
           if (controller.rxPrinterInterface.value == 'LAN') {
             return Card(
-              color: colorScheme.surfaceVariant.withOpacity(0.2),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -428,7 +428,7 @@ class ConfigureView extends GetView<SettingController> {
           }
           if (controller.rxPrinterInterface.value == 'USB') {
             return Card(
-              color: colorScheme.surfaceVariant.withOpacity(0.2),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -472,7 +472,7 @@ class ConfigureView extends GetView<SettingController> {
           () => Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.surfaceVariant.withOpacity(0.4),
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -634,7 +634,7 @@ class ConfigureView extends GetView<SettingController> {
           () => Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.withOpacity(0.5)),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: DropdownButtonHideUnderline(
@@ -674,7 +674,7 @@ class ConfigureView extends GetView<SettingController> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.08),
+                color: colorScheme.primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
@@ -702,7 +702,7 @@ class ConfigureView extends GetView<SettingController> {
                 Text(
                   'Versi: ${AppConstants.appVersion} (${AppConstants.buildNumber})',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -721,7 +721,7 @@ class ConfigureView extends GetView<SettingController> {
           child: Text(
             'Copyright © ${DateTime.now().year} Bio Experience. All Rights Reserved.',
             style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
             ),
           ),
         ),

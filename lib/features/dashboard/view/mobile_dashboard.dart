@@ -146,7 +146,7 @@ class MobileDashboard extends GetView<DashboardController> {
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                   ),
                 ],
@@ -292,7 +292,7 @@ class MobileDashboard extends GetView<DashboardController> {
                           height: 80,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: colorScheme.primary.withOpacity(0.1),
+                            color: colorScheme.primary.withValues(alpha: 0.1),
                             width: 80,
                             height: 80,
                             child: Icon(
@@ -1096,7 +1096,7 @@ class MobileDashboard extends GetView<DashboardController> {
                         decoration: BoxDecoration(
                           color: _getTimelineColor(
                             item['status'],
-                          ).withOpacity(0.1),
+                          ).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -2005,7 +2005,7 @@ ThemeData _getDashboardTheme(bool isDark) {
       onSecondary: Colors.black,
       surface: const Color(0xFF0F172A), // Deep Slate Navy (tailwind slate-900)
       onSurface: const Color(0xFFF8FAFC), // Off-white (slate-50)
-      surfaceContainerHighest: const Color(0xFF1E293B), // replacing surfaceVariant
+      surfaceContainerHighest: const Color(0xFF1E293B), // replacing surfaceContainerHighest
       error: Colors.redAccent,
       onError: Colors.white,
     );
