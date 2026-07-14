@@ -6,9 +6,7 @@ import 'core/services/storage_service.dart';
 import 'core/network/dio_client.dart';
 import 'core/shared/locales/translations.dart';
 import 'core/shared/routes/app_pages.dart';
-import 'core/shared/utils/device_utils.dart';
 import 'core/shared/utils/page_logger.dart';
-import 'core/shared/widgets/gold_standard_scaler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,24 +15,14 @@ void main() async {
   // Gold standard:
   //   HP Android  (Samsung A55, shortestSide ≈ 360dp) → Portrait
   //   Tablet Android (Tab A8,   shortestSide ≈ 800dp) → Landscape
-  try {
-    if (GetPlatform.isMobile) {
-      final isTablet = AppDeviceUtil.isTabletFromPhysicalSize();
-      if (isTablet) {
-        // Tablet: lock Landscape
-        await SystemChrome.setPreferredOrientations([
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-        ]);
-      } else {
-        // Phone: lock Portrait
-        await SystemChrome.setPreferredOrientations([
-          DeviceOrientation.portraitUp,
-        ]);
-      }
-    }
-  } catch (_) {
-    // Fallback if views are not loaded
+  // Lock orientasi: app ini eksklusif untuk tablet → selalu Landscape.
+  // isTabletFromPhysicalSize() tidak reliable saat startup (physicalSize
+  // bisa return Size.zero sebelum window siap). Lock landscape langsung.
+  if (GetPlatform.isMobile) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 
   // Initialize and register global services
@@ -113,11 +101,6 @@ class MyApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system, // follow system light/dark
-      // Global layout scaling
-      builder: (context, child) {
-        if (child == null) return const SizedBox.shrink();
-        return GoldStandardScaler(child: child);
-      },
       // Localizations Setup
       translations: AppTranslations(),
       locale: const Locale('id'), // Default Indonesian

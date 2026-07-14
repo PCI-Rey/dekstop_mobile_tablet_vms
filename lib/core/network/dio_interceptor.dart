@@ -5,17 +5,17 @@ class DioLoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (kDebugMode) {
-      debugPrint('--> ${options.method.toUpperCase()} ${options.baseUrl}${options.path}');
-      debugPrint('Headers:');
-      options.headers.forEach((k, v) => debugPrint('  $k: $v'));
+      print('--> ${options.method.toUpperCase()} ${options.baseUrl}${options.path}');
+      print('Headers:');
+      options.headers.forEach((k, v) => print('  $k: $v'));
       if (options.queryParameters.isNotEmpty) {
-        debugPrint('QueryParameters:');
-        options.queryParameters.forEach((k, v) => debugPrint('  $k: $v'));
+        print('QueryParameters:');
+        options.queryParameters.forEach((k, v) => print('  $k: $v'));
       }
       if (options.data != null) {
-        debugPrint('Body: ${options.data}');
+        print('Body: ${options.data}');
       }
-      debugPrint('--> END ${options.method.toUpperCase()}');
+      print('--> END ${options.method.toUpperCase()}');
     }
     handler.next(options);
   }
@@ -23,11 +23,11 @@ class DioLoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (kDebugMode) {
-      debugPrint('<-- ${response.statusCode} ${response.requestOptions.baseUrl}${response.requestOptions.path}');
-      debugPrint('Headers:');
-      response.headers.forEach((k, v) => debugPrint('  $k: ${v.join(',')}'));
-      debugPrint('Response: ${response.data}');
-      debugPrint('<-- END HTTP');
+      print('<-- ${response.statusCode} ${response.requestOptions.baseUrl}${response.requestOptions.path}');
+      print('Headers:');
+      response.headers.forEach((k, v) => print('  $k: ${v.join(',')}'));
+      print('Response: ${response.data}');
+      print('<-- END HTTP');
     }
     handler.next(response);
   }
@@ -35,12 +35,12 @@ class DioLoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (kDebugMode) {
-      debugPrint('<-- ERROR: ${err.message}');
+      print('<-- ERROR: ${err.message}');
       if (err.response != null) {
-        debugPrint('Status code: ${err.response?.statusCode}');
-        debugPrint('Data: ${err.response?.data}');
+        print('Status code: ${err.response?.statusCode}');
+        print('Data: ${err.response?.data}');
       }
-      debugPrint('<-- END ERROR');
+      print('<-- END ERROR');
     }
     handler.next(err);
   }

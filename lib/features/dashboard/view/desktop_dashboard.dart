@@ -86,7 +86,7 @@ class DesktopDashboard extends GetView<DashboardController> {
 
                             // Right Column (Host details, Occupancy statistics, ID photo, Alerts)
                             Expanded(
-                              flex: 3,
+                              flex: 2,
                               child: SingleChildScrollView(
                                 child: Column(
                                   children: [
@@ -836,9 +836,9 @@ class DesktopDashboard extends GetView<DashboardController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildQrDetailRow('Kode Undangan', '-'),
-                          _buildQrDetailRow('Waktu Check In', '-'),
-                          _buildQrDetailRow('Waktu Check Out', '-'),
+                          _buildQrDetailRowWithIcon(Icons.confirmation_number_outlined, 'Kode Undangan', '-', subtextColor),
+                          _buildQrDetailRowWithIcon(Icons.login_outlined, 'Waktu Check In', '-', subtextColor),
+                          _buildQrDetailRowWithIcon(Icons.logout_outlined, 'Waktu Check Out', '-', subtextColor),
                         ],
                       ),
                     ),
@@ -952,6 +952,43 @@ class DesktopDashboard extends GetView<DashboardController> {
     );
   }
 
+  /// Row dengan icon di sebelah kiri — digunakan pada placeholder QR Tamu
+  Widget _buildQrDetailRowWithIcon(
+    IconData icon,
+    String label,
+    String val,
+    Color iconColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16, color: iconColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 10, color: iconColor),
+                ),
+                Text(
+                  val,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // --- Center Panel Actions Grid ---
   Widget _buildQuickActionsGrid(
     BuildContext context,
@@ -1002,9 +1039,9 @@ class DesktopDashboard extends GetView<DashboardController> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: 4,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1.3,
               children: [
                 // Row 1
                 _buildActionTile(
@@ -1072,7 +1109,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                 _buildActionTile(
                   Icons.block,
                   'Blacklist',
-                  Colors.grey[850]!,
+                  Colors.blueGrey[700]!,
                   () => controller.executeAction('blacklist'),
                 ),
                 // Row 4
@@ -1121,10 +1158,7 @@ class DesktopDashboard extends GetView<DashboardController> {
     Color color,
     VoidCallback onTap,
   ) {
-    final isDark = Theme.of(Get.context!).brightness == Brightness.dark;
-    final adjustedColor = (color == Colors.grey[850] && isDark)
-        ? Colors.grey[300]!
-        : color;
+    final adjustedColor = color;
 
     return Material(
       color: adjustedColor.withValues(alpha: 0.08),
@@ -1133,32 +1167,29 @@ class DesktopDashboard extends GetView<DashboardController> {
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-          child: Row(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: adjustedColor,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(7),
                 ),
-                child: Icon(icon, color: Colors.white, size: 16),
+                child: Icon(icon, color: Colors.white, size: 18),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: adjustedColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
-                    maxLines: 1,
-                  ),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  color: adjustedColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -1174,6 +1205,7 @@ class DesktopDashboard extends GetView<DashboardController> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Tabs and Header
             Row(
@@ -1211,8 +1243,7 @@ class DesktopDashboard extends GetView<DashboardController> {
             const Divider(),
 
             // Grid of visitors
-            SizedBox(
-              height: 220,
+            Expanded(
               child: Obx(() {
                 final visitors = controller.rxRelatedVisitors;
                 if (visitors.isEmpty) {
@@ -1448,11 +1479,15 @@ class DesktopDashboard extends GetView<DashboardController> {
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           hostDept,
                           style: TextStyle(color: subtextColor, fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                         const SizedBox(height: 8),
                         // Phone Row
@@ -1464,11 +1499,15 @@ class DesktopDashboard extends GetView<DashboardController> {
                               color: subtextColor,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              ':  $hostPhone',
-                              style: TextStyle(
-                                color: subtextColor,
-                                fontSize: 12,
+                            Expanded(
+                              child: Text(
+                                ':  $hostPhone',
+                                style: TextStyle(
+                                  color: subtextColor,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
@@ -1483,11 +1522,15 @@ class DesktopDashboard extends GetView<DashboardController> {
                               color: subtextColor,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              ':  $hostEmail',
-                              style: TextStyle(
-                                color: subtextColor,
-                                fontSize: 12,
+                            Expanded(
+                              child: Text(
+                                ':  $hostEmail',
+                                style: TextStyle(
+                                  color: subtextColor,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
@@ -1608,7 +1651,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 2.2,
+                childAspectRatio: 1.8,
                 children: [
                   _buildOccupancyTile(
                     'employees'.tr,
@@ -1650,7 +1693,7 @@ class DesktopDashboard extends GetView<DashboardController> {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.04),
         border: Border.all(color: color.withValues(alpha: 0.12), width: 1),
@@ -1660,23 +1703,27 @@ class DesktopDashboard extends GetView<DashboardController> {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(color: Colors.grey, fontSize: 9),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.grey, fontSize: 9),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-              ),
-            ],
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
