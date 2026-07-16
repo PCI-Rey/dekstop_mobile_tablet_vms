@@ -23,4 +23,20 @@ class DashboardRepository {
       },
     );
   }
+
+  Future<ApiResult<Map<String, dynamic>>> searchInvitation(String code) async {
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/search',
+      data: {
+        'search': code,
+        'invitation_code': code,
+        'code': code,
+      },
+      queryParameters: {
+        'search': code,
+        'invitation_code': code,
+        'code': code,
+      },
+    );
+  }
 }

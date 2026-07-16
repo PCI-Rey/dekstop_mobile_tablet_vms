@@ -95,7 +95,7 @@ class DioClient {
 
   Future<bool> _isDemoServer() async {
     final url = await _storageService.getServerUrl();
-    return url.contains('example.com') || url.contains('localhost') || url.isEmpty;
+    return url.contains('example.com') || url.isEmpty;
   }
 
   // Simulating backend endpoints when no real backend server is plugged in
@@ -115,12 +115,27 @@ class DioClient {
         return ApiResult.success(fromJson(mockSummary));
       }
       return ApiResult.success(mockSummary as T);
+    } else if (path.contains('/operator-invitation/search')) {
+      final mockSearch = _getMockSearchResult();
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockSearch));
+      }
+      return ApiResult.success(mockSearch as T);
     }
 
     return ApiResult.failure(const ServerException(statusCode: 404, message: 'Resource not found in Demo server.'));
   }
 
   Future<ApiResult<T>> _handleDemoPost<T>(String path, dynamic data, T Function(dynamic json)? fromJson) async {
+    if (path.contains('/operator-invitation/search')) {
+      await Future.delayed(const Duration(milliseconds: 150));
+      final mockSearch = _getMockSearchResult();
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockSearch));
+      }
+      return ApiResult.success(mockSearch as T);
+    }
+
     await Future.delayed(const Duration(milliseconds: 1000));
 
     if (path.contains('/login')) {
@@ -283,6 +298,113 @@ class DioClient {
           'critical': false,
         }
       ]
+    };
+  }
+
+  Map<String, dynamic> _getMockSearchResult() {
+    return {
+      "status": "success",
+      "status_code": 200,
+      "title": "success",
+      "msg": "Data retrieved successfully",
+      "collection": {
+        "data": [
+          {
+            "transaction_visitor_id": "9bddf1c6-d00d-431b-9e32-9aa4df7586e2",
+            "agenda": "Meeting",
+            "initial_trx_code": "HIPUX9OB7MREJQPT7DE2GXK9A6671KCPY3HU2R7IT6OE6IMOX9HIT18ZI9PN3JM6XJV21E3PK5E1IES4ZSD8448RJDVVICJT5FCYONDV88MH3BBHREAO7P4VJSO5I585",
+            "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
+            "host_name": "Endru",
+            "host_organization_name": "SPU",
+            "visitor_period_start": "2026-07-09T03:00:00",
+            "visitor_period_end": "2026-07-09T13:00:00",
+            "group_name": "PCI",
+            "visitor_number": "2651825375",
+            "visitor_code": "2651825375",
+            "invitation_code": "IURKVH-OJAPWV",
+            "self_only": false,
+            "checkin_at": "2026-07-09T06:27:06.2192235",
+            "checkin_by": "Admins",
+            "visitor_status": "Checkin",
+            "invitation_created_at": "2026-07-09T03:38:52.0996476",
+            "vehicle_plate_number": "",
+            "remarks": "Invitation",
+            "parking_slot": "",
+            "parking_area": "",
+            "visitor_id": "76efef06-c8fa-4ab2-9e9f-4d6e8a612e84",
+            "visitor_name": "Kora",
+            "visitor_organization_name": "asdasdas",
+            "visitor_identity_id": "151241231231232",
+            "visitor_phone": "151234123123",
+            "visitor_email": "cennandaa@gmail.com",
+            "can_track_ble": true,
+            "can_parking": true,
+            "can_access": true,
+            "tz": "Asia/Jakarta",
+            "is_group": true,
+            "visitor_type": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+            "visitor_type_name": "General Visitor (DKUT)",
+            "is_praregister_done": true,
+            "application_id": "074ddc10-9b66-4466-8195-7bf972914603",
+            "site_place_name": "Gedung Visitor",
+            "visitor": {
+              "visitor_type": "00000000-0000-0000-0000-000000000000",
+              "name": "Kora",
+              "email": "cennandaa@gmail.com",
+              "id": "76efef06-c8fa-4ab2-9e9f-4d6e8a612e84"
+            },
+            "card": [],
+            "access": [],
+            "tracking_ble": [],
+            "visitor_role": "Visitor",
+            "trx_visitor_sites": [
+              {
+                "site_name": "Gedung Visitor",
+                "id": "a05b4207-8f44-4191-add6-e149de852d96"
+              }
+            ],
+            "approval_status": "Approved",
+            "hosts": [
+              {
+                "person_id": "77182",
+                "identity_id": "77182",
+                "type": "Permanent",
+                "name": "Endru",
+                "phone": "08898765678",
+                "email": "reyjanumbs@gmail.com",
+                "gender": "Male",
+                "upload_fr": 0,
+                "faceimage": "",
+                "head_employee_1": "",
+                "head_employee_2": "",
+                "id": "f2b0c94e-312d-418b-bb6e-05709784e9c3"
+              },
+              {
+                "person_id": "12324",
+                "identity_id": "1232",
+                "type": "Permanent",
+                "name": "Tommy",
+                "phone": "62819267281",
+                "email": "user2@example.com",
+                "gender": "Female",
+                "upload_fr": 0,
+                "faceimage": "/faces/f065aa93-7dc6-4636-a0a6-edea6a97e256.jpg",
+                "head_employee_1": "",
+                "head_employee_2": "",
+                "id": "41e4ee80-a921-43ab-af9f-517d96ec7db0"
+              }
+            ],
+            "visitor_access_system_status": "NotUsed",
+            "visitor_parking_system_status": "NotUsed",
+            "visitor_trackingble_system_status": "NotUsed",
+            "visitor_trackingcctv_system_status": "NotUsed",
+            "invited_by": "416befe2-b840-4f35-b310-a079bf1b6a3b",
+            "invited_by_name": "Admins",
+            "id": "1b10ef66-1c93-44b7-bca2-33c395e778b2"
+          }
+        ],
+        "search-match": "InvitationCode"
+      }
     };
   }
 }

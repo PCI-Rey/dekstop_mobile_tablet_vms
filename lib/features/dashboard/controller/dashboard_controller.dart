@@ -324,16 +324,16 @@ class DashboardController extends GetxController {
       rxSelectedVisitor.value = updated;
 
       Get.snackbar(
-        'Aksi Berhasil',
-        'Visitor ${visitor['name']} berhasil dilakukan aksi: $action',
+        'Success',
+        'Visitor ${visitor['name']} action executed: $action',
         backgroundColor: Colors.green,
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,
       );
     } else {
       Get.snackbar(
-        'Aksi Gagal',
-        'Gagal memproses aksi.',
+        'Failed',
+        'Failed to execute action.',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,
@@ -359,5 +359,67 @@ class DashboardController extends GetxController {
       final storage = Get.find<StorageService>();
       storage.saveThemeMode(rxIsDarkMode.value ? 'dark' : 'light');
     } catch (_) {}
+  }
+
+  Map<String, dynamic> mapApiVisitorToUi(Map<String, dynamic> item) {
+    return {
+      'id': item['visitor_id'] ?? item['id'] ?? '8057210110',
+      'name': item['visitor_name'] ?? item['visitor']?['name'] ?? 'Maza Instansi',
+      'company': item['visitor_organization_name'] ?? 'Instansi Maza',
+      'email': item['visitor_email'] ?? item['visitor']?['email'] ?? 'maza24@gmail.com',
+      'phone': item['visitor_phone'] ?? '085123123412',
+      'id_card_no': item['visitor_identity_id'] ?? '8057210110',
+      'gender': 'Laki-laki',
+      'nationality': 'Indonesia',
+      'status': item['visitor_status'] ?? 'Checked In',
+      'vip': false,
+      'frequent': false,
+      'verified': item['is_praregister_done'] == true,
+      'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=300&h=300',
+      'address': item['visitor_organization_name'] ?? 'Jl. Kemang Raya No. 42, Jakarta Selatan',
+      'organization': item['visitor_organization_name'] ?? 'PT. Maju Jaya Bersama',
+      'occupation': item['visitor_type_name'] ?? 'Marketing Manager',
+      'id_type': 'KTP',
+      'id_number': item['visitor_identity_id'] ?? '3175050101990001',
+      'visit_purpose': item['agenda'] ?? 'Pertemuan Bisnis & Pembahasan Kontrak Kerjasama',
+      'host': item['host_name'] ?? 'John Doe',
+      'host_title': 'IT Manager',
+      'host_phone': 'Ext. 2234',
+      'host_email': 'john.doe@company.com',
+      'host_avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fit=crop&w=150&h=150',
+      'host_status': 'Available',
+      'department': item['host_organization_name'] ?? 'IT Department',
+      'visit_period': '${item['visitor_period_start'] ?? ""} - ${item['visitor_period_end'] ?? ""}',
+      'created_by': item['invited_by_name'] ?? 'Admin Lobby A',
+      'qr_code_data': item['invitation_code'] ?? 'QRXMFQ-HGNLFT',
+      'check_in_time': item['checkin_at'] ?? '14 Jan 2026, 09:47',
+      'check_out_time': '-',
+      'ticket_no': item['visitor_number'] ?? '8057210110',
+      'invitation_code': item['invitation_code'] ?? 'QRXMFQ-HGNLFT',
+      'visit_type': item['visitor_type_name'] ?? 'Meeting',
+      'identity_doc_url': 'https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?fit=crop&w=600&h=400',
+    };
+  }
+
+  Future<bool> searchInvitationCode(String code) async {
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.searchInvitation(code);
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final data = result.data;
+      final collection = data['collection'];
+      if (collection != null) {
+        final list = collection['data'] as List?;
+        if (list != null && list.isNotEmpty) {
+          final firstItem = list[0] as Map<String, dynamic>;
+          final uiVisitor = mapApiVisitorToUi(firstItem);
+          
+          rxSelectedVisitor.value = uiVisitor;
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

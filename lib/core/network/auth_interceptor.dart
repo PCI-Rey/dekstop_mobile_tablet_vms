@@ -92,7 +92,7 @@ class AuthInterceptor extends QueuedInterceptor {
       final serverUrl = await _storageService.getServerUrl();
       
       // Special logic for local demo server testing:
-      if (serverUrl.contains('example.com') || serverUrl.contains('localhost') || serverUrl.isEmpty) {
+      if (serverUrl.contains('example.com') || serverUrl.isEmpty) {
         // Simulate a successful refresh token response for demo/preview purposes
         await Future.delayed(const Duration(milliseconds: 1500));
         final newAccess = 'mock_access_token_${DateTime.now().millisecondsSinceEpoch}';

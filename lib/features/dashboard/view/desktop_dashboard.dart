@@ -212,208 +212,202 @@ class DesktopDashboard extends GetView<DashboardController> {
   Widget _buildSelectedVisitorCard(ThemeData theme, ColorScheme colorScheme) {
     return Obx(() {
       final visitor = controller.rxSelectedVisitor.value;
-      if (visitor == null) {
-        return Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          color: theme.cardColor,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 48.0,
-              horizontal: 24.0,
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.qr_code_scanner,
-                      color: colorScheme.primary,
-                      size: 54,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Belum Ada Data Scan',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Gunakan scanner hardware / kamera tablet, atau pilih salah satu tamu terdaftar di panel tengah untuk memuat berkas profile.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
+      final name = visitor?['name'] ?? 'Name';
+      final company = visitor?['company'] ?? '-';
+      final email = visitor?['email'] ?? '-';
+      final phone = visitor?['phone'] ?? '-';
+      final idCardNo = visitor?['id_card_no'] ?? '-';
+      final gender = visitor?['gender'] ?? '-';
+      final occupancy = visitor?['occupation'] ?? '-';
+      
+      final avatarUrl = visitor?['avatar'] ?? 'https://images.unsplash.com/photo-1560250097-0b93528c311a?fit=crop&w=300&h=300';
 
       return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: theme.cardColor,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Photo with simulated hover edit cam icon
-                  Stack(
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Photo on the Left with Face recognition overlay
+                SizedBox(
+                  width: 140,
+                  child: Stack(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          visitor['avatar'],
-                          width: 90,
-                          height: 90,
-                          fit: BoxThemeFallback.imageFit,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: colorScheme.primary.withValues(alpha: 0.1),
-                            width: 90,
-                            height: 90,
-                            child: Icon(
-                              Icons.person,
-                              color: colorScheme.primary,
-                              size: 40,
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.network(
+                            avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: colorScheme.primary.withValues(alpha: 0.1),
+                              child: Icon(
+                                Icons.person,
+                                color: colorScheme.primary,
+                                size: 48,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: Colors.grey[300]!),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 14,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Primary Details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          visitor['name'],
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
+                  // Green face detection overlay brackets
+                  Positioned.fill(
+                    child: Center(
+                      child: SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: Stack(
                           children: [
-                            if (visitor['vip'] == true)
-                              _buildBadge(
-                                'VIP VISITOR',
-                                Colors.purple,
-                                Colors.purple[50]!,
+                            // Top-left
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Colors.greenAccent, width: 2),
+                                    left: BorderSide(color: Colors.greenAccent, width: 2),
+                                  ),
+                                ),
                               ),
-                            const SizedBox(width: 4),
-                            if (visitor['frequent'] == true)
-                              _buildBadge(
-                                'FREQUENT',
-                                Colors.blue,
-                                Colors.blue[50]!,
+                            ),
+                            // Top-right
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Colors.greenAccent, width: 2),
+                                    right: BorderSide(color: Colors.greenAccent, width: 2),
+                                  ),
+                                ),
                               ),
-                            const SizedBox(width: 4),
-                            if (visitor['verified'] == true)
-                              _buildBadge(
-                                'VERIFIED',
-                                Colors.green,
-                                Colors.green[50]!,
+                            ),
+                            // Bottom-left
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.greenAccent, width: 2),
+                                    left: BorderSide(color: Colors.greenAccent, width: 2),
+                                  ),
+                                ),
                               ),
+                            ),
+                            // Bottom-right
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(color: Colors.greenAccent, width: 2),
+                                    right: BorderSide(color: Colors.greenAccent, width: 2),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        _buildDetailText(
-                          Icons.business,
-                          'Company',
-                          visitor['company'],
-                        ),
-                        _buildDetailText(
-                          Icons.mail_outline,
-                          'Email',
-                          visitor['email'],
-                        ),
-                        _buildDetailText(
-                          Icons.phone_iphone,
-                          'Phone',
-                          visitor['phone'],
-                        ),
-                        _buildDetailText(
-                          Icons.badge,
-                          'ID/Card No',
-                          visitor['id_card_no'],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
               ),
+            ),
+            const SizedBox(width: 16),
+
+              // 2. Profile details on the Right
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Divider(height: 1, thickness: 1),
+                    const SizedBox(height: 8),
+                    _buildProfileDetailRow(Icons.business, 'Organization', company, colorScheme, theme),
+                    _buildProfileDetailRow(Icons.mail_outline, 'Email', email, colorScheme, theme),
+                    _buildProfileDetailRow(Icons.phone_iphone, 'Phone', phone, colorScheme, theme),
+                    _buildProfileDetailRow(Icons.credit_card, 'Identity ID', idCardNo, colorScheme, theme),
+                    _buildProfileDetailRow(Icons.wc, 'Gender', gender, colorScheme, theme),
+                    _buildProfileDetailRow(Icons.person_outline, 'Occupancy', occupancy, colorScheme, theme),
+                  ],
+                ),
+              ),
             ],
           ),
+         ),
         ),
       );
     });
   }
 
-  Widget _buildBadge(String label, Color color, Color bg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 8,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
+  Widget _buildProfileDetailRow(
+    IconData icon,
+    String label,
+    String? value,
+    ColorScheme colorScheme,
+    ThemeData theme,
+  ) {
+    final isDark = theme.brightness == Brightness.dark;
+    final labelColor = isDark ? Colors.white70 : Colors.grey[700]!;
+    final valColor = isDark ? Colors.white : Colors.black87;
 
-  Widget _buildDetailText(IconData icon, String label, String? value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: Colors.grey),
-          const SizedBox(width: 6),
+          Icon(icon, size: 16, color: colorScheme.primary),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: labelColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
           Text(
-            '$label : ',
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ' :  ',
+            style: TextStyle(
+              fontSize: 11,
+              color: labelColor,
+            ),
           ),
           Expanded(
             child: Text(
-              value ?? '-',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              (value == null || value.trim().isEmpty) ? '-' : value,
+              style: TextStyle(
+                fontSize: 11,
+                color: valColor,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
@@ -421,50 +415,15 @@ class DesktopDashboard extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildEmptyVisitorTabsPlaceholder(
-    ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
-    // Shortened labels so they always fit on one line
-    final tabLabels = ['Kunjungan', 'Tujuan', 'Kartu', 'Riwayat'];
-    final subtextColor = theme.brightness == Brightness.dark
-        ? const Color(0xFF718096)
-        : Colors.grey[400]!;
-
-    Widget emptyRow(IconData icon, String label) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: subtextColor),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: subtextColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '-',
-                    style: TextStyle(fontSize: 12, color: subtextColor),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+  Widget _buildVisitorTabs(ThemeData theme, ColorScheme colorScheme) {
     return Obx(() {
+      final visitor = controller.rxSelectedVisitor.value;
       final selectedIndex = controller.rxSelectedTab.value;
+      final tabLabels = ['Visit Information', 'Purpose Visit', 'Card', 'History'];
+      
+      // Prevent index overflow since we reduced tabs
+      final safeIndex = selectedIndex >= tabLabels.length ? 0 : selectedIndex;
+
       return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: theme.cardColor,
@@ -473,12 +432,13 @@ class DesktopDashboard extends GetView<DashboardController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tab header — tappable, single-line labels
+              // Tabs selectors
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: tabLabels.asMap().entries.map((entry) {
                   final idx = entry.key;
                   final label = entry.value;
-                  final isSelected = selectedIndex == idx;
+                  final isSelected = safeIndex == idx;
                   return Expanded(
                     child: GestureDetector(
                       onTap: () => controller.rxSelectedTab.value = idx,
@@ -490,7 +450,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                               color: isSelected
                                   ? colorScheme.primary
                                   : Colors.transparent,
-                              width: 1,
+                              width: 2,
                             ),
                           ),
                         ),
@@ -504,119 +464,8 @@ class DesktopDashboard extends GetView<DashboardController> {
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
-                            color: isSelected
-                                ? colorScheme.primary
-                                : subtextColor,
+                            color: isSelected ? colorScheme.primary : Colors.grey,
                           ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              // Two-column grid of placeholder rows
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        emptyRow(Icons.people_outline, 'Kode Tamu'),
-                        emptyRow(Icons.person_outline, 'Diundang Oleh'),
-                        emptyRow(Icons.format_list_numbered, 'Nomor Tamu'),
-                        emptyRow(
-                          Icons.directions_car_outlined,
-                          'Jenis Kendaraan',
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    color: theme.dividerColor,
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        emptyRow(
-                          Icons.calendar_today_outlined,
-                          'Diundang Oleh',
-                        ),
-                        emptyRow(Icons.group_outlined, 'Nama Grup'),
-                        emptyRow(
-                          Icons.assignment_turned_in_outlined,
-                          'Status Tamu',
-                        ),
-                        emptyRow(
-                          Icons.receipt_outlined,
-                          'Nomor Plat Kendaraan',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildVisitorTabs(ThemeData theme, ColorScheme colorScheme) {
-    return Obx(() {
-      final visitor = controller.rxSelectedVisitor.value;
-      if (visitor == null) {
-        return _buildEmptyVisitorTabsPlaceholder(theme, colorScheme);
-      }
-
-      final selectedIndex = controller.rxSelectedTab.value;
-
-      final tabLabels = ['Info', 'Details', 'Documents', 'Card', 'History'];
-
-      return Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Tabs selectors
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: tabLabels.asMap().entries.map((entry) {
-                  final idx = entry.key;
-                  final label = entry.value;
-                  final isSelected = selectedIndex == idx;
-                  return GestureDetector(
-                    onTap: () => controller.rxSelectedTab.value = idx,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isSelected
-                                ? colorScheme.primary
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: isSelected ? colorScheme.primary : Colors.grey,
                         ),
                       ),
                     ),
@@ -625,7 +474,7 @@ class DesktopDashboard extends GetView<DashboardController> {
               ),
               const SizedBox(height: 16),
               // Tab contents
-              _buildTabContents(selectedIndex, visitor, theme),
+              _buildTabContents(safeIndex, visitor, theme),
             ],
           ),
         ),
@@ -635,59 +484,148 @@ class DesktopDashboard extends GetView<DashboardController> {
 
   Widget _buildTabContents(
     int index,
-    Map<String, dynamic> visitor,
+    Map<String, dynamic>? visitor,
     ThemeData theme,
   ) {
+    final subtextColor = theme.brightness == Brightness.dark
+        ? const Color(0xFF718096)
+        : Colors.grey[600]!;
+
     if (index == 0) {
-      // Info
-      return Column(
-        children: [
-          _buildTabInfoRow('Address', visitor['address']),
-          _buildTabInfoRow('Organization', visitor['organization']),
-          _buildTabInfoRow('Occupation', visitor['occupation']),
-          _buildTabInfoRow(
-            'ID Type / No',
-            '${visitor['id_type']} / ${visitor['id_number']}',
-          ),
-        ],
+      // Visit Information
+      final leftRows = [
+        _buildTabDetailColumnRow(Icons.badge_outlined, 'Visitor Code', visitor?['visitor_code'], subtextColor, theme),
+        _buildTabDetailColumnRow(Icons.format_list_numbered, 'Visitor Number', visitor?['ticket_no'], subtextColor, theme),
+        _buildTabDetailColumnRow(Icons.group_outlined, 'Group Name', visitor?['group_name'], subtextColor, theme),
+      ];
+      final rightRows = [
+        _buildTabDetailColumnRow(Icons.person_add_alt_1_outlined, 'Invited By', visitor?['created_by'], subtextColor, theme),
+        _buildTabDetailColumnRow(Icons.directions_car_outlined, 'Vehicle Type', visitor?['visit_type'], subtextColor, theme),
+        _buildTabDetailColumnRow(Icons.receipt_outlined, 'Vehicle Plate Number', visitor?['vehicle_plate_number'], subtextColor, theme),
+      ];
+
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: leftRows,
+              ),
+            ),
+            VerticalDivider(
+              width: 32,
+              thickness: 1,
+              color: theme.dividerColor,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: rightRows,
+              ),
+            ),
+          ],
+        ),
       );
     } else if (index == 1) {
-      // Visit Details
-      return Column(
-        children: [
-          _buildTabInfoRow('Purpose', visitor['visit_purpose']),
-          _buildTabInfoRow('Host (PIC)', visitor['host']),
-          _buildTabInfoRow('Department', visitor['department']),
-          _buildTabInfoRow('Period', visitor['visit_period']),
-          _buildTabInfoRow('Created By', visitor['created_by']),
-        ],
+      // Purpose Visit
+      final leftRows = [
+        _buildTabDetailColumnRow(Icons.calendar_today_outlined, 'Agenda', visitor?['visit_purpose'], subtextColor, theme),
+        _buildTabDetailColumnRow(
+          Icons.event_note_outlined,
+          'Visit Period Start',
+          visitor?['visitor_period_start']?.toString().replaceAll('T', ' '),
+          subtextColor,
+          theme,
+        ),
+        _buildTabDetailColumnRow(Icons.location_on_outlined, 'Site', visitor?['site_place_name'], subtextColor, theme),
+      ];
+      final rightRows = [
+        _buildTabDetailColumnRow(Icons.person_outline, 'PIC Host', visitor?['host'], subtextColor, theme),
+        _buildTabDetailColumnRow(
+          Icons.event_note_outlined,
+          'Visit Period End',
+          visitor?['visitor_period_end']?.toString().replaceAll('T', ' '),
+          subtextColor,
+          theme,
+        ),
+      ];
+
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: leftRows,
+              ),
+            ),
+            VerticalDivider(
+              width: 32,
+              thickness: 1,
+              color: theme.dividerColor,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: rightRows,
+              ),
+            ),
+          ],
+        ),
       );
     } else if (index == 2) {
-      // Documents (mock signed files list)
-      return Column(
-        children: [
-          _buildDocRow('Signed NDA Contract.pdf', 'Signed 09:35', Colors.green),
-          _buildDocRow('Visitor Form.pdf', 'Signed 09:36', Colors.green),
-          _buildDocRow('Vaccination Certificate.jpg', 'Uploaded', Colors.blue),
-        ],
-      );
-    } else if (index == 3) {
-      // Card Status
-      return Column(
-        children: [
-          _buildTabInfoRow('Card Status', 'Active & Registered'),
-          _buildTabInfoRow('Card ID Ref', visitor['id_card_no']),
-          _buildTabInfoRow('Swipe Count', '4 Swipes Today'),
-        ],
+      // Card Info
+      final leftRows = [
+        _buildTabDetailColumnRow(Icons.credit_card, 'Card Status', visitor != null ? 'Active & Registered' : null, subtextColor, theme),
+        _buildTabDetailColumnRow(Icons.credit_card_off_outlined, 'Card ID Ref', visitor?['id_card_no'], subtextColor, theme),
+      ];
+      final rightRows = [
+        _buildTabDetailColumnRow(Icons.swipe_vertical_outlined, 'Swipe Count', visitor != null ? '4 Swipes Today' : null, subtextColor, theme),
+      ];
+
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: leftRows,
+              ),
+            ),
+            VerticalDivider(
+              width: 32,
+              thickness: 1,
+              color: theme.dividerColor,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: rightRows,
+              ),
+            ),
+          ],
+        ),
       );
     } else {
-      // History list
+      // History List
+      if (visitor == null) {
+        return Column(
+          children: [
+            _buildHistoryRow('Checked In', 'Lobby A - Gates', '-'),
+            _buildHistoryRow('Created Registration', 'Portal Pre-Reg', '-'),
+          ],
+        );
+      }
       return Column(
         children: [
           _buildHistoryRow(
             'Checked In',
             'Lobby A - Gates',
-            '14 Jan 2026, 09:47',
+            visitor['check_in_time'] ?? '14 Jan 2026, 09:47',
           ),
           _buildHistoryRow(
             'Created Registration',
@@ -699,45 +637,49 @@ class DesktopDashboard extends GetView<DashboardController> {
     }
   }
 
-  Widget _buildTabInfoRow(String label, String? value) {
+  Widget _buildTabDetailColumnRow(
+    IconData icon,
+    String label,
+    String? value,
+    Color subtextColor,
+    ThemeData theme,
+  ) {
+    final isDark = theme.brightness == Brightness.dark;
+    final labelColor = isDark ? Colors.white : Colors.black87;
+    final valueColor = isDark ? Colors.white70 : Colors.grey[700]!;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
+          Icon(icon, size: 22, color: subtextColor),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              value ?? '-',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: labelColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  (value == null || value.trim().isEmpty) ? '-' : value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: valueColor,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDocRow(String name, String status, Color color) {
-    return ListTile(
-      dense: true,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(Icons.picture_as_pdf, color: color, size: 20),
-      title: Text(
-        name,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(status, style: const TextStyle(fontSize: 10)),
-      trailing: const Icon(Icons.download, size: 16),
     );
   }
 
@@ -746,7 +688,7 @@ class DesktopDashboard extends GetView<DashboardController> {
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          const Icon(Icons.history, size: 16, color: Colors.grey),
+          Icon(Icons.history, size: 16, color: Colors.grey[600]),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -761,12 +703,12 @@ class DesktopDashboard extends GetView<DashboardController> {
                 ),
                 Text(
                   gate,
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                 ),
               ],
             ),
           ),
-          Text(time, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(time, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
         ],
       ),
     );
@@ -778,7 +720,7 @@ class DesktopDashboard extends GetView<DashboardController> {
       if (visitor == null) {
         final subtextColor = theme.brightness == Brightness.dark
             ? const Color(0xFF718096)
-            : Colors.grey[500]!;
+            : Colors.grey[600]!;
         return Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -790,7 +732,7 @@ class DesktopDashboard extends GetView<DashboardController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Kode QR Tamu',
+                  'Visitor QR Code',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
@@ -818,13 +760,13 @@ class DesktopDashboard extends GetView<DashboardController> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Tidak Ada\nQR/Kartu',
+                            'No QR/Card',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 9, color: subtextColor),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Scan tamu untuk\nmenampilkan QR',
+                            'Scan visitor to\ndisplay QR',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 8, color: subtextColor),
                           ),
@@ -836,9 +778,9 @@ class DesktopDashboard extends GetView<DashboardController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildQrDetailRowWithIcon(Icons.confirmation_number_outlined, 'Kode Undangan', '-', subtextColor),
-                          _buildQrDetailRowWithIcon(Icons.login_outlined, 'Waktu Check In', '-', subtextColor),
-                          _buildQrDetailRowWithIcon(Icons.logout_outlined, 'Waktu Check Out', '-', subtextColor),
+                          _buildQrDetailRowWithIcon(Icons.confirmation_number_outlined, 'Invitation Code', '-', subtextColor),
+                          _buildQrDetailRowWithIcon(Icons.login_outlined, 'Check In Time', '-', subtextColor),
+                          _buildQrDetailRowWithIcon(Icons.logout_outlined, 'Check Out Time', '-', subtextColor),
                         ],
                       ),
                     ),
@@ -937,10 +879,10 @@ class DesktopDashboard extends GetView<DashboardController> {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
+              style: TextStyle(fontSize: 10, color: Colors.grey[600]),
             ),
           ),
-          const Text(' : ', style: TextStyle(fontSize: 10, color: Colors.grey)),
+          Text(' : ', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
           Expanded(
             child: Text(
               val,
@@ -959,33 +901,45 @@ class DesktopDashboard extends GetView<DashboardController> {
     String val,
     Color iconColor,
   ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: iconColor),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 10, color: iconColor),
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        // Label lebih gelap di light mode agar terbaca jelas
+        final labelColor = isDark ? iconColor : Colors.grey[700]!;
+        final valColor = isDark
+            ? Colors.white70
+            : Colors.grey[850] ?? const Color(0xFF1A1A1A);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isDark ? iconColor : Colors.grey[600]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(fontSize: 10, color: labelColor),
+                    ),
+                    Text(
+                      val,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: valColor,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  val,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1019,7 +973,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                     borderRadius: BorderRadius.circular(6),
                     onTap: () => Get.snackbar(
                       'Quick Actions',
-                      'Fitur kustomisasi aksi akan segera hadir.',
+                      'Action customisation feature will be available soon.',
                       snackPosition: SnackPosition.BOTTOM,
                     ),
                     child: const Padding(
@@ -1054,7 +1008,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Icons.local_parking,
                   'Parking',
                   Colors.teal,
-                  () => Get.snackbar('Parking Lot', 'Pendaftaran tiket parkir...'),
+                  () => Get.snackbar('Parking Lot', 'Registering parking ticket...'),
                 ),
                 _buildActionTile(
                   Icons.door_sliding_outlined,
@@ -1067,13 +1021,13 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Icons.how_to_reg,
                   'Pra Register',
                   Colors.blue[400]!,
-                  () => Get.snackbar('VMS Registration', 'Membuka formulir Pre-Registration...'),
+                  () => Get.snackbar('VMS Registration', 'Opening Pre-Registration form...'),
                 ),
                 _buildActionTile(
                   Icons.directions_walk_rounded,
                   'Walk In',
                   Colors.blue[600]!,
-                  () => Get.snackbar('VMS Registration', 'Membuka formulir walk-in...'),
+                  () => Get.snackbar('VMS Registration', 'Opening walk-in form...'),
                 ),
                 _buildActionTile(
                   Icons.update,
@@ -1085,7 +1039,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Icons.restore,
                   'Arrival',
                   Colors.greenAccent[700]!,
-                  () => Get.snackbar('Log', 'Membuka log kedatangan...'),
+                  () => Get.snackbar('Log', 'Opening arrival log...'),
                 ),
                 // Row 3
                 _buildActionTile(
@@ -1104,7 +1058,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Icons.print_outlined,
                   'Print',
                   Colors.blueGrey[600]!,
-                  () => Get.snackbar('Print', 'Mencetak dokumen tamu...'),
+                  () => Get.snackbar('Print', 'Printing visitor document...'),
                 ),
                 _buildActionTile(
                   Icons.block,
@@ -1117,32 +1071,32 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Icons.credit_card,
                   'Card Issuance',
                   Colors.purple,
-                  () => Get.snackbar('RFID Integration', 'Menerbitkan kartu tamu...'),
+                  () => Get.snackbar('RFID Integration', 'Issuing visitor card...'),
                 ),
                 _buildActionTile(
                   Icons.credit_card_off_outlined,
                   'Card Return',
                   Colors.purple[300]!,
-                  () => Get.snackbar('RFID Integration', 'Mengembalikan kartu tamu...'),
+                  () => Get.snackbar('RFID Integration', 'Returning visitor card...'),
                 ),
                 _buildActionTile(
                   Icons.edit_note_outlined,
                   'Enable Edit',
                   Colors.deepPurple[300]!,
-                  () => Get.snackbar('Edit Mode', 'Mode edit diaktifkan...'),
+                  () => Get.snackbar('Edit Mode', 'Edit mode enabled...'),
                 ),
                 // Row 5 (last row, single item)
                 _buildActionTile(
                   Icons.key,
                   'Access Issuance',
                   Colors.orange,
-                  () => Get.snackbar('Security Access', 'Mengakses panel kontrol pintu...'),
+                  () => Get.snackbar('Security Access', 'Accessing door control panel...'),
                 ),
                 _buildActionTile(
                   Icons.edit_document,
                   'Edit Form',
                   Colors.deepPurple[400]!,
-                  () => Get.snackbar('Edit Form', 'Membuka formulir edit tamu...'),
+                  () => Get.snackbar('Edit Form', 'Opening visitor edit form...'),
                 ),
               ],
             ),
@@ -1160,41 +1114,58 @@ class DesktopDashboard extends GetView<DashboardController> {
   ) {
     final adjustedColor = color;
 
-    return Material(
-      color: adjustedColor.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: adjustedColor,
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Icon(icon, color: Colors.white, size: 18),
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        // Di light mode, gunakan warna yang lebih gelap supaya teks dan background tile tidak terlalu pucat
+        final bgColor = isDark
+            ? adjustedColor.withValues(alpha: 0.12)
+            : adjustedColor.withValues(alpha: 0.13);
+        final labelColor = isDark
+            ? adjustedColor
+            : HSLColor.fromColor(adjustedColor)
+                .withLightness(
+                    (HSLColor.fromColor(adjustedColor).lightness - 0.15)
+                        .clamp(0.0, 1.0))
+                .toColor();
+
+        return Material(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: adjustedColor,
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: labelColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              const SizedBox(height: 5),
-              Text(
-                label,
-                style: TextStyle(
-                  color: adjustedColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1247,7 +1218,7 @@ class DesktopDashboard extends GetView<DashboardController> {
               child: Obx(() {
                 final visitors = controller.rxRelatedVisitors;
                 if (visitors.isEmpty) {
-                  return const Center(child: Text('Data kosong'));
+                  return const Center(child: Text('No data available'));
                 }
 
                 return GridView.builder(
@@ -1363,7 +1334,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                   Row(
                     children: [
                       Text(
-                        '${controller.rxSelectedItems.length} dipilih',
+                        '${controller.rxSelectedItems.length} selected',
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -1405,7 +1376,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                           color: Colors.grey,
                         ),
                         label: const Text(
-                          'Batal',
+                          'Cancel',
                           style: TextStyle(fontSize: 11, color: Colors.grey),
                         ),
                       ),
@@ -1442,7 +1413,7 @@ class DesktopDashboard extends GetView<DashboardController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Informasi Host',
+                'Host Information',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -1549,7 +1520,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                       icon: Icons.phone_in_talk_outlined,
                       label: 'Call',
                       bgColor: const Color(0xFF7CA1C4), // Muted slate-blue
-                      onTap: () => Get.snackbar('Call', 'Menghubungi host...'),
+                      onTap: () => Get.snackbar('Call', 'Calling host...'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1559,7 +1530,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                       label: 'Chat',
                       bgColor: const Color(0xFF80EED2), // Mint green
                       onTap: () =>
-                          Get.snackbar('Chat', 'Mengirim chat ke host...'),
+                          Get.snackbar('Chat', 'Sending chat to host...'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1569,7 +1540,7 @@ class DesktopDashboard extends GetView<DashboardController> {
                       label: 'Email',
                       bgColor: const Color(0xFF9AD5FA), // Light sky blue
                       onTap: () =>
-                          Get.snackbar('Email', 'Mengirim email ke host...'),
+                          Get.snackbar('Email', 'Sending email to host...'),
                     ),
                   ),
                 ],
@@ -1743,7 +1714,7 @@ class DesktopDashboard extends GetView<DashboardController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Gambar Identitas',
+                'Identity Image',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -2018,76 +1989,264 @@ class DesktopDashboard extends GetView<DashboardController> {
   // --- Scan Bottom Sheet Choice Options ---
 
   void _showCameraChoiceBottomSheet(BuildContext context) {
+    final textController = TextEditingController();
+    final rxHasInput = false.obs;
+    final rxIsLoading = false.obs;
+    textController.addListener(() {
+      rxHasInput.value = textController.text.trim().isNotEmpty;
+    });
+
+    final colorScheme = Theme.of(context).colorScheme;
+
     Get.bottomSheet(
-      Container(
-        decoration: BoxDecoration(
+      Obx(() {
+        return Material(
           color: Theme.of(context).cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Select Scanning Camera',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Scan QR Visitor',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Get.back(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // 1. Input Text Section
+                  Text(
+                    'Input Text',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: textController,
+                    autofocus: false,
+                    enabled: !rxIsLoading.value,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your code',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: colorScheme.outlineVariant, width: 1.2),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                      ),
+                    ),
+                    onFieldSubmitted: (val) async {
+                      if (val.trim().isNotEmpty && !rxIsLoading.value) {
+                        rxIsLoading.value = true;
+                        final success = await controller.searchInvitationCode(val.trim());
+                        rxIsLoading.value = false;
+                        Get.back();
+                        if (success) {
+                          Get.snackbar(
+                            'Visitor Found',
+                            'Loaded profile for ${controller.rxSelectedVisitor.value?['name']}',
+                            backgroundColor: Colors.green,
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.TOP,
+                          );
+                        } else {
+                          Get.snackbar(
+                            'Not Found',
+                            'No visitor matches invitation code "$val"',
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.TOP,
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                          foregroundColor: colorScheme.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                        onPressed: !rxIsLoading.value
+                            ? () {
+                                Get.back();
+                                Get.snackbar(
+                                  'New Invitation',
+                                  'Opening new invitation registration form...',
+                                  backgroundColor: Colors.blueAccent,
+                                  colorText: Colors.white,
+                                );
+                              }
+                            : null,
+                        icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                        label: const Text(
+                          'New Invitation',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: rxHasInput.value && !rxIsLoading.value
+                              ? colorScheme.primary
+                              : Colors.grey[300],
+                          foregroundColor: rxHasInput.value && !rxIsLoading.value
+                              ? Colors.white
+                              : Colors.grey[600],
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        onPressed: rxHasInput.value && !rxIsLoading.value
+                            ? () async {
+                                rxIsLoading.value = true;
+                                final success = await controller.searchInvitationCode(textController.text.trim());
+                                rxIsLoading.value = false;
+                                Get.back();
+                                if (success) {
+                                  Get.snackbar(
+                                    'Visitor Found',
+                                    'Loaded profile for ${controller.rxSelectedVisitor.value?['name']}',
+                                    backgroundColor: Colors.green,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.TOP,
+                                  );
+                                } else {
+                                  Get.snackbar(
+                                    'Not Found',
+                                    'No visitor matches invitation code "${textController.text.trim()}"',
+                                    backgroundColor: Colors.redAccent,
+                                    colorText: Colors.white,
+                                    snackPosition: SnackPosition.TOP,
+                                  );
+                                }
+                              }
+                            : null,
+                        child: rxIsLoading.value
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Submit',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+
+                  // 2. Camera list selection Section
+                  Text(
+                    'Select Scanning Camera',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    leading: const Icon(Icons.camera_front),
+                    title: const Text('Front Camera'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    onTap: () {
+                      Get.back();
+                      Get.snackbar('Scan QR', 'Opening front camera...');
+                      if (controller.rxAllRelatedVisitors.isNotEmpty) {
+                        controller.rxSelectedVisitor.value =
+                            controller.rxAllRelatedVisitors[0];
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.camera_rear),
+                    title: const Text('Rear Camera'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    onTap: () {
+                      Get.back();
+                      Get.snackbar('Scan QR', 'Opening rear camera...');
+                      if (controller.rxAllRelatedVisitors.isNotEmpty) {
+                        controller.rxSelectedVisitor.value =
+                            controller.rxAllRelatedVisitors[1 %
+                                controller.rxAllRelatedVisitors.length];
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.usb),
+                    title: const Text('External USB Camera'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    onTap: () {
+                      Get.back();
+                      Get.snackbar('Scan QR', 'Opening USB camera...');
+                      if (controller.rxAllRelatedVisitors.isNotEmpty) {
+                        controller.rxSelectedVisitor.value =
+                            controller.rxAllRelatedVisitors[2 %
+                                controller.rxAllRelatedVisitors.length];
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.dns),
+                    title: const Text('IP Camera (Lobby A Gate 1)'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    onTap: () {
+                      Get.back();
+                      Get.snackbar('Scan QR', 'Connecting IP camera feed...');
+                      if (controller.rxAllRelatedVisitors.isNotEmpty) {
+                        controller.rxSelectedVisitor.value =
+                            controller.rxAllRelatedVisitors[3 %
+                                controller.rxAllRelatedVisitors.length];
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.camera_front),
-              title: const Text('Front Camera'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Scan QR', 'Membuka kamera depan...');
-                if (controller.rxAllRelatedVisitors.isNotEmpty) {
-                  controller.rxSelectedVisitor.value =
-                      controller.rxAllRelatedVisitors[0];
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_rear),
-              title: const Text('Rear Camera'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Scan QR', 'Membuka kamera belakang...');
-                if (controller.rxAllRelatedVisitors.isNotEmpty) {
-                  controller.rxSelectedVisitor.value =
-                      controller.rxAllRelatedVisitors[1 %
-                          controller.rxAllRelatedVisitors.length];
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.usb),
-              title: const Text('External USB Camera'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Scan QR', 'Membuka USB camera...');
-                if (controller.rxAllRelatedVisitors.isNotEmpty) {
-                  controller.rxSelectedVisitor.value =
-                      controller.rxAllRelatedVisitors[2 %
-                          controller.rxAllRelatedVisitors.length];
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.dns),
-              title: const Text('IP Camera (Lobby A Gate 1)'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Scan QR', 'Menghubungkan IP camera feed...');
-                if (controller.rxAllRelatedVisitors.isNotEmpty) {
-                  controller.rxSelectedVisitor.value =
-                      controller.rxAllRelatedVisitors[3 %
-                          controller.rxAllRelatedVisitors.length];
-                }
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }),
+      isScrollControlled: true,
     );
   }
 }
