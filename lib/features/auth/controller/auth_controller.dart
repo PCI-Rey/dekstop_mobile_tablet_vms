@@ -136,6 +136,57 @@ class AuthController extends GetxController {
     }
   }
 
+  // --- Tapping Card Action ---
+  void loginWithCard() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(28.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.contactless_rounded,
+                  size: 64,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Tapping Card',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Silakan tempelkan kartu akses RFID / NFC Anda pada pembaca kartu.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              const SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(strokeWidth: 3),
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Batal'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // --- Logout Action ---
   void logout() {
     Get.dialog(

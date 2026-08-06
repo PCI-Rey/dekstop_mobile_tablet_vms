@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
 import '../../../core/config/constants.dart';
-import '../../../core/shared/routes/app_pages.dart';
 
 class LoginView extends GetView<AuthController> {
   const LoginView({super.key});
@@ -145,7 +144,7 @@ class LoginView extends GetView<AuthController> {
                           )),
                       const SizedBox(height: 12),
 
-                      // Remember Me and Server Configuration link
+                      // Remember Me
                       Row(
                         children: [
                           Obx(() => Checkbox(
@@ -160,11 +159,6 @@ class LoginView extends GetView<AuthController> {
                           Text(
                             'remember_me'.tr,
                             style: theme.textTheme.bodyMedium,
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () => Get.toNamed(AppRoutes.configure),
-                            child: const Text('Configure'),
                           ),
                         ],
                       ),
@@ -195,52 +189,89 @@ class LoginView extends GetView<AuthController> {
                                     ),
                             )),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
-                      // Server Connection Status
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Obx(() => Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: controller.rxServerConnected.value
-                                        ? Colors.green
-                                        : Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                )),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'server_status'.tr,
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Obx(() => Text(
-                                        controller.rxServerUrlDisplay.value,
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      )),
-                                ],
+                      // Divider / Separator
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'atau',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
-                          ],
+                          ),
+                          Expanded(child: Divider(color: colorScheme.outlineVariant)),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Tapping Card Segment
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => controller.loginWithCard(),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: colorScheme.primary.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              color: colorScheme.primaryContainer.withValues(alpha: 0.1),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.contactless_rounded,
+                                    color: colorScheme.primary,
+                                    size: 26,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Tapping Card',
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Tempelkan kartu akses RFID / NFC',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
                       Center(
                         child: Text(
                           'v${AppConstants.appVersion}',
