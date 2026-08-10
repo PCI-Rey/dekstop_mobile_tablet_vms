@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../controller/dashboard_controller.dart';
 import '../widgets/operator_tour_overlay.dart';
+import 'desktop_overview_analytics.dart';
 import '../../../core/shared/routes/app_pages.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
 
@@ -25,6 +26,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
   // Fullscreen state
   bool _isFullScreen = false;
+
+  // Active Top Navigation Tab (0: Dashboard Overview Analytics, 1: Operator View)
+  int _selectedTopNavTab = 1;
 
   // Guided Tour Walkthrough state (10 Steps)
   bool _isTourActive = false;
@@ -250,52 +254,65 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 // ── 1. Top Navigation Bar (Hidden when _isFullScreen) ─────────
                 if (!_isFullScreen) _buildTopNavBar(),
 
-                // ── 2. Secondary Action Toolbar (Search, Clear, Site, Fullscreen) ──
-                _buildSecondaryToolbar(),
+                // ── 2. View Switcher (Dashboard Overview Analytics vs Operator View) ──
+                if (_selectedTopNavTab == 0)
+                  Expanded(
+                    child: DesktopOverviewAnalytics(
+                      onAddVisitor: () {
+                        setState(() {
+                          _selectedTopNavTab = 1;
+                        });
+                      },
+                    ),
+                  )
+                else ...[
+                  // ── 2. Secondary Action Toolbar (Search, Clear, Site, Fullscreen) ──
+                  _buildSecondaryToolbar(),
 
-                const SizedBox(height: 5),
+                  const SizedBox(height: 5),
 
-                // ── 3. Main 3-Column Dashboard Body (Zero Scroll Fit) ─────────
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // ── Left Column (~30% width) ──────────────────────────
-                        Expanded(
-                          flex: 30,
-                          child: _buildLeftColumn(),
-                        ),
+                  // ── 3. Main 3-Column Dashboard Body (Zero Scroll Fit) ─────────
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ── Left Column (~30% width) ──────────────────────────
+                          Expanded(
+                            flex: 30,
+                            child: _buildLeftColumn(),
+                          ),
 
-                        const SizedBox(width: 8),
+                          const SizedBox(width: 8),
 
-                        // ── Center Column (~41% width) ────────────────────────
-                        Expanded(
-                          flex: 41,
-                          child: _buildCenterColumn(),
-                        ),
+                          // ── Center Column (~41% width) ────────────────────────
+                          Expanded(
+                            flex: 41,
+                            child: _buildCenterColumn(),
+                          ),
 
-                        const SizedBox(width: 8),
+                          const SizedBox(width: 8),
 
-                        // ── Right Column (~29% width) ─────────────────────────
-                        Expanded(
-                          flex: 29,
-                          child: _buildRightColumn(),
-                        ),
-                      ],
+                          // ── Right Column (~29% width) ─────────────────────────
+                          Expanded(
+                            flex: 29,
+                            child: _buildRightColumn(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                // ── 4. Bottom Copyright Footer ────────────────────────────────
-                _buildFooter(),
+                  // ── 4. Bottom Copyright Footer ────────────────────────────────
+                  _buildFooter(),
+                ],
               ],
             ),
           ),
 
           // ── 5. Interactive Operator Guided Tour Overlay (10 Steps) ───────────
-          if (_isTourActive)
+          if (_isTourActive && _selectedTopNavTab == 1)
             OperatorTourOverlay(
               steps: _buildTourSteps(),
               initialStep: _tourStep,
@@ -354,53 +371,118 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
           const SizedBox(width: 14),
 
-          // Breadcrumb item 1: Dashboard
-          InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          // Navigation Tab 1: Dashboard
+          if (_selectedTopNavTab == 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF003082),
+                borderRadius: BorderRadius.circular(6),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.home_outlined, size: 15, color: _textMuted),
-                  const SizedBox(width: 4),
+                  const Icon(Icons.home_outlined, size: 14, color: Colors.white),
+                  const SizedBox(width: 5),
                   Text(
                     'Dashboard',
                     style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _textMuted,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
                   ),
                 ],
               ),
+            )
+          else
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedTopNavTab = 0;
+                  });
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.home_outlined,
+                          size: 14, color: _textMuted),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Dashboard',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: _textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
 
           const SizedBox(width: 6),
 
-          // Breadcrumb item 2: Operator View (Blue Badge)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF003082),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.visibility_outlined, size: 13, color: Colors.white),
-                const SizedBox(width: 5),
-                Text(
-                  'Operator View',
-                  style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+          // Navigation Tab 2: Operator View
+          if (_selectedTopNavTab == 1)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF003082),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.visibility_outlined,
+                      size: 13, color: Colors.white),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Operator View',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedTopNavTab = 1;
+                  });
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.visibility_outlined,
+                          size: 14, color: _textMuted),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Operator View',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: _textMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
 
           const Spacer(),
 
