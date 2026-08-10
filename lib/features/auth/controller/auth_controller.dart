@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/shared/routes/app_pages.dart';
+import '../../../core/shared/widgets/app_snackbar.dart';
 import '../repository/auth_repository.dart';
 
 class AuthController extends GetxController {
@@ -12,7 +13,7 @@ class AuthController extends GetxController {
   AuthController(this._authRepository, this._storageService);
 
   // Splash Screen States
-  final rxSplashMessage = 'splash_check_config'.obs;
+  final rxSplashMessage = 'Checking server configuration...'.obs;
   final rxIsLoadingSplash = true.obs;
 
   // Login Page States
@@ -53,31 +54,17 @@ class AuthController extends GetxController {
     rxIsLoadingSplash.value = true;
     
     // Step 1: Check Config
-    rxSplashMessage.value = 'splash_check_config'.tr;
-    await Future.delayed(const Duration(milliseconds: 1000));
+    rxSplashMessage.value = 'Initializing system...';
+    await Future.delayed(const Duration(milliseconds: 600));
     final serverUrl = await _storageService.getServerUrl();
     
     if (serverUrl.isEmpty) {
-      // Configuration missing -> redirect to setting
       Get.offAllNamed(AppRoutes.configure);
       return;
     }
 
-    // Step 2: Check Server
-    rxSplashMessage.value = 'splash_check_server'.tr;
-    final serverCheck = await _authRepository.checkServerConnection();
-    
-    if (serverCheck is Failure) {
-      rxServerConnected.value = false;
-      // Continue login in offline mode if cached, but for demo we assume success
-      // If server check fails and it's a real server, we could warn, but for demo we proceed.
-    } else {
-      rxServerConnected.value = true;
-    }
-
-    // Step 3: Check Login Credentials
-    rxSplashMessage.value = 'splash_check_login'.tr;
-    await Future.delayed(const Duration(milliseconds: 1000));
+    // Step 2: Check Login Session
+    rxSplashMessage.value = 'Checking login session...';
     final token = await _storageService.getAccessToken();
 
     if (token != null && token.isNotEmpty) {
@@ -95,13 +82,17 @@ class AuthController extends GetxController {
     final password = passwordController.text.trim();
 
     if (username.isEmpty) {
-      Get.snackbar('error_title'.tr, 'username_required'.tr, 
-        backgroundColor: Colors.redAccent, colorText: Colors.white);
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Username is required',
+      );
       return;
     }
     if (password.isEmpty) {
-      Get.snackbar('error_title'.tr, 'password_required'.tr, 
-        backgroundColor: Colors.redAccent, colorText: Colors.white);
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Password is required',
+      );
       return;
     }
 
@@ -112,8 +103,23 @@ class AuthController extends GetxController {
 
     if (result is Success<Map<String, dynamic>>) {
       final data = result.data;
-      final accessToken = data['access_token'];
-      final refreshToken = data['refresh_token'];
+      final collection = (data['collection'] is Map)
+          ? data['collection'] as Map<String, dynamic>
+          : data;
+
+      final accessToken = (collection['access_token'] ??
+              collection['token'] ??
+              data['access_token'] ??
+              data['token'] ??
+              data['data']?['access_token'] ??
+              data['data']?['token'] ??
+              '')
+          .toString();
+      final refreshToken = (collection['refresh_token'] ??
+              data['refresh_token'] ??
+              data['data']?['refresh_token'] ??
+              '')
+          .toString();
       
       await _storageService.saveAccessToken(accessToken);
       await _storageService.saveRefreshToken(refreshToken);
@@ -125,13 +131,18 @@ class AuthController extends GetxController {
         await _storageService.saveUsername('');
       }
 
+      final successMsg = (data['msg'] ?? 'Welcome back, $username!').toString();
+
+      AppSnackbar.success(
+        title: 'Login Successful',
+        message: successMsg,
+      );
+
       Get.offAllNamed(AppRoutes.dashboard);
     } else if (result is Failure) {
-      Get.snackbar(
-        'error_title'.tr, 
-        (result as Failure).exception.message,
-        backgroundColor: Colors.redAccent, 
-        colorText: Colors.white
+      AppSnackbar.error(
+        title: 'Login Failed',
+        message: (result as Failure).exception.message,
       );
     }
   }
@@ -165,7 +176,7 @@ class AuthController extends GetxController {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Silakan tempelkan kartu akses RFID / NFC Anda pada pembaca kartu.',
+                'Please place your RFID / NFC access card on the card reader.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
@@ -178,7 +189,7 @@ class AuthController extends GetxController {
               const SizedBox(height: 24),
               TextButton(
                 onPressed: () => Get.back(),
-                child: const Text('Batal'),
+                child: const Text('Cancel'),
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../features/auth/binding/auth_binding.dart';
 import '../../../features/auth/view/login_view.dart';
 import '../../../features/auth/view/splash_view.dart';
+import '../../../features/auth/view/card_tap_view.dart';
 import '../../../features/dashboard/binding/dashboard_binding.dart';
 import '../../../features/dashboard/view/dashboard_view.dart';
 import '../../../features/visitor/view/visitor_detail_view.dart';
@@ -16,6 +17,7 @@ import '../widgets/no_internet_screen.dart';
 class AppRoutes {
   static const String splash = '/';
   static const String login = '/login';
+  static const String cardTap = '/card-tap';
   static const String dashboard = '/dashboard';
   static const String visitorDetail = '/visitor/detail';
   static const String visitorList = '/visitor/list';
@@ -36,6 +38,11 @@ class AppPages {
     GetPage(
       name: AppRoutes.login,
       page: () => const LoginView(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.cardTap,
+      page: () => const CardTapView(),
       binding: AuthBinding(),
     ),
     GetPage(

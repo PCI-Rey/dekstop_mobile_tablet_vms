@@ -12,7 +12,11 @@ class DioClient {
   DioClient(this._storageService) {
     _dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     ));
 
     _dio.interceptors.addAll([
@@ -100,9 +104,6 @@ class DioClient {
 
   // Simulating backend endpoints when no real backend server is plugged in
   Future<ApiResult<T>> _handleDemoGet<T>(String path, Map<String, dynamic>? queryParams, T Function(dynamic json)? fromJson) async {
-    // Add artificial delay to show shimmer skeleton loadings
-    await Future.delayed(const Duration(milliseconds: 1200));
-
     if (path.contains('/visitors')) {
       final mockData = _getMockVisitors();
       if (fromJson != null) {
@@ -128,7 +129,6 @@ class DioClient {
 
   Future<ApiResult<T>> _handleDemoPost<T>(String path, dynamic data, T Function(dynamic json)? fromJson) async {
     if (path.contains('/operator-invitation/search')) {
-      await Future.delayed(const Duration(milliseconds: 150));
       final mockSearch = _getMockSearchResult();
       if (fromJson != null) {
         return ApiResult.success(fromJson(mockSearch));
@@ -136,27 +136,31 @@ class DioClient {
       return ApiResult.success(mockSearch as T);
     }
 
-    await Future.delayed(const Duration(milliseconds: 1000));
-
-    if (path.contains('/login')) {
-      final username = data['username'] ?? '';
-      final password = data['password'] ?? '';
+    if (path.contains('/_Auth/RequestToken') || path.contains('/login')) {
+      final username = (data['username'] ?? '').toString().trim();
+      final password = (data['password'] ?? '').toString().trim();
       
       if (username.isEmpty || password.isEmpty) {
-        return ApiResult.failure(const ServerException(statusCode: 400, message: 'Nama Pengguna dan Kata Sandi wajib diisi.'));
+        return ApiResult.failure(const ServerException(statusCode: 400, message: 'Username and password are required.'));
+      }
+
+      // Strictly validate operator credentials: username == 'operator' && password == 'admin'
+      if (username != 'operator' || password != 'admin') {
+        return ApiResult.failure(const ServerException(statusCode: 401, message: 'Invalid username or password.'));
       }
 
       final mockLoginResult = {
         'access_token': 'mock_access_token_${DateTime.now().millisecondsSinceEpoch}',
+        'token': 'mock_access_token_${DateTime.now().millisecondsSinceEpoch}',
         'refresh_token': 'mock_refresh_token_${DateTime.now().millisecondsSinceEpoch}',
         'user': {
           'username': username,
-          'name': 'Operator Utama VMS',
-          'email': 'operator@vms.com',
+          'name': 'Operator Bank Indonesia',
+          'email': 'operator@bi.go.id',
           'department': 'Security & Facility Control',
-          'role': 'Super Admin Operator',
-          'avatar': 'https://i.pravatar.cc/300?img=11',
-          'device_info': 'Windows 11 Tablet Terminal',
+          'role': 'Operator',
+          'avatar': 'assets/images/ava_person1.png',
+          'device_info': 'Samsung Galaxy Tab SM-X200',
           'app_version': '1.0.0',
         }
       };

@@ -15,6 +15,14 @@ class AppConstants {
   static const String keyPrinterConfig = 'printer_config';
   static const String keyCameraConfig = 'camera_config';
   
-  // Defaults
-  static const String defaultServerUrl = 'https://api-vms.example.com/v1';
+  // Defaults (Matching mobile_vms backend server)
+  static const String defaultServerUrl = 'https://be-vms.app.bio-experience.com';
+
+  // MQTT Public Broker Configuration
+  static const String mqttHost = '103.193.15.67';
+  static const int mqttPort = 1883;
+  static const int mqttWsPort = 15765;
+  static const String mqttUsername = 'user';
+  static const String mqttPassword = 'root';
+  static const String mqttTopicArrivedVisitor = 'notification/dashboard/viewer/arrived';
 }

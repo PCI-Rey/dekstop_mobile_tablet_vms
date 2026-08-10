@@ -42,7 +42,10 @@ class StorageService extends GetxService {
 
   Future<String> getServerUrl() async {
     final url = await _storage.read(key: AppConstants.keyServerUrl);
-    return url ?? AppConstants.defaultServerUrl;
+    if (url == null || url.isEmpty || url.contains('example.com')) {
+      return AppConstants.defaultServerUrl;
+    }
+    return url;
   }
 
   Future<void> saveRememberMe(bool value) async {

@@ -14,7 +14,16 @@ sealed class NetworkException implements Exception {
         return const NoInternetException('Tidak ada koneksi internet. Silakan periksa jaringan Anda.');
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final statusMessage = error.response?.data?['message'] ?? error.response?.statusMessage;
+        final dynamic data = error.response?.data;
+        String? statusMessage;
+        
+        if (data is Map) {
+          statusMessage = (data['message'] ?? data['msg'] ?? data['title'] ?? error.response?.statusMessage)?.toString();
+        } else if (data is String && data.isNotEmpty) {
+          statusMessage = error.response?.statusMessage ?? 'Server error ($statusCode)';
+        } else {
+          statusMessage = error.response?.statusMessage;
+        }
         
         if (statusCode == 401) {
           return UnauthorizedException(statusMessage ?? 'Sesi telah berakhir. Silakan masuk kembali.');

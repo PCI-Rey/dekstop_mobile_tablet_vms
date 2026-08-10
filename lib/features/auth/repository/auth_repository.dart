@@ -6,20 +6,14 @@ class AuthRepository {
 
   AuthRepository(this._dioClient);
 
+  // Login via official endpoint /api/_Auth/RequestToken
   Future<ApiResult<Map<String, dynamic>>> login(String username, String password) async {
     return await _dioClient.post<Map<String, dynamic>>(
-      '/login',
+      '/api/_Auth/RequestToken',
       data: {
         'username': username,
         'password': password,
       },
-    );
-  }
-
-  Future<ApiResult<Map<String, dynamic>>> checkServerConnection() async {
-    // Simply fetch the server URL ping status
-    return await _dioClient.get<Map<String, dynamic>>(
-      '/dashboard-summary', // Use summary ping as server health check
     );
   }
 }

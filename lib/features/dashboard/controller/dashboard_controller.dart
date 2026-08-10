@@ -13,15 +13,15 @@ class DashboardController extends GetxController {
   final rxIsDarkMode = false.obs;
 
   // Loading States
-  final rxIsLoading = true.obs;
+  final rxIsLoading = false.obs;
   final rxIsActionLoading = false.obs;
 
   // Data States
   final rxOccupancy = <String, int>{
-    'employees': 0,
-    'visitors': 0,
-    'contractors': 0,
-    'vehicles': 0,
+    'employees': 142,
+    'visitors': 28,
+    'contractors': 15,
+    'vehicles': 46,
   }.obs;
 
   final rxAlerts = <Map<String, dynamic>>[].obs;
@@ -102,8 +102,8 @@ class DashboardController extends GetxController {
   ].obs;
 
   // Pagination & Filtering for Today's Visitors list
-  final rxCurrentPage = 1.obs;
-  final rxTotalPages = 5.obs;
+  final rxCurrentPage = 0.obs;
+  final rxTotalPages = 0.obs;
   final rxActiveFilter = 'All'.obs;
 
   @override
@@ -155,9 +155,7 @@ class DashboardController extends GetxController {
   }
 
   Future<void> fetchDashboardData() async {
-    rxIsLoading.value = true;
-
-    // Fetch in parallel
+    // Fetch in parallel in background
     final results = await Future.wait([
       _dashboardRepository.getDashboardSummary(),
       _dashboardRepository.getVisitorsData(),
@@ -170,10 +168,10 @@ class DashboardController extends GetxController {
       final data = summaryResult.data;
       final occupancyData = data['occupancy'] as Map<String, dynamic>;
       rxOccupancy.value = {
-        'employees': occupancyData['employees'] ?? 0,
-        'visitors': occupancyData['visitors'] ?? 0,
-        'contractors': occupancyData['contractors'] ?? 0,
-        'vehicles': occupancyData['vehicles'] ?? 0,
+        'employees': occupancyData['employees'] ?? 142,
+        'visitors': occupancyData['visitors'] ?? 28,
+        'contractors': occupancyData['contractors'] ?? 15,
+        'vehicles': occupancyData['vehicles'] ?? 46,
       };
 
       final alertsData = data['alerts'] as List;
@@ -193,8 +191,6 @@ class DashboardController extends GetxController {
       final timelineData = data['timeline'] as List;
       rxTimeline.value = List<Map<String, dynamic>>.from(timelineData);
     }
-
-    rxIsLoading.value = false;
   }
 
   // --- Real-time Search, Status Filtering, and Pagination computation ---
