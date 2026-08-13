@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../config/constants.dart';
 
 class StorageService extends GetxService {
@@ -9,7 +10,13 @@ class StorageService extends GetxService {
     wOptions: WindowsOptions(),
   );
 
+  static const String _boxCardTap = 'card_tap_visitors_box';
+  static const String _keyVisitorsList = 'visitors_list';
+  late Box _cardTapBox;
+
   Future<StorageService> init() async {
+    await Hive.initFlutter();
+    _cardTapBox = await Hive.openBox(_boxCardTap);
     return this;
   }
 
@@ -112,8 +119,86 @@ class StorageService extends GetxService {
     }
   }
 
+  // Card Tap Visitors Persistence (Hive with 5-minute TTL auto-expiration)
+  static const Duration cardTapTtl = Duration(minutes: 5);
+
+  Future<void> saveCardTapVisitors(List<Map<String, dynamic>> visitors) async {
+    final now = DateTime.now();
+    // Only persist visitors created within the 5-minute TTL
+    final validVisitors = visitors.where((v) {
+      final createdStr = v['createdAt'];
+      if (createdStr != null) {
+        try {
+          final dt = DateTime.parse(createdStr);
+          return now.difference(dt) <= cardTapTtl;
+        } catch (_) {}
+      }
+      return true;
+    }).toList();
+
+    final jsonList = validVisitors.map((v) => json.encode(v)).toList();
+    await _cardTapBox.put(_keyVisitorsList, jsonList);
+  }
+
+  List<Map<String, dynamic>> getCardTapVisitors({Duration maxAge = cardTapTtl}) {
+    final rawList = _cardTapBox.get(_keyVisitorsList);
+    if (rawList == null) return [];
+    try {
+      final now = DateTime.now();
+      final list = List<dynamic>.from(rawList);
+      final validItems = <Map<String, dynamic>>[];
+      bool hasExpired = false;
+
+      for (final item in list) {
+        Map<String, dynamic> map;
+        if (item is String) {
+          map = Map<String, dynamic>.from(json.decode(item));
+        } else if (item is Map) {
+          map = Map<String, dynamic>.from(item);
+        } else {
+          continue;
+        }
+
+        if (map.isEmpty) continue;
+
+        // Verify if record is within 5-minute TTL
+        final createdStr = map['createdAt'];
+        if (createdStr != null) {
+          try {
+            final dt = DateTime.parse(createdStr);
+            if (now.difference(dt) > maxAge) {
+              hasExpired = true;
+              continue; // Drop expired item
+            }
+          } catch (_) {}
+        }
+        validItems.add(map);
+      }
+
+      // If any expired records were dropped, clean up Hive storage
+      if (hasExpired) {
+        saveCardTapVisitors(validItems);
+      }
+
+      return validItems;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> addCardTapVisitor(Map<String, dynamic> visitor) async {
+    final currentList = getCardTapVisitors();
+    currentList.insert(0, visitor);
+    await saveCardTapVisitors(currentList);
+  }
+
+  Future<void> clearCardTapVisitors() async {
+    await _cardTapBox.delete(_keyVisitorsList);
+  }
+
   // Reset all
   Future<void> clearAll() async {
     await _storage.deleteAll();
+    await clearCardTapVisitors();
   }
 }

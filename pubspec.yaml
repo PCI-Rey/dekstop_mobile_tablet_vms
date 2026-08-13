@@ -44,6 +44,8 @@ dependencies:
   pdf: ^3.11.3
   mobile_scanner: ^5.1.1
   mqtt_client: ^10.11.11
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -55,9 +57,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: "assets/images/VMS.png"
-  adaptive_icon_foreground: "assets/images/VMS.png"
-  adaptive_icon_background: "#FFFFFF"
+  image_path: "assets/images/icon_ios.png"
+  adaptive_icon_foreground: "assets/images/icon_android_fg.png"
+  adaptive_icon_background: "#1976D2"
   min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the

@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../core/config/constants.dart';
 import '../../../core/services/mqtt_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
 
 class CardTapView extends StatefulWidget {
@@ -15,6 +18,9 @@ class _CardTapViewState extends State<CardTapView> {
   // Timer for live real-time header clock
   late Timer _clockTimer;
   DateTime _currentTime = DateTime.now();
+
+  // Storage Service Instance (Hive Persistence)
+  late final StorageService _storageService;
 
   // MQTT Service Instance
   final MqttService _mqttService = MqttService();
@@ -31,12 +37,12 @@ class _CardTapViewState extends State<CardTapView> {
   bool _autoRefresh = true;
   bool _isGridView = true;
 
-  // Dynamic Metric Counters
-  int _totalToday = 128;
-  int _passedToday = 98;
-  int _rejectedToday = 18;
-  int _blacklistedToday = 12;
-  int _totalMonth = 1248;
+  // Dynamic Metric Counters (Calculated from real persisted data)
+  int _totalToday = 0;
+  int _passedToday = 0;
+  int _rejectedToday = 0;
+  int _blacklistedToday = 0;
+  int _totalMonth = 0;
 
   // Design Tokens (from AGENTS.md)
   static const Color _blue = Color(0xFF1976D2);
@@ -48,139 +54,149 @@ class _CardTapViewState extends State<CardTapView> {
   static const Color _orangeBlacklist = Color(0xFFF59E0B);
   static const Color _redRejected = Color(0xFFEF4444);
 
-  // Live Visitors Data Feed
-  final List<Map<String, dynamic>> _allVisitors = [
-    {
-      'id': 'V001',
-      'name': 'Endru Wijaya',
-      'status': 'Passed',
-      'scan': 'No',
-      'tapIn': '08:40:11',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V002',
-      'name': 'Budi Santoso',
-      'status': 'Blacklisted',
-      'scan': 'No',
-      'tapIn': '08:42:30',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V003',
-      'name': 'Reza Pratama',
-      'status': 'Rejected',
-      'scan': 'No',
-      'tapIn': '08:45:15',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V004',
-      'name': 'Dimas Anggara',
-      'status': 'Passed',
-      'scan': 'No',
-      'tapIn': '08:48:50',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V005',
-      'name': 'Hendrik Gunawan',
-      'status': 'Blacklisted',
-      'scan': 'No',
-      'tapIn': '08:50:05',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V006',
-      'name': 'Arif Setiawan',
-      'status': 'Rejected',
-      'scan': 'No',
-      'tapIn': '08:52:44',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V007',
-      'name': 'Fajar Hidayat',
-      'status': 'Passed',
-      'scan': 'No',
-      'tapIn': '08:55:18',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V008',
-      'name': 'Bayu Nugroho',
-      'status': 'Blacklisted',
-      'scan': 'No',
-      'tapIn': '08:58:22',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V009',
-      'name': 'Rian Saputra',
-      'status': 'Rejected',
-      'scan': 'No',
-      'tapIn': '09:02:11',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?fit=crop&w=400&h=400',
-    },
-    {
-      'id': 'V010',
-      'name': 'Agus Firmansyah',
-      'status': 'Passed',
-      'scan': 'No',
-      'tapIn': '09:05:40',
-      'tapOut': '16:40:11',
-      'image':
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?fit=crop&w=400&h=400',
-    },
+  // Fallback realistic face portraits list for random face assignment
+  static final List<String> _randomFaces = [
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?fit=crop&w=400&h=400',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?fit=crop&w=400&h=400',
+    'assets/images/ava_person1.png',
+    'assets/images/ava_person2.png',
+    'assets/images/ava_person3.png',
+    'assets/images/ava_person4.png',
   ];
+
+  // Live Visitors Data Feed (Purely populated from Hive storage and MQTT)
+  final List<Map<String, dynamic>> _allVisitors = [];
+  static const Duration _visitorTtl = Duration(minutes: 5);
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
 
-    // 1. Live clock ticker
+    // 1. Initialize Storage & Load Saved Visitors from Hive (with 5-minute TTL)
+    _storageService = Get.find<StorageService>();
+    _loadPersistedVisitors();
+
+    // 2. Live clock ticker + real-time 5-minute TTL expiration checker
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
           _currentTime = DateTime.now();
+          _purgeExpiredVisitors();
         });
       }
     });
 
-    // 2. Initialize Real-Time MQTT Stream
+    // 3. Initialize Real-Time MQTT Stream
     _initMqttStream();
   }
 
+  void _loadPersistedVisitors() {
+    try {
+      final saved = _storageService.getCardTapVisitors();
+      _allVisitors.clear();
+      _allVisitors.addAll(saved);
+      _recalculateMetrics();
+    } catch (e) {
+      debugPrint('Error loading card tap visitors from Hive: $e');
+    }
+  }
+
+  void _purgeExpiredVisitors() {
+    if (_allVisitors.isEmpty) return;
+    final now = DateTime.now();
+    final beforeLength = _allVisitors.length;
+
+    _allVisitors.removeWhere((v) {
+      final createdStr = v['createdAt'];
+      if (createdStr != null) {
+        try {
+          final dt = DateTime.parse(createdStr);
+          return now.difference(dt) > _visitorTtl;
+        } catch (_) {}
+      }
+      return false;
+    });
+
+    // If any record expired and was removed, recalculate metrics & update Hive
+    if (_allVisitors.length != beforeLength) {
+      _recalculateMetrics();
+      _storageService.saveCardTapVisitors(_allVisitors);
+      // Adjust pagination page index if needed
+      if (_currentPage >= _totalPages) {
+        _currentPage = math.max(0, _totalPages - 1);
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentPage);
+        }
+      }
+    }
+  }
+
+  void _recalculateMetrics() {
+    final now = DateTime.now();
+    int totalT = 0;
+    int passedT = 0;
+    int rejectedT = 0;
+    int blacklistedT = 0;
+    int totalM = 0;
+
+    for (final v in _allVisitors) {
+      DateTime itemDate = now;
+      if (v['createdAt'] != null) {
+        try {
+          itemDate = DateTime.parse(v['createdAt']);
+        } catch (_) {}
+      }
+
+      final isToday = itemDate.year == now.year &&
+          itemDate.month == now.month &&
+          itemDate.day == now.day;
+      final isThisMonth =
+          itemDate.year == now.year && itemDate.month == now.month;
+
+      if (isThisMonth) totalM++;
+
+      if (isToday) {
+        totalT++;
+        final s = (v['status'] ?? '').toString().toLowerCase();
+        if (s == 'blacklisted') {
+          blacklistedT++;
+        } else if (s == 'rejected' || s == 'blocked' || s == 'denied') {
+          rejectedT++;
+        } else {
+          passedT++;
+        }
+      }
+    }
+
+    _totalToday = totalT;
+    _passedToday = passedT;
+    _rejectedToday = rejectedT;
+    _blacklistedToday = blacklistedT;
+    _totalMonth = totalM;
+  }
+
   void _initMqttStream() {
-    _mqttService.onVisitorArrived = (raw) {
+    _mqttService.onVisitorArrived = (raw) async {
       if (!mounted) return;
-      _handleIncomingMqttPayload(raw);
+      await _handleIncomingMqttPayload(raw);
     };
 
     // Connect to Broker: 103.193.15.67:1883 & Subscribe Topic: notification/dashboard/viewer/arrived
     _mqttService.initializeAndConnect();
   }
 
-  void _handleIncomingMqttPayload(Map<String, dynamic> raw) {
+  Future<void> _handleIncomingMqttPayload(Map<String, dynamic> raw) async {
     debugPrint('MQTT RECEIVED ON TOPIC: $raw');
 
     List<dynamic> visitorList = [];
@@ -206,22 +222,31 @@ class _CardTapViewState extends State<CardTapView> {
     final String arrivalMethod =
         (options['arrival_tap_in'] ?? 'CardTap').toString();
 
+    final activeServerUrl = await _storageService.getServerUrl();
+
     for (final dynamic item in visitorList) {
       if (item is! Map<String, dynamic>) continue;
 
       final String name =
           (item['visitor_name'] ?? item['name'] ?? 'Visitor').toString();
 
-      // Determine status: Passed / Blacklisted / Rejected
+      // 1. Determine status: prioritize visitor_status, fallback to approval_status / flags
       String status = 'Passed';
+      final String rawVisitorStatus =
+          (item['visitor_status'] ?? '').toString().trim();
+
       if (item['is_blacklisted'] == true) {
         status = 'Blacklisted';
       } else if (item['is_rejected'] == true || item['is_blocked'] == true) {
         status = 'Rejected';
-      } else if (item['approval_status'] == 'Approved' ||
-          item['visitor_status'] == 'Checkin' ||
-          item['is_checked_in'] == true ||
-          item['is_arrived'] == true) {
+      } else if (rawVisitorStatus.isNotEmpty && rawVisitorStatus != 'null') {
+        // Direct status extraction from MQTT payload visitor_status
+        status = rawVisitorStatus;
+      } else if (item['approval_status'] != null &&
+          item['approval_status'].toString().trim().isNotEmpty &&
+          item['approval_status'].toString() != 'null') {
+        status = item['approval_status'].toString().trim();
+      } else if (item['is_checked_in'] == true || item['is_arrived'] == true) {
         status = 'Passed';
       }
 
@@ -255,48 +280,67 @@ class _CardTapViewState extends State<CardTapView> {
         tapInTime = '$h:$m:$s';
       }
 
-      // Determine Image
-      String image = (item['selfie_image'] ??
+      // Parse Tap Out Time cleanly
+      String tapOutTime = '-';
+      final String? checkoutAtStr = (item['checkout_at'] ??
+              item['tap_out_at'] ??
+              item['tap_out'] ??
+              item['departure_at'])
+          ?.toString();
+      if (checkoutAtStr != null &&
+          checkoutAtStr.isNotEmpty &&
+          checkoutAtStr != 'null') {
+        try {
+          final parsed = DateTime.parse(checkoutAtStr);
+          final local = parsed.isUtc ? parsed.toLocal() : parsed;
+          final h = local.hour.toString().padLeft(2, '0');
+          final m = local.minute.toString().padLeft(2, '0');
+          final s = local.second.toString().padLeft(2, '0');
+          tapOutTime = '$h:$m:$s';
+        } catch (_) {
+          tapOutTime = checkoutAtStr;
+        }
+      }
+
+      // 2. Determine Image: Use selfie_image with CDN path resolution (/{{pathcdn}}{path}) or fallback to random face
+      final String rawImage = (item['selfie_image'] ??
               item['image'] ??
               item['photo'] ??
               item['avatar'] ??
               '')
-          .toString();
-      if (image.isEmpty || image == 'null') {
-        final avatarList = [
-          'assets/images/ava_person1.png',
-          'assets/images/ava_person2.png',
-          'assets/images/ava_person3.png',
-          'assets/images/ava_person4.png',
-        ];
-        image = avatarList[_allVisitors.length % avatarList.length];
+          .toString()
+          .trim();
+
+      String image = '';
+      if (rawImage.isEmpty || rawImage == 'null') {
+        // Pick random realistic face avatar
+        final randomIndex = math.Random().nextInt(_randomFaces.length);
+        image = _randomFaces[randomIndex];
+      } else {
+        // Resolve full CDN image URL using /{{pathcdn}}{path} API format
+        image = AppConstants.getCdnImageUrl(rawImage, baseUrl: activeServerUrl);
       }
 
       final newVisitorCard = {
-        'id': 'V00${_allVisitors.length + 1}',
+        'id': (item['visitor_number'] ?? item['id'] ?? 'V${(_allVisitors.length + 1).toString().padLeft(3, '0')}').toString(),
         'name': name,
         'status': status,
         'scan': scan,
         'tapIn': tapInTime,
-        'tapOut': '16:40:11',
+        'tapOut': tapOutTime,
         'image': image,
         'method': arrivalMethod,
         'org': (item['visitor_organization_name'] ?? 'Instansi').toString(),
+        'createdAt': DateTime.now().toIso8601String(),
       };
 
       setState(() {
         _allVisitors.insert(0, newVisitorCard);
-
-        _totalToday++;
-        _totalMonth++;
-        if (status == 'Passed') {
-          _passedToday++;
-        } else if (status == 'Blacklisted') {
-          _blacklistedToday++;
-        } else {
-          _rejectedToday++;
-        }
+        _recalculateMetrics();
       });
+
+      // Persist immediately to Hive so data is NEVER lost on back navigation
+      _storageService.saveCardTapVisitors(_allVisitors);
 
       // Jump/Animate to first page on new arrival
       if (_currentPage != 0 && _pageController.hasClients) {
@@ -307,20 +351,21 @@ class _CardTapViewState extends State<CardTapView> {
         );
       }
 
-      if (status == 'Passed') {
-        AppSnackbar.success(
-          title: 'Success',
-          message: '$name ($arrivalMethod) tapped in at $tapInTime',
-        );
-      } else if (status == 'Blacklisted') {
+      final sLower = status.toLowerCase();
+      if (sLower == 'blacklisted') {
         AppSnackbar.warning(
           title: 'Blacklisted',
           message: '$name ($arrivalMethod) flagged at $tapInTime',
         );
-      } else {
+      } else if (sLower == 'rejected' || sLower == 'blocked') {
         AppSnackbar.error(
           title: 'Rejected',
           message: '$name ($arrivalMethod) rejected at $tapInTime',
+        );
+      } else {
+        AppSnackbar.success(
+          title: status,
+          message: '$name ($arrivalMethod) $status at $tapInTime',
         );
       }
     }
@@ -369,18 +414,60 @@ class _CardTapViewState extends State<CardTapView> {
     return '$dayName, ${time.day} $monthName ${time.year} at $h:$m:$s';
   }
 
+  Color _getStatusColor(String status) {
+    final s = status.toLowerCase();
+    if (s == 'passed' ||
+        s == 'checkin' ||
+        s == 'checked in' ||
+        s == 'checked_in' ||
+        s == 'approved' ||
+        s == 'arrived') {
+      return _greenPassed;
+    } else if (s == 'blacklisted') {
+      return _orangeBlacklist;
+    } else if (s == 'rejected' || s == 'blocked' || s == 'denied') {
+      return _redRejected;
+    } else {
+      return _blue;
+    }
+  }
+
   List<Map<String, dynamic>> get _filteredVisitors {
     final q = _searchController.text.trim().toLowerCase();
     return _allVisitors.where((v) {
       final name = (v['name'] as String).toLowerCase();
       final id = (v['id'] as String).toLowerCase();
-      final status = v['status'] as String;
+      final status = (v['status'] ?? '').toString();
+      final sLower = status.toLowerCase();
 
       final matchQuery = q.isEmpty || name.contains(q) || id.contains(q);
-      final matchStatus =
-          _selectedStatus == 'All Status' || status == _selectedStatus;
 
-      return matchQuery && matchStatus;
+      bool matchStatus = _selectedStatus == 'All Status';
+      if (!matchStatus) {
+        final selLower = _selectedStatus.toLowerCase();
+        if (selLower == 'passed') {
+          matchStatus = sLower == 'passed' ||
+              sLower == 'checkin' ||
+              sLower == 'checked in' ||
+              sLower == 'approved';
+        } else {
+          matchStatus = sLower == selLower;
+        }
+      }
+
+      bool matchDate = true;
+      if (_selectedDate != null) {
+        if (v['createdAt'] != null) {
+          try {
+            final dt = DateTime.parse(v['createdAt']);
+            matchDate = dt.year == _selectedDate!.year &&
+                dt.month == _selectedDate!.month &&
+                dt.day == _selectedDate!.day;
+          } catch (_) {}
+        }
+      }
+
+      return matchQuery && matchStatus && matchDate;
     }).toList();
   }
 
@@ -739,7 +826,13 @@ class _CardTapViewState extends State<CardTapView> {
                 fontWeight: FontWeight.w600,
                 color: _textDark,
               ),
-              items: ['All Status', 'Passed', 'Rejected', 'Blacklisted']
+              items: [
+                'All Status',
+                'Checkin',
+                'Passed',
+                'Rejected',
+                'Blacklisted'
+              ]
                   .map(
                     (s) => DropdownMenuItem(
                       value: s,
@@ -1053,15 +1146,43 @@ class _CardTapViewState extends State<CardTapView> {
     final totalPages = _totalPages;
 
     if (visitors.isEmpty) {
+      final isCompletelyEmpty = _allVisitors.isEmpty;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_off_outlined, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 8),
-            const Text(
-              'No visitor records match the current filter',
-              style: TextStyle(fontSize: 12, color: _textMuted),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _blue.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isCompletelyEmpty
+                    ? Icons.contactless_outlined
+                    : Icons.person_off_outlined,
+                size: 42,
+                color: _blue,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isCompletelyEmpty
+                  ? 'No Visitor Activity Yet'
+                  : 'No visitor records match the current filter',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: _textDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isCompletelyEmpty
+                  ? 'Publish visitor events from MQTT Explorer or tap RFID cards to see real-time records.'
+                  : 'Try clearing your search query or adjusting status/date filter.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11.5, color: _textMuted),
             ),
           ],
         ),
@@ -1126,16 +1247,7 @@ class _CardTapViewState extends State<CardTapView> {
   Widget _buildVisitorCard(Map<String, dynamic> item) {
     final status = (item['status'] ?? 'Passed').toString();
     final name = (item['name'] ?? 'Visitor').toString();
-
-    Color statusBgColor;
-    if (status == 'Passed') {
-      statusBgColor = _greenPassed;
-    } else if (status == 'Blacklisted') {
-      statusBgColor = _orangeBlacklist;
-    } else {
-      statusBgColor = _redRejected;
-    }
-
+    final statusBgColor = _getStatusColor(status);
     final imageSrc = (item['image'] ?? '').toString();
 
     return Container(
@@ -1192,11 +1304,11 @@ class _CardTapViewState extends State<CardTapView> {
                     ),
                   ),
 
-                  // Bottom Status Badge (Passed / Blacklisted / Rejected)
+                  // Bottom Status Badge (Passed / Checkin / Blacklisted / Rejected)
                   Positioned(
                     bottom: 4,
-                    left: 12,
-                    right: 12,
+                    left: 8,
+                    right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 2.5),
                       decoration: BoxDecoration(
@@ -1213,6 +1325,8 @@ class _CardTapViewState extends State<CardTapView> {
                       child: Text(
                         status,
                         textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 9.5,
@@ -1286,14 +1400,42 @@ class _CardTapViewState extends State<CardTapView> {
         imageSrc,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _buildFallbackAvatar(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: const Color(0xFFF1F5F9),
+            child: const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        },
       );
-    } else {
-      // Relative path or local file
-      return Image.asset(
-        'assets/images/ava_person1.png',
+    } else if (imageSrc.isNotEmpty && imageSrc != 'null') {
+      final cdnUrl = AppConstants.getCdnImageUrl(imageSrc);
+      return Image.network(
+        cdnUrl,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _buildFallbackAvatar(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: const Color(0xFFF1F5F9),
+            child: const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        },
       );
+    } else {
+      return _buildFallbackAvatar();
     }
   }
 
@@ -1371,16 +1513,56 @@ class _CardTapViewState extends State<CardTapView> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildVisitorListView() {
     final visitors = _filteredVisitors;
+    if (visitors.isEmpty) {
+      final isCompletelyEmpty = _allVisitors.isEmpty;
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _blue.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isCompletelyEmpty
+                    ? Icons.contactless_outlined
+                    : Icons.person_off_outlined,
+                size: 42,
+                color: _blue,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isCompletelyEmpty
+                  ? 'No Visitor Activity Yet'
+                  : 'No visitor records match the current filter',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: _textDark,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isCompletelyEmpty
+                  ? 'Publish visitor events from MQTT Explorer or tap RFID cards to see real-time records.'
+                  : 'Try clearing your search query or adjusting status/date filter.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11.5, color: _textMuted),
+            ),
+          ],
+        ),
+      );
+    }
     return ListView.separated(
       itemCount: visitors.length,
       separatorBuilder: (_, __) => const SizedBox(height: 6),
       itemBuilder: (context, index) {
         final item = visitors[index];
         final status = (item['status'] ?? 'Passed').toString();
-
-        Color statusBgColor = _greenPassed;
-        if (status == 'Blacklisted') statusBgColor = _orangeBlacklist;
-        if (status == 'Rejected') statusBgColor = _redRejected;
+        final statusBgColor = _getStatusColor(status);
 
         return Container(
           padding: const EdgeInsets.all(8),
