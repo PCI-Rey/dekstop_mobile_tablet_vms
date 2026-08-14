@@ -18,106 +18,130 @@ class MobileDashboard extends GetView<DashboardController> {
 
       return Theme(
         data: localTheme,
-        child: Builder(builder: (context) {
-          final theme = Theme.of(context);
-          final colorScheme = theme.colorScheme;
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            final colorScheme = theme.colorScheme;
 
-          return Scaffold(
-            resizeToAvoidBottomInset: false,
-            backgroundColor: theme.scaffoldBackgroundColor,
-            // Floating Scan Button in the center (FAB)
-            floatingActionButton: FloatingActionButton(
-        onPressed: () => _openConfiguredCamera(context),
-        backgroundColor: Colors.blueAccent,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-      // Bottom Navigation Bar
-      bottomNavigationBar: _buildBottomNavigationBar(context, colorScheme),
-
-      // Main Body
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // Header Search & Actions (Fixed floating at the top)
-                _buildHeader(context, theme, colorScheme),
-
-                // Scrollable Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-
-                          // B5: Alert Chips Banner — HP style: horizontal chips, bukan card penuh
-                          _buildAlertChipsBanner(theme, colorScheme),
-
-                          // Selected Visitor Card
-                          _buildSelectedVisitorCard(theme, colorScheme),
-                          const SizedBox(height: 8),
-
-                          // B1: QR Code Collapsible Card (di bawah visitor card)
-                          _buildQrCollapsibleCard(theme, colorScheme),
-                          const SizedBox(height: 12),
-
-                          // B2: Tombol 'Detail Lengkap' — buka Bottom Sheet tabs
-                          _buildDetailLengkapButton(context, theme, colorScheme),
-                          const SizedBox(height: 20),
-
-                          // Quick Actions Section
-                          _buildQuickActionsHeader(context, theme),
-                          const SizedBox(height: 8),
-                          _buildQuickActionsGrid(context, theme, colorScheme),
-                          const SizedBox(height: 20),
-
-                          // B3: Host Info Compact Row
-                          _buildHostInfoCompactRow(theme, colorScheme),
-                          const SizedBox(height: 20),
-
-                          // Live Occupancy row list
-                          _buildOccupancySection(theme, colorScheme),
-                          const SizedBox(height: 20),
-
-                          // Related Visitors Row
-                          _buildRelatedVisitorsRow(context, theme, colorScheme),
-                          const SizedBox(height: 20),
-
-                          // Visit Timeline
-                          _buildTimelineSection(theme, colorScheme),
-                          const SizedBox(height: 32),
-                        ],
-                      ),
-                    ),
-                  ),
+            return Scaffold(
+              resizeToAvoidBottomInset: false,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              // Floating Scan Button in the center (FAB)
+              floatingActionButton: FloatingActionButton(
+                onPressed: () => _openConfiguredCamera(context),
+                backgroundColor: Colors.blueAccent,
+                shape: const CircleBorder(),
+                child: const Icon(
+                  Icons.qr_code_scanner,
+                  color: Colors.white,
+                  size: 28,
                 ),
-              ],
-            ),
+              ),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerDocked,
 
-            // Floating Quick Access Bar
-            Obx(() {
-              if (controller.rxSelectMultiple.value &&
-                  controller.rxSelectedItems.isNotEmpty) {
-                return Positioned(
-                  bottom: 76, // Float above bottom navigation bar
-                  left: 16,
-                  right: 16,
-                  child: _buildQuickAccessBar(context),
-                );
-              }
-              return const SizedBox.shrink();
-            }),
-          ],
+              // Bottom Navigation Bar
+              bottomNavigationBar: _buildBottomNavigationBar(
+                context,
+                colorScheme,
+              ),
+
+              // Main Body
+              body: SafeArea(
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        // Header Search & Actions (Fixed floating at the top)
+                        _buildHeader(context, theme, colorScheme),
+
+                        // Scrollable Content
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 12),
+
+                                  // B5: Alert Chips Banner — HP style: horizontal chips, bukan card penuh
+                                  _buildAlertChipsBanner(theme, colorScheme),
+
+                                  // Selected Visitor Card
+                                  _buildSelectedVisitorCard(theme, colorScheme),
+                                  const SizedBox(height: 8),
+
+                                  // B1: QR Code Collapsible Card (di bawah visitor card)
+                                  _buildQrCollapsibleCard(theme, colorScheme),
+                                  const SizedBox(height: 12),
+
+                                  // B2: Tombol 'Detail Lengkap' — buka Bottom Sheet tabs
+                                  _buildDetailLengkapButton(
+                                    context,
+                                    theme,
+                                    colorScheme,
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Quick Actions Section
+                                  _buildQuickActionsHeader(context, theme),
+                                  const SizedBox(height: 8),
+                                  _buildQuickActionsGrid(
+                                    context,
+                                    theme,
+                                    colorScheme,
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // B3: Host Info Compact Row
+                                  _buildHostInfoCompactRow(theme, colorScheme),
+                                  const SizedBox(height: 20),
+
+                                  // Live Occupancy row list
+                                  _buildOccupancySection(theme, colorScheme),
+                                  const SizedBox(height: 20),
+
+                                  // Related Visitors Row
+                                  _buildRelatedVisitorsRow(
+                                    context,
+                                    theme,
+                                    colorScheme,
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Visit Timeline
+                                  _buildTimelineSection(theme, colorScheme),
+                                  const SizedBox(height: 32),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Floating Quick Access Bar
+                    Obx(() {
+                      if (controller.rxSelectMultiple.value &&
+                          controller.rxSelectedItems.isNotEmpty) {
+                        return Positioned(
+                          bottom: 76, // Float above bottom navigation bar
+                          left: 16,
+                          right: 16,
+                          child: _buildQuickAccessBar(context),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
-      ),
-    );
-        }),
       );
     });
   }
@@ -1200,44 +1224,91 @@ class MobileDashboard extends GetView<DashboardController> {
                 return InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: () {
-                    Get.dialog(AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      title: Row(children: [
-                        Icon(isCritical ? Icons.warning : Icons.info, color: chipColor, size: 18),
-                        const SizedBox(width: 8),
-                        Text(isCritical ? 'Alert Kritis' : 'Informasi', style: const TextStyle(fontSize: 14)),
-                      ]),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(alert['message'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          Text(alert['subText'], style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                          const SizedBox(height: 4),
-                          Text(alert['time'], style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                    Get.dialog(
+                      AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        title: Row(
+                          children: [
+                            Icon(
+                              isCritical ? Icons.warning : Icons.info,
+                              color: chipColor,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isCritical ? 'Alert Kritis' : 'Informasi',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              alert['message'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              alert['subText'],
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              alert['time'],
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: Get.back,
+                            child: const Text('Tutup'),
+                          ),
                         ],
                       ),
-                      actions: [
-                        TextButton(onPressed: Get.back, child: const Text('Tutup')),
-                      ],
-                    ));
+                    );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: chipColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: chipColor.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: chipColor.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(isCritical ? Icons.warning_amber : Icons.info_outline, color: chipColor, size: 12),
+                        Icon(
+                          isCritical ? Icons.warning_amber : Icons.info_outline,
+                          color: chipColor,
+                          size: 12,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           alert['message'],
-                          style: TextStyle(color: chipColor, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: chipColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1280,71 +1351,118 @@ class MobileDashboard extends GetView<DashboardController> {
                   children: [
                     Icon(Icons.qr_code_2, size: 18, color: colorScheme.primary),
                     const SizedBox(width: 8),
-                    Text('QR Code Visitor', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'QR Code Visitor',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const Spacer(),
-                    Obx(() => AnimatedRotation(
-                      turns: _qrExpanded.value ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.grey[400]),
-                    )),
+                    Obx(
+                      () => AnimatedRotation(
+                        turns: _qrExpanded.value ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 18,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-                Obx(() => AnimatedSize(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  child: _qrExpanded.value
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // QR compact
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey[200]!),
-                                ),
-                                child: const Icon(Icons.qr_code, size: 70, color: Colors.black87),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      visitor['name'],
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                Obx(
+                  () => AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: _qrExpanded.value
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // QR compact
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.grey[200]!,
                                     ),
-                                    const SizedBox(height: 4),
-                                    Row(children: [
-                                      Icon(Icons.schedule, size: 11, color: Colors.grey[500]),
-                                      const SizedBox(width: 4),
-                                      Text('Berlaku hingga: 17:00', style: TextStyle(fontSize: 10, color: Colors.grey[600])),
-                                    ]),
-                                    const SizedBox(height: 12),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: OutlinedButton.icon(
-                                        onPressed: () => Get.snackbar('Print', 'Mencetak QR code...'),
-                                        icon: const Icon(Icons.print_outlined, size: 14),
-                                        label: const Text('Print QR', style: TextStyle(fontSize: 11)),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 6),
-                                          minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: const Icon(
+                                    Icons.qr_code,
+                                    size: 70,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        visitor['name'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.schedule,
+                                            size: 11,
+                                            color: Colors.grey[500],
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Berlaku hingga: 17:00',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: OutlinedButton.icon(
+                                          onPressed: () => Get.snackbar(
+                                            'Print',
+                                            'Mencetak QR code...',
+                                          ),
+                                          icon: const Icon(
+                                            Icons.print_outlined,
+                                            size: 14,
+                                          ),
+                                          label: const Text(
+                                            'Print QR',
+                                            style: TextStyle(fontSize: 11),
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 6,
+                                            ),
+                                            minimumSize: Size.zero,
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                )),
+                              ],
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1354,25 +1472,41 @@ class MobileDashboard extends GetView<DashboardController> {
   }
 
   // ─── B2: Tombol Detail Lengkap → Bottom Sheet Tabs (Info/Dokumen/Riwayat) ───
-  Widget _buildDetailLengkapButton(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildDetailLengkapButton(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     return Obx(() {
-      if (controller.rxSelectedVisitor.value == null) return const SizedBox.shrink();
+      if (controller.rxSelectedVisitor.value == null) {
+        return const SizedBox.shrink();
+      }
       return SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          onPressed: () => _showVisitorDetailBottomSheet(context, theme, colorScheme),
+          onPressed: () =>
+              _showVisitorDetailBottomSheet(context, theme, colorScheme),
           icon: const Icon(Icons.open_in_new, size: 14),
-          label: const Text('Detail Lengkap Visitor', style: TextStyle(fontSize: 12)),
+          label: const Text(
+            'Detail Lengkap Visitor',
+            style: TextStyle(fontSize: 12),
+          ),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       );
     });
   }
 
-  void _showVisitorDetailBottomSheet(BuildContext context, ThemeData theme, ColorScheme colorScheme) {
+  void _showVisitorDetailBottomSheet(
+    BuildContext context,
+    ThemeData theme,
+    ColorScheme colorScheme,
+  ) {
     final visitor = controller.rxSelectedVisitor.value;
     if (visitor == null) return;
 
@@ -1390,8 +1524,12 @@ class MobileDashboard extends GetView<DashboardController> {
               // Handle bar
               Container(
                 margin: const EdgeInsets.only(top: 10, bottom: 8),
-                width: 36, height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               // Header
               Padding(
@@ -1400,27 +1538,55 @@ class MobileDashboard extends GetView<DashboardController> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(visitor['avatar'], width: 40, height: 40, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(width: 40, height: 40, color: Colors.grey[200],
-                          child: const Icon(Icons.person, color: Colors.grey)),
+                      child: Image.network(
+                        visitor['avatar'],
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 40,
+                          height: 40,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.person, color: Colors.grey),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(visitor['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        Text(visitor['company'] ?? '-', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                      ],
-                    )),
-                    IconButton(onPressed: Get.back, icon: const Icon(Icons.close, size: 20)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            visitor['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            visitor['company'] ?? '-',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: Get.back,
+                      icon: const Icon(Icons.close, size: 20),
+                    ),
                   ],
                 ),
               ),
               const Divider(height: 16),
               // Tabs
               TabBar(
-                labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                labelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
                 unselectedLabelColor: Colors.grey,
                 indicatorSize: TabBarIndicatorSize.label,
                 tabs: const [
@@ -1438,22 +1604,53 @@ class MobileDashboard extends GetView<DashboardController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildInfoRowDetailed(Icons.phone, 'Telepon', visitor['phone']),
-                          _buildInfoRowDetailed(Icons.email, 'Email', visitor['email']),
-                          _buildInfoRowDetailed(Icons.badge, 'ID Card No', visitor['id_card_no']),
-                          _buildInfoRowDetailed(Icons.business, 'Perusahaan', visitor['company']),
+                          _buildInfoRowDetailed(
+                            Icons.phone,
+                            'Telepon',
+                            visitor['phone'],
+                          ),
+                          _buildInfoRowDetailed(
+                            Icons.email,
+                            'Email',
+                            visitor['email'],
+                          ),
+                          _buildInfoRowDetailed(
+                            Icons.badge,
+                            'ID Card No',
+                            visitor['id_card_no'],
+                          ),
+                          _buildInfoRowDetailed(
+                            Icons.business,
+                            'Perusahaan',
+                            visitor['company'],
+                          ),
                           const SizedBox(height: 16),
                           // B4: ID Card thumbnail
-                          const Text('Foto Identitas', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          const Text(
+                            'Foto Identitas',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               visitor['identity_doc_url'] ?? '',
-                              width: double.infinity, height: 140, fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: 140,
+                              fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Container(
-                                height: 140, color: Colors.grey[100],
-                                child: const Center(child: Icon(Icons.credit_card, size: 40, color: Colors.grey)),
+                                height: 140,
+                                color: Colors.grey[100],
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.credit_card,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -1465,46 +1662,95 @@ class MobileDashboard extends GetView<DashboardController> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          _buildDocumentRow('NDA Agreement', 'Disetujui', Colors.green),
-                          _buildDocumentRow('Safety Form', 'Belum Upload', Colors.orange),
-                          _buildDocumentRow('Health Declaration', 'Disetujui', Colors.green),
+                          _buildDocumentRow(
+                            'NDA Agreement',
+                            'Disetujui',
+                            Colors.green,
+                          ),
+                          _buildDocumentRow(
+                            'Safety Form',
+                            'Belum Upload',
+                            Colors.orange,
+                          ),
+                          _buildDocumentRow(
+                            'Health Declaration',
+                            'Disetujui',
+                            Colors.green,
+                          ),
                         ],
                       ),
                     ),
                     // Tab 3: Riwayat
                     SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
-                      child: Obx(() => Column(
-                        children: controller.rxTimeline.map((item) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(children: [
-                                Container(
-                                  padding: const EdgeInsets.all(5),
-                                  decoration: BoxDecoration(
-                                    color: _getTimelineColorMobile(item['status']).withValues(alpha: 0.12),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(_getTimelineIconMobile(item['status']),
-                                      color: _getTimelineColorMobile(item['status']), size: 13),
+                      child: Obx(
+                        () => Column(
+                          children: controller.rxTimeline.map((item) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: _getTimelineColorMobile(
+                                          item['status'],
+                                        ).withValues(alpha: 0.12),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        _getTimelineIconMobile(item['status']),
+                                        color: _getTimelineColorMobile(
+                                          item['status'],
+                                        ),
+                                        size: 13,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 2,
+                                      height: 28,
+                                      color: Colors.grey[200],
+                                    ),
+                                  ],
                                 ),
-                                Container(width: 2, height: 28, color: Colors.grey[200]),
-                              ]),
-                              const SizedBox(width: 10),
-                              Text(item['time'], style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 10),
-                              Expanded(child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item['title'], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  Text(item['desc'], style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                                ],
-                              )),
-                            ],
-                          );
-                        }).toList(),
-                      )),
+                                const SizedBox(width: 10),
+                                Text(
+                                  item['time'],
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['title'],
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        item['desc'],
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1524,8 +1770,19 @@ class MobileDashboard extends GetView<DashboardController> {
         children: [
           Icon(icon, size: 16, color: Colors.grey[500]),
           const SizedBox(width: 10),
-          SizedBox(width: 90, child: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey))),
-          Expanded(child: Text(value ?? '-', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+          SizedBox(
+            width: 90,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value ?? '-',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );
@@ -1538,14 +1795,26 @@ class MobileDashboard extends GetView<DashboardController> {
         children: [
           Icon(Icons.description_outlined, size: 18, color: Colors.grey[400]),
           const SizedBox(width: 10),
-          Expanded(child: Text(name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(status, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold)),
+            child: Text(
+              status,
+              style: TextStyle(
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -1554,21 +1823,31 @@ class MobileDashboard extends GetView<DashboardController> {
 
   IconData _getTimelineIconMobile(String? status) {
     switch (status) {
-      case 'invitation': return Icons.mail_outline;
-      case 'arrived': return Icons.face;
-      case 'checked_in': return Icons.login;
-      case 'card_issued': return Icons.credit_card;
-      default: return Icons.circle;
+      case 'invitation':
+        return Icons.mail_outline;
+      case 'arrived':
+        return Icons.face;
+      case 'checked_in':
+        return Icons.login;
+      case 'card_issued':
+        return Icons.credit_card;
+      default:
+        return Icons.circle;
     }
   }
 
   Color _getTimelineColorMobile(String? status) {
     switch (status) {
-      case 'invitation': return Colors.blue;
-      case 'arrived': return Colors.green;
-      case 'checked_in': return Colors.teal;
-      case 'card_issued': return Colors.purple;
-      default: return Colors.grey;
+      case 'invitation':
+        return Colors.blue;
+      case 'arrived':
+        return Colors.green;
+      case 'checked_in':
+        return Colors.teal;
+      case 'card_issued':
+        return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -1592,7 +1871,11 @@ class MobileDashboard extends GetView<DashboardController> {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: colorScheme.secondaryContainer,
-                child: Icon(Icons.person, size: 18, color: colorScheme.onSecondaryContainer),
+                child: Icon(
+                  Icons.person,
+                  size: 18,
+                  color: colorScheme.onSecondaryContainer,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1601,7 +1884,10 @@ class MobileDashboard extends GetView<DashboardController> {
                   children: [
                     Text(
                       visitor['host_name'] ?? 'Budi Santoso',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                     Text(
                       visitor['host_dept'] ?? 'IT Department',
@@ -1612,10 +1898,14 @@ class MobileDashboard extends GetView<DashboardController> {
               ),
               Row(
                 children: [
-                  const Text('Host ', style: TextStyle(fontSize: 9, color: Colors.grey)),
+                  const Text(
+                    'Host ',
+                    style: TextStyle(fontSize: 9, color: Colors.grey),
+                  ),
                   IconButton(
                     icon: const Icon(Icons.phone_outlined, size: 16),
-                    onPressed: () => Get.snackbar('Host', 'Menghubungi host...'),
+                    onPressed: () =>
+                        Get.snackbar('Host', 'Menghubungi host...'),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -1623,7 +1913,8 @@ class MobileDashboard extends GetView<DashboardController> {
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.message_outlined, size: 16),
-                    onPressed: () => Get.snackbar('Host', 'Mengirim pesan ke host...'),
+                    onPressed: () =>
+                        Get.snackbar('Host', 'Mengirim pesan ke host...'),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -1994,7 +2285,7 @@ class MobileDashboard extends GetView<DashboardController> {
 
 ThemeData _getDashboardTheme(bool isDark) {
   final seedColor = const Color(0xFF0F62FE); // Sleek tech blue
-  
+
   if (isDark) {
     // Elegant Dark Theme
     final colorScheme = ColorScheme.dark(
@@ -2006,28 +2297,36 @@ ThemeData _getDashboardTheme(bool isDark) {
       onSecondary: Colors.black,
       surface: const Color(0xFF0F172A), // Deep Slate Navy (tailwind slate-900)
       onSurface: const Color(0xFFF8FAFC), // Off-white (slate-50)
-      surfaceContainerHighest: const Color(0xFF1E293B), // replacing surfaceContainerHighest
+      surfaceContainerHighest: const Color(
+        0xFF1E293B,
+      ), // replacing surfaceContainerHighest
       error: Colors.redAccent,
       onError: Colors.white,
     );
-    
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF0B0F19), // Darker slate for background
+      scaffoldBackgroundColor: const Color(
+        0xFF0B0F19,
+      ), // Darker slate for background
       cardColor: const Color(0xFF1E293B), // Slate-800 for cards
       dividerColor: const Color(0xFF334155), // Slate-700
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-        bodyMedium: const TextStyle(color: Color(0xFFCBD5E1)), // Slate-300
-        bodySmall: const TextStyle(color: Color(0xFF94A3B8)),  // Slate-400
-      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
+          .copyWith(
+            bodyMedium: const TextStyle(color: Color(0xFFCBD5E1)), // Slate-300
+            bodySmall: const TextStyle(color: Color(0xFF94A3B8)), // Slate-400
+          ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF334155), width: 1), // subtle slate border
+          side: const BorderSide(
+            color: Color(0xFF334155),
+            width: 1,
+          ), // subtle slate border
         ),
       ),
       iconTheme: const IconThemeData(color: Color(0xFF94A3B8)),
@@ -2041,12 +2340,14 @@ ThemeData _getDashboardTheme(bool isDark) {
       onSurface: Colors.black87,
       surfaceContainerHighest: const Color(0xFFF1F5F9), // Light Slate
     );
-    
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFEDF2FF), // Periwinkle-blue background
+      scaffoldBackgroundColor: const Color(
+        0xFFEDF2FF,
+      ), // Periwinkle-blue background
       cardColor: Colors.white,
       dividerColor: Colors.grey[200],
       textTheme: GoogleFonts.interTextTheme(),
@@ -2062,4 +2363,3 @@ ThemeData _getDashboardTheme(bool isDark) {
     );
   }
 }
-

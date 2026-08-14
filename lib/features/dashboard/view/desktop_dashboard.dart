@@ -80,7 +80,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // Selected Tabs
   int _selectedVisitorInfoTab =
       0; // 0: Visit Information, 1: Purpose Visit, 2: Card, 3: History
-  int _selectedVisitorListTab = 0; // 0: Live Visitors, 1: Related Visitors
 
   // Filter controllers
   final TextEditingController _visitorSearchController =
