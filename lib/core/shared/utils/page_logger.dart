@@ -22,14 +22,33 @@ class PageLogger extends NavigatorObserver {
 
   void _log(String action, Route? route) {
     if (!kDebugMode) return; // only in debug builds
-    final name = route?.settings.name ?? '(unknown)';
-    final label = _routeLabels[name] ?? name;
-    // ignore: avoid_print
-    debugPrint('┌─────────────────────────────────────────');
-    // ignore: avoid_print
-    debugPrint('│ [PAGE] $action → $label');
-    // ignore: avoid_print
-    debugPrint('└─────────────────────────────────────────');
+    if (route == null) return;
+
+    final name = route.settings.name;
+    if (name != null) {
+      final label = _routeLabels[name] ?? name;
+      // ignore: avoid_print
+      debugPrint('┌─────────────────────────────────────────');
+      // ignore: avoid_print
+      debugPrint('│ [PAGE] $action → $label');
+      // ignore: avoid_print
+      debugPrint('└─────────────────────────────────────────');
+      return;
+    }
+
+    // If it's a dialog, bottom sheet, or popup overlay
+    final routeType = route.runtimeType.toString();
+    if (routeType.contains('Dialog') ||
+        routeType.contains('Popup') ||
+        routeType.contains('Modal') ||
+        routeType.contains('GetDialog')) {
+      // ignore: avoid_print
+      debugPrint('┌─────────────────────────────────────────');
+      // ignore: avoid_print
+      debugPrint('│ [MODAL] $action → Dialog / Popup ($routeType)');
+      // ignore: avoid_print
+      debugPrint('└─────────────────────────────────────────');
+    }
   }
 
   @override

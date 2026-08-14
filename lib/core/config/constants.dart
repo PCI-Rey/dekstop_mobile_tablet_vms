@@ -17,6 +17,7 @@ class AppConstants {
   
   // Defaults (Matching mobile_vms backend server)
   static const String defaultServerUrl = 'https://be-vms.app.bio-experience.com';
+  static const String pathApi = 'api'; // Base API path (/{{pathapi}}...)
   static const String pathCdn = 'cdn'; // Base CDN endpoint path for visitor images (/{{pathcdn}}{path})
 
   // MQTT Public Broker Configuration

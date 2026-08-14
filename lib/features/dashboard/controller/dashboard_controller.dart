@@ -117,85 +117,24 @@ class DashboardController extends GetxController {
       });
     } catch (_) {}
 
-    fetchDashboardData();
-
-    // Debounce search query to automatically trigger filtering
-    debounce(rxSearchQuery, (query) {
-      rxCurrentPage.value = 1;
-      applyFiltersAndPagination();
-
-      final qStr = query.toString().trim();
-      if (qStr.isNotEmpty) {
-        final matchingVisitor = rxAllRelatedVisitors.firstWhere((v) {
-          // (v['name'] as String).toLowerCase().contains(
-          //   qStr.toLowerCase(),
-          // ) ||
-          // (v['ticket_no'] as String).toLowerCase().contains(
-          //   qStr.toLowerCase(),
-          // ) ||
-          // (v['qr_code_data'] as String).toLowerCase().contains(
-          //   qStr.toLowerCase(),
-          // )
-          return (v['name'] as String).toLowerCase().contains(
-            qStr.toLowerCase(),
-          );
-        }, orElse: () => <String, dynamic>{});
-        if (matchingVisitor.isNotEmpty) {
-          rxSelectedVisitor.value = matchingVisitor;
-        }
-      }
-    }, time: const Duration(milliseconds: 300));
-
-    // Listen to changes in filter or page and apply rules
-    ever(rxActiveFilter, (_) {
-      rxCurrentPage.value = 1;
-      applyFiltersAndPagination();
-    });
-    ever(rxCurrentPage, (_) => applyFiltersAndPagination());
+    // Initial empty state
+    resetDashboardToInitialState();
   }
 
   Future<void> fetchDashboardData() async {
-    // Fetch in parallel in background
-    final results = await Future.wait([
-      _dashboardRepository.getDashboardSummary(),
-      _dashboardRepository.getVisitorsData(),
-    ]);
-
-    final summaryResult = results[0];
-    final visitorsResult = results[1];
-
-    if (summaryResult is Success<Map<String, dynamic>>) {
-      final data = summaryResult.data;
-      final occupancyData = data['occupancy'] as Map<String, dynamic>;
-      rxOccupancy.value = {
-        'employees': occupancyData['employees'] ?? 142,
-        'visitors': occupancyData['visitors'] ?? 28,
-        'contractors': occupancyData['contractors'] ?? 15,
-        'vehicles': occupancyData['vehicles'] ?? 46,
-      };
-
-      final alertsData = data['alerts'] as List;
-      rxAlerts.value = List<Map<String, dynamic>>.from(alertsData);
-    }
-
-    if (visitorsResult is Success<Map<String, dynamic>>) {
-      final data = visitorsResult.data;
-      rxSelectedVisitor.value = null; // Start with no scanned visitor
-
-      final relatedData = data['related'] as List;
-      rxAllRelatedVisitors.clear();
-      rxAllRelatedVisitors.addAll(List<Map<String, dynamic>>.from(relatedData));
-
-      applyFiltersAndPagination();
-
-      final timelineData = data['timeline'] as List;
-      rxTimeline.value = List<Map<String, dynamic>>.from(timelineData);
-    }
+    // No automatic summary/visitors calls since API endpoints do not exist in backend
   }
 
   // --- Real-time Search, Status Filtering, and Pagination computation ---
   void applyFiltersAndPagination() {
     var list = List<Map<String, dynamic>>.from(rxAllRelatedVisitors);
+
+    if (list.isEmpty) {
+      rxCurrentPage.value = 0;
+      rxTotalPages.value = 0;
+      rxRelatedVisitors.value = [];
+      return;
+    }
 
     // 1. Search Query filtering
     final query = rxSearchQuery.value;
@@ -247,13 +186,16 @@ class DashboardController extends GetxController {
     final pageSize = 4;
     final totalItems = list.length;
     final calculatedPages = (totalItems / pageSize).ceil();
-    rxTotalPages.value = calculatedPages > 0 ? calculatedPages : 1;
+    rxTotalPages.value = calculatedPages > 0 ? calculatedPages : 0;
 
     if (rxCurrentPage.value > rxTotalPages.value) {
       rxCurrentPage.value = rxTotalPages.value;
     }
+    if (rxCurrentPage.value == 0 && totalItems > 0) {
+      rxCurrentPage.value = 1;
+    }
 
-    final startIndex = (rxCurrentPage.value - 1) * pageSize;
+    final startIndex = (rxCurrentPage.value > 0 ? (rxCurrentPage.value - 1) : 0) * pageSize;
     final endIndex = startIndex + pageSize;
 
     if (startIndex < list.length) {
@@ -268,6 +210,20 @@ class DashboardController extends GetxController {
 
   void clearSearch() {
     rxSearchQuery.value = '';
+    applyFiltersAndPagination();
+  }
+
+  /// Reset all visitor data, related feeds, tabs, and search back to the clean initial empty state
+  void resetDashboardToInitialState() {
+    rxSelectedVisitor.value = null;
+    rxAllRelatedVisitors.clear();
+    rxRelatedVisitors.clear();
+    rxSelectedItems.clear();
+    rxTimeline.clear();
+    rxSearchQuery.value = '';
+    rxActiveFilter.value = 'All';
+    rxCurrentPage.value = 0;
+    rxTotalPages.value = 0;
     applyFiltersAndPagination();
   }
 
@@ -357,63 +313,206 @@ class DashboardController extends GetxController {
     } catch (_) {}
   }
 
+  String formatApiDate(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().trim().isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(dateStr.toString().trim()).toLocal();
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      ];
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = months[dt.month - 1];
+      final year = dt.year;
+      final hour = dt.hour.toString().padLeft(2, '0');
+      final minute = dt.minute.toString().padLeft(2, '0');
+      return '$day $month $year, $hour:$minute';
+    } catch (_) {
+      return dateStr.toString();
+    }
+  }
+
   Map<String, dynamic> mapApiVisitorToUi(Map<String, dynamic> item) {
+    final hostsList = (item['hosts'] as List?) ?? [];
+    Map<String, dynamic> primaryHost = {};
+    if (hostsList.isNotEmpty) {
+      primaryHost = Map<String, dynamic>.from(hostsList[0] as Map);
+    }
+
+    final rawCards = (item['card'] as List?) ?? [];
+    final parsedCards = rawCards.map((c) => Map<String, dynamic>.from(c as Map)).toList();
+
+    final visitorName = (item['visitor_name'] ?? item['visitor']?['name'] ?? item['name'] ?? '-').toString();
+    final visitorOrg = (item['visitor_organization_name'] ?? item['company'] ?? item['organization'] ?? '-').toString();
+    final visitorEmail = (item['visitor_email'] ?? item['visitor']?['email'] ?? item['email'] ?? '-').toString();
+    final visitorPhone = (item['visitor_phone'] ?? item['phone'] ?? '-').toString();
+    final visitorIdentityId = (item['visitor_identity_id'] ?? item['id_number'] ?? item['visitor_number'] ?? '-').toString();
+    final visitorRole = (item['visitor_role'] ?? 'Visitor').toString();
+    final visitorTypeName = (item['visitor_type_name'] ?? 'General Visitor').toString();
+    final visitorStatus = (item['visitor_status'] ?? item['status'] ?? 'Preregis').toString();
+    final invitationCode = (item['invitation_code'] ?? item['initial_trx_code'] ?? '-').toString();
+    final groupName = (item['group_name'] ?? '-').toString();
+    final visitorNumber = (item['visitor_number'] ?? item['visitor_code'] ?? '-').toString();
+    final vehiclePlate = (item['vehicle_plate_number'] ?? item['parking_slot'] ?? '-').toString();
+    final invitedBy = (item['invited_by_name'] ?? item['host_name'] ?? '-').toString();
+    final agenda = (item['agenda'] ?? item['remarks'] ?? 'Meeting').toString();
+    final siteName = (item['site_place_name'] ?? 'Gedung SINERGI').toString();
+    final periodStart = formatApiDate(item['visitor_period_start']);
+    final periodEnd = formatApiDate(item['visitor_period_end']);
+    final checkinAt = formatApiDate(item['checkin_at']);
+    final isGroup = item['is_group'] == true;
+
+    final hostName = (primaryHost['name'] ?? item['host_name'] ?? '-').toString();
+    final hostOrg = (item['host_organization_name'] ?? 'Organization SPU').toString();
+    final hostPhone = (primaryHost['phone'] ?? item['host_phone'] ?? '-').toString();
+    final hostEmail = (primaryHost['email'] ?? item['host_email'] ?? '-').toString();
+    final hostFaceImage = (primaryHost['faceimage'] ?? '').toString();
+
     return {
-      'id': item['visitor_id'] ?? item['id'] ?? '8057210110',
-      'name': item['visitor_name'] ?? item['visitor']?['name'] ?? 'Maza Instansi',
-      'company': item['visitor_organization_name'] ?? 'Instansi Maza',
-      'email': item['visitor_email'] ?? item['visitor']?['email'] ?? 'maza24@gmail.com',
-      'phone': item['visitor_phone'] ?? '085123123412',
-      'id_card_no': item['visitor_identity_id'] ?? '8057210110',
-      'gender': 'Laki-laki',
+      'id': item['visitor_id'] ?? item['id'] ?? item['transaction_visitor_id'] ?? 'v_${DateTime.now().millisecondsSinceEpoch}',
+      'name': visitorName,
+      'company': visitorOrg,
+      'organization': visitorOrg,
+      'email': visitorEmail,
+      'phone': visitorPhone,
+      'id_card_no': visitorIdentityId,
+      'gender': primaryHost['gender'] ?? item['gender'] ?? '-',
       'nationality': 'Indonesia',
-      'status': item['visitor_status'] ?? 'Checked In',
-      'vip': false,
+      'status': visitorStatus,
+      'visitor_status': visitorStatus,
+      'occupancy': visitorRole,
+      'visitor_role': visitorRole,
+      'visitor_type_name': visitorTypeName,
+      'vip': item['vip'] == true,
       'frequent': false,
-      'verified': item['is_praregister_done'] == true,
-      'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=300&h=300',
-      'address': item['visitor_organization_name'] ?? 'Jl. Kemang Raya No. 42, Jakarta Selatan',
-      'organization': item['visitor_organization_name'] ?? 'PT. Maju Jaya Bersama',
-      'occupation': item['visitor_type_name'] ?? 'Marketing Manager',
-      'id_type': 'KTP',
-      'id_number': item['visitor_identity_id'] ?? '3175050101990001',
-      'visit_purpose': item['agenda'] ?? 'Pertemuan Bisnis & Pembahasan Kontrak Kerjasama',
-      'host': item['host_name'] ?? 'John Doe',
-      'host_title': 'IT Manager',
-      'host_phone': 'Ext. 2234',
-      'host_email': 'john.doe@company.com',
-      'host_avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fit=crop&w=150&h=150',
+      'verified': item['is_praregister_done'] == true || item['approval_status'] == 'Approved',
+      'avatar': 'assets/images/ava_person1.png',
+      'photo': 'assets/images/ava_person1.png',
+      'host_name': hostName,
+      'host_dept': hostOrg,
+      'host_organization_name': hostOrg,
+      'host_phone': hostPhone,
+      'host_email': hostEmail,
+      'host_faceimage': hostFaceImage,
       'host_status': 'Available',
-      'department': item['host_organization_name'] ?? 'IT Department',
-      'visit_period': '${item['visitor_period_start'] ?? ""} - ${item['visitor_period_end'] ?? ""}',
-      'created_by': item['invited_by_name'] ?? 'Admin Lobby A',
-      'qr_code_data': item['invitation_code'] ?? 'QRXMFQ-HGNLFT',
-      'check_in_time': item['checkin_at'] ?? '14 Jan 2026, 09:47',
-      'check_out_time': '-',
-      'ticket_no': item['visitor_number'] ?? '8057210110',
-      'invitation_code': item['invitation_code'] ?? 'QRXMFQ-HGNLFT',
-      'visit_type': item['visitor_type_name'] ?? 'Meeting',
-      'identity_doc_url': 'https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?fit=crop&w=600&h=400',
+      'agenda': agenda,
+      'purpose': agenda,
+      'visit_purpose': agenda,
+      'site': siteName,
+      'site_place_name': siteName,
+      'period_start': periodStart,
+      'period_end': periodEnd,
+      'visitor_period_start': periodStart,
+      'visitor_period_end': periodEnd,
+      'group_name': groupName,
+      'visitor_code': item['visitor_code'] ?? visitorNumber,
+      'ticket_no': visitorNumber,
+      'visitor_number': visitorNumber,
+      'vehicle_type': vehiclePlate.isNotEmpty && vehiclePlate != '-' ? 'Car' : '-',
+      'vehicle_plate': vehiclePlate,
+      'vehicle_plate_number': vehiclePlate,
+      'invited_by_name': invitedBy,
+      'is_group': isGroup,
+      'qr_code_data': item['initial_trx_code'] ?? invitationCode,
+      'invitation_code': invitationCode,
+      'check_in': checkinAt,
+      'check_out': '-',
+      'checkin_at': checkinAt,
+      'cards': parsedCards,
+      'card': parsedCards,
+      'hosts': hostsList,
+      'raw': item,
     };
   }
 
   Future<bool> searchInvitationCode(String code) async {
+    final cleanCode = code.trim().toUpperCase();
+    if (cleanCode.isEmpty) return false;
+
     rxIsActionLoading.value = true;
-    final result = await _dashboardRepository.searchInvitation(code);
+    final result = await _dashboardRepository.searchInvitation(cleanCode);
     rxIsActionLoading.value = false;
 
     if (result is Success<Map<String, dynamic>>) {
       final data = result.data;
-      final collection = data['collection'];
-      if (collection != null) {
-        final list = collection['data'] as List?;
-        if (list != null && list.isNotEmpty) {
-          final firstItem = list[0] as Map<String, dynamic>;
-          final uiVisitor = mapApiVisitorToUi(firstItem);
-          
-          rxSelectedVisitor.value = uiVisitor;
-          return true;
+      final collection = (data['collection'] is Map)
+          ? data['collection'] as Map<String, dynamic>
+          : (data['data'] is Map ? data['data'] as Map<String, dynamic> : data);
+
+      final list = (collection['data'] as List?) ?? (data['data'] as List?) ?? [];
+      
+      if (list.isNotEmpty) {
+        final firstItem = Map<String, dynamic>.from(list[0] as Map);
+        final uiVisitor = mapApiVisitorToUi(firstItem);
+        
+        rxSelectedVisitor.value = uiVisitor;
+
+        // Populate Related Visitors Feed from API response
+        final newRelated = <Map<String, dynamic>>[];
+        
+        // 1. Add the main visitor
+        newRelated.add(uiVisitor);
+
+        // 2. Add the hosts / group members
+        final hosts = (firstItem['hosts'] as List?) ?? [];
+        for (final h in hosts) {
+          final hostMap = Map<String, dynamic>.from(h as Map);
+          newRelated.add({
+            'id': hostMap['id'] ?? hostMap['person_id'] ?? 'host_1',
+            'name': hostMap['name'] ?? 'Endru',
+            'company': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'organization': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'email': hostMap['email'] ?? 'reyjanumbs@gmail.com',
+            'phone': hostMap['phone'] ?? '08898765678',
+            'id_card_no': hostMap['identity_id'] ?? '77182',
+            'gender': hostMap['gender'] ?? 'Male',
+            'status': 'Host (Available)',
+            'visitor_status': 'Host',
+            'occupancy': 'Host',
+            'visitor_type_name': 'Employee Host',
+            'vip': false,
+            'verified': true,
+            'faceimage': hostMap['faceimage'] ?? '',
+            'avatar': hostMap['faceimage'] ?? '',
+            'host_faceimage': hostMap['faceimage'] ?? '',
+            'invitation_code': uiVisitor['invitation_code'],
+            'group_name': uiVisitor['group_name'],
+            'visitor_code': hostMap['identity_id'] ?? '77182',
+            'ticket_no': hostMap['identity_id'] ?? '77182',
+            'vehicle_plate': '-',
+            'invited_by_name': uiVisitor['invited_by_name'],
+            'is_group': true,
+            'agenda': uiVisitor['agenda'],
+            'site': uiVisitor['site'],
+            'period_start': uiVisitor['period_start'],
+            'period_end': uiVisitor['period_end'],
+            'cards': uiVisitor['cards'],
+            'card': uiVisitor['card'],
+          });
         }
+
+        rxAllRelatedVisitors.clear();
+        rxAllRelatedVisitors.addAll(newRelated);
+        applyFiltersAndPagination();
+
+        // Update Timeline
+        rxTimeline.clear();
+        rxTimeline.addAll([
+          {
+            'time': '10:23',
+            'title': 'Invitation Created',
+            'desc': 'By ${uiVisitor['invited_by_name']}',
+            'status': 'invitation',
+          },
+          {
+            'time': '10:25',
+            'title': 'Pra-Register Status',
+            'desc': 'Status: ${uiVisitor['status']}',
+            'status': 'preregis',
+          },
+        ]);
+
+        return true;
       }
     }
     return false;

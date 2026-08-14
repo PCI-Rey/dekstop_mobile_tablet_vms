@@ -23,6 +23,7 @@ class MobileDashboard extends GetView<DashboardController> {
           final colorScheme = theme.colorScheme;
 
           return Scaffold(
+            resizeToAvoidBottomInset: false,
             backgroundColor: theme.scaffoldBackgroundColor,
             // Floating Scan Button in the center (FAB)
             floatingActionButton: FloatingActionButton(

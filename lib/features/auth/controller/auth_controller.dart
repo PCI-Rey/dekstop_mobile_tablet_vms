@@ -49,13 +49,13 @@ class AuthController extends GetxController {
     rxServerUrlDisplay.value = url;
   }
 
-  // --- Splash Flow ---
+  // --- Splash Flow (3 Seconds Total) ---
   Future<void> runSplashFlow() async {
     rxIsLoadingSplash.value = true;
     
-    // Step 1: Check Config
+    // Step 1: Initialize System (1.5 seconds)
     rxSplashMessage.value = 'Initializing system...';
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 1500));
     final serverUrl = await _storageService.getServerUrl();
     
     if (serverUrl.isEmpty) {
@@ -63,8 +63,9 @@ class AuthController extends GetxController {
       return;
     }
 
-    // Step 2: Check Login Session
+    // Step 2: Check Login Session (1.5 seconds)
     rxSplashMessage.value = 'Checking login session...';
+    await Future.delayed(const Duration(milliseconds: 1500));
     final token = await _storageService.getAccessToken();
 
     if (token != null && token.isNotEmpty) {

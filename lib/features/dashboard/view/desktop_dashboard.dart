@@ -7,8 +7,23 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../controller/dashboard_controller.dart';
 import '../widgets/operator_tour_overlay.dart';
 import 'desktop_overview_analytics.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../core/config/constants.dart';
 import '../../../core/shared/routes/app_pages.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
+    );
+  }
+}
 
 class DesktopDashboard extends StatefulWidget {
   const DesktopDashboard({super.key});
@@ -63,11 +78,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   final GlobalKey _keyAlerts = GlobalKey();
 
   // Selected Tabs
-  int _selectedVisitorInfoTab = 0; // 0: Visit Information, 1: Purpose Visit, 2: Card, 3: History
+  int _selectedVisitorInfoTab =
+      0; // 0: Visit Information, 1: Purpose Visit, 2: Card, 3: History
   int _selectedVisitorListTab = 0; // 0: Live Visitors, 1: Related Visitors
 
   // Filter controllers
-  final TextEditingController _visitorSearchController = TextEditingController();
+  final TextEditingController _visitorSearchController =
+      TextEditingController();
   final TextEditingController _topSearchController = TextEditingController();
   String _selectedSite = 'SPU';
   String _selectedBulkAction = 'Fill Form';
@@ -112,16 +129,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     });
     if (_isFullScreen) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      AppSnackbar.info(
-        title: 'Fullscreen Mode',
-        message: 'Fullscreen active',
-      );
+      AppSnackbar.info(title: 'Fullscreen Mode', message: 'Fullscreen active');
     } else {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      AppSnackbar.info(
-        title: 'Normal Mode',
-        message: 'Normal view active',
-      );
+      AppSnackbar.info(title: 'Normal Mode', message: 'Normal view active');
     }
   }
 
@@ -217,7 +228,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     const months = [
       'January',
@@ -231,7 +242,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
 
     final dayName = days[time.weekday - 1];
@@ -245,6 +256,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: _bgSlate,
       body: Stack(
         children: [
@@ -279,26 +291,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // ── Left Column (~30% width) ──────────────────────────
-                          Expanded(
-                            flex: 30,
-                            child: _buildLeftColumn(),
-                          ),
+                          Expanded(flex: 30, child: _buildLeftColumn()),
 
                           const SizedBox(width: 8),
 
                           // ── Center Column (~41% width) ────────────────────────
-                          Expanded(
-                            flex: 41,
-                            child: _buildCenterColumn(),
-                          ),
+                          Expanded(flex: 41, child: _buildCenterColumn()),
 
                           const SizedBox(width: 8),
 
                           // ── Right Column (~29% width) ─────────────────────────
-                          Expanded(
-                            flex: 29,
-                            child: _buildRightColumn(),
-                          ),
+                          Expanded(flex: 29, child: _buildRightColumn()),
                         ],
                       ),
                     ),
@@ -345,9 +348,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       padding: const EdgeInsets.symmetric(horizontal: 14.0),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -381,7 +382,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.home_outlined, size: 14, color: Colors.white),
+                  const Icon(
+                    Icons.home_outlined,
+                    size: 14,
+                    color: Colors.white,
+                  ),
                   const SizedBox(width: 5),
                   Text(
                     'Dashboard',
@@ -405,12 +410,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.home_outlined,
-                          size: 14, color: _textMuted),
+                      const Icon(
+                        Icons.home_outlined,
+                        size: 14,
+                        color: _textMuted,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         'Dashboard',
@@ -438,8 +448,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.visibility_outlined,
-                      size: 13, color: Colors.white),
+                  const Icon(
+                    Icons.visibility_outlined,
+                    size: 13,
+                    color: Colors.white,
+                  ),
                   const SizedBox(width: 5),
                   Text(
                     'Operator View',
@@ -463,12 +476,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.visibility_outlined,
-                          size: 14, color: _textMuted),
+                      const Icon(
+                        Icons.visibility_outlined,
+                        size: 14,
+                        color: _textMuted,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         'Operator View',
@@ -552,10 +570,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: const Center(
-              child: Text(
-                '🇬🇧',
-                style: TextStyle(fontSize: 11),
-              ),
+              child: Text('🇬🇧', style: TextStyle(fontSize: 11)),
             ),
           ),
 
@@ -625,20 +640,73 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Icon(Icons.search_rounded, size: 15, color: _textMuted),
+                        const Icon(
+                          Icons.search_rounded,
+                          size: 15,
+                          color: _textMuted,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _topSearchController,
                             textAlignVertical: TextAlignVertical.center,
-                            style: GoogleFonts.inter(fontSize: 11.5, color: _textDark, height: 1.2),
+                            textCapitalization: TextCapitalization.characters,
+                            inputFormatters: [
+                              UpperCaseTextFormatter(),
+                            ],
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              color: _textDark,
+                              height: 1.2,
+                            ),
                             decoration: InputDecoration(
-                              hintText: 'Search Visitor',
-                              hintStyle: GoogleFonts.inter(fontSize: 11.5, color: _textMuted, height: 1.2),
+                              hintText:
+                                  'Search Visitor / Code (e.g. 15Y1H5-QR5FHL)',
+                              hintStyle: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                color: _textMuted,
+                                height: 1.2,
+                              ),
                               border: InputBorder.none,
                               isDense: true,
                               contentPadding: EdgeInsets.zero,
+                              suffixIcon: _topSearchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.clear_rounded,
+                                        size: 14,
+                                        color: _textMuted,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        _topSearchController.clear();
+                                        controller.resetDashboardToInitialState();
+                                        setState(() {});
+                                      },
+                                    )
+                                  : null,
                             ),
+                            onChanged: (val) => setState(() {}),
+                            onSubmitted: (val) async {
+                              final query = val.trim().toUpperCase();
+                              if (query.isNotEmpty) {
+                                final success = await controller
+                                    .searchInvitationCode(query);
+                                if (success) {
+                                  AppSnackbar.success(
+                                    title: 'Success',
+                                    message: 'Data retrieved successfully',
+                                  );
+                                } else {
+                                  AppSnackbar.error(
+                                    title: 'Search Failed',
+                                    message:
+                                        'No visitor data found for: $query',
+                                  );
+                                }
+                              }
+                            },
                           ),
                         ),
                       ],
@@ -652,6 +720,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   child: InkWell(
                     onTap: () {
                       _topSearchController.clear();
+                      controller.resetDashboardToInitialState();
                       setState(() {});
                     },
                     borderRadius: BorderRadius.circular(6),
@@ -668,7 +737,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Icon(Icons.close_rounded, size: 13, color: _redDanger),
+                          const Icon(
+                            Icons.close_rounded,
+                            size: 13,
+                            color: _redDanger,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Clear',
@@ -758,8 +831,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Icon(Icons.person_outline_rounded,
-                          size: 14, color: Colors.white),
+                      const Icon(
+                        Icons.person_outline_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         'Visitor Site',
@@ -797,8 +873,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             child: IconButton(
               padding: EdgeInsets.zero,
               tooltip: 'Operator Guided Tour',
-              icon: const Icon(Icons.info_outline_rounded,
-                  size: 15, color: Colors.white),
+              icon: const Icon(
+                Icons.info_outline_rounded,
+                size: 15,
+                color: Colors.white,
+              ),
               onPressed: () {
                 setState(() {
                   _isTourActive = true;
@@ -849,7 +928,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       children: [
         // ── 1. Top Visitor Profile Card (Keyed for Tour Step 2) ───────────
         Expanded(
-          flex: 8,
+          flex: 10,
           child: _buildCardContainer(
             key: _keyVisitorProfile,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -862,7 +941,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   child: AspectRatio(
                     aspectRatio: 3 / 4,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
@@ -873,24 +952,28 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                               color: const Color(0xFFE2E8F0),
-                              child: const Icon(Icons.person,
-                                  size: 44, color: _textMuted),
-                            ),
-                          ),
-                          // Green Face Detection Target Overlay
-                          Center(
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: _greenSuccess,
-                                  width: 1.5,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
+                              child: const Icon(
+                                Icons.person,
+                                size: 44,
+                                color: _textMuted,
                               ),
                             ),
                           ),
+                          // Green Face Detection Target Overlay (Only when visitor != null)
+                          if (visitor != null)
+                            Center(
+                              child: Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFF00E676),
+                                    width: 1.5,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -899,37 +982,118 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                 const SizedBox(width: 12),
 
-                // Visitor Details Table (Clean Typography with Tight Divider)
+                // Visitor Details Table (Clean Typography with Tight Divider & ScaleDown)
                 Expanded(
                   flex: 6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        visitor?['name'] ?? 'Name',
-                        style: GoogleFonts.inter(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F2B48),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SizedBox(
+                        height: constraints.maxHeight,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: constraints.maxWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (visitor != null) ...[
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          visitor['name'] ?? 'Visitor Name',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 15,
+                                        color: Color(0xFF00D696),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF38B6FF),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      visitor['visitor_type_name'] ?? 'General Visitor',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ] else ...[
+                                  Text(
+                                    'Name',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                                const Divider(
+                                  height: 8,
+                                  thickness: 1,
+                                  color: Color(0xFFECEFF1),
+                                ),
+                                _buildDetailRow(
+                                  Icons.apartment_rounded,
+                                  'Organization',
+                                  visitor?['company'] ?? visitor?['org'] ?? '-',
+                                ),
+                                _buildDetailRow(
+                                  Icons.email_outlined,
+                                  'Email',
+                                  visitor?['email'] ?? '-',
+                                ),
+                                _buildDetailRow(
+                                  Icons.phone_outlined,
+                                  'Phone',
+                                  visitor?['phone'] ?? '-',
+                                ),
+                                _buildDetailRow(
+                                  Icons.credit_card_outlined,
+                                  'Identity ID',
+                                  visitor?['id_card_no'] ?? visitor?['id'] ?? '-',
+                                ),
+                                _buildDetailRow(
+                                  Icons.transgender_rounded,
+                                  'Gender',
+                                  visitor?['gender'] ?? '-',
+                                ),
+                                _buildDetailRow(
+                                  Icons.person_outline_rounded,
+                                  'Occupancy',
+                                  visitor?['occupancy'] ?? '-',
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const Divider(height: 5, thickness: 1, color: Color(0xFFE2E8F0)),
-                      _buildDetailRow(Icons.apartment_rounded, 'Organization',
-                          visitor?['company'] ?? visitor?['org'] ?? '-'),
-                      _buildDetailRow(Icons.email_outlined, 'Email',
-                          visitor?['email'] ?? '-'),
-                      _buildDetailRow(Icons.phone_outlined, 'Phone',
-                          visitor?['phone'] ?? '-'),
-                      _buildDetailRow(Icons.credit_card_outlined, 'Identity ID',
-                          visitor?['id_card_no'] ?? visitor?['id'] ?? '-'),
-                      _buildDetailRow(Icons.transgender_outlined, 'Gender',
-                          visitor?['gender'] ?? '-'),
-                      _buildDetailRow(Icons.person_outline_rounded, 'Occupancy',
-                          visitor?['occupancy'] ?? '-'),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -941,15 +1105,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
         // ── 2 & 3. Middle Tabs & QR Code (Grouped & Keyed for Tour Step 3) ─
         Expanded(
-          flex: 21,
+          flex: 20,
           child: Container(
             key: _keyVisitorTabs,
             child: Column(
               children: [
                 Expanded(
-                  flex: 12,
+                  flex: 13,
                   child: _buildCardContainer(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -963,17 +1130,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             _buildTabHeader(3, 'History'),
                           ],
                         ),
-                        const Divider(height: 10, thickness: 1, color: Color(0xFFF1F5F9)),
+                        const Divider(
+                          height: 8,
+                          thickness: 1,
+                          color: Color(0xFFF1F5F9),
+                        ),
 
                         // Tab Content with Middle Vertical Divider
                         Expanded(
                           child: _selectedVisitorInfoTab == 0
                               ? _buildVisitInformationTab(visitor)
                               : _selectedVisitorInfoTab == 1
-                                  ? _buildPurposeVisitTab(visitor)
-                                  : _selectedVisitorInfoTab == 2
-                                      ? _buildCardTab(visitor)
-                                      : _buildHistoryTab(visitor),
+                              ? _buildPurposeVisitTab(visitor)
+                              : _selectedVisitorInfoTab == 2
+                              ? _buildCardTab(visitor)
+                              : _buildHistoryTab(visitor),
                         ),
                       ],
                     ),
@@ -981,9 +1152,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ),
                 const SizedBox(height: 5),
                 Expanded(
-                  flex: 9,
+                  flex: 7,
                   child: _buildCardContainer(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1011,7 +1185,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         width: 52,
                                         height: 52,
                                         child: QrImageView(
-                                          data: visitor!['qr_code_data'].toString(),
+                                          data: visitor!['qr_code_data']
+                                              .toString(),
                                           version: QrVersions.auto,
                                           size: 52.0,
                                         ),
@@ -1056,7 +1231,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       _buildQrDetailField(
@@ -1094,14 +1270,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.2),
+      padding: const EdgeInsets.symmetric(vertical: 0.8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFF334155)),
-          const SizedBox(width: 8),
+          Icon(icon, size: 14, color: const Color(0xFF1E293B)),
+          const SizedBox(width: 6),
           SizedBox(
-            width: 84,
+            width: 82,
             child: Text(
               label,
               style: GoogleFonts.inter(
@@ -1137,192 +1313,400 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildVisitInformationTab(Map<String, dynamic>? visitor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Column
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetadataField(
-                Icons.groups_outlined,
-                'Visitor Code',
-                visitor?['visitor_code'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.person_outline_rounded,
-                'Group Name',
-                visitor?['group_name'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.format_list_numbered_rounded,
-                'Visitor Number',
-                visitor?['ticket_no'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.directions_car_outlined,
-                'Vehicle Type',
-                visitor?['vehicle_type'] ?? '-',
-              ),
-            ],
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          height: constraints.maxHeight,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildMetadataField(
+                              Icons.qr_code_scanner_rounded,
+                              'Visitor Code',
+                              visitor?['visitor_code'] ?? visitor?['ticket_no'] ?? '-',
+                            ),
+                            _buildMetadataField(
+                              Icons.groups_outlined,
+                              'Group Name',
+                              visitor?['group_name'] ?? '-',
+                            ),
+                            _buildMetadataField(
+                              Icons.format_list_numbered_rounded,
+                              'Visitor Number',
+                              visitor?['visitor_number'] ??
+                                  visitor?['ticket_no'] ??
+                                  '-',
+                            ),
+                            _buildMetadataField(
+                              Icons.directions_car_outlined,
+                              'Vehicle Type',
+                              visitor?['vehicle_type'] ?? '-',
+                            ),
+                          ],
+                        ),
+                      ),
 
-        // Vertical divider in the middle
-        Container(
-          width: 1,
-          height: double.infinity,
-          color: const Color(0xFFF1F5F9),
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-        ),
+                      // Vertical divider in the middle
+                      Container(
+                        width: 1,
+                        height: 120,
+                        color: const Color(0xFFF1F5F9),
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
 
-        // Right Column
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetadataField(
-                Icons.badge_outlined,
-                'Invited By',
-                visitor?['host_name'] ?? '-',
+                      // Right Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildMetadataField(
+                              Icons.badge_outlined,
+                              'Invited By',
+                              visitor?['invited_by_name'] ??
+                                  visitor?['host_name'] ??
+                                  '-',
+                            ),
+                            _buildMetadataField(
+                              Icons.person_outline_rounded,
+                              'Group',
+                              (visitor != null && visitor['is_group'] != null)
+                                  ? (visitor['is_group'] == true ? 'Yes' : 'No')
+                                  : '-',
+                            ),
+                            (visitor != null &&
+                                    (visitor['visitor_status'] != null ||
+                                        visitor['status'] != null))
+                                ? _buildStatusMetadataField(
+                                    Icons.assignment_outlined,
+                                    'Visitor Status',
+                                    visitor['visitor_status'] ??
+                                        visitor['status'] ??
+                                        '-',
+                                  )
+                                : _buildMetadataField(
+                                    Icons.assignment_outlined,
+                                    'Visitor Status',
+                                    '-',
+                                  ),
+                            _buildMetadataField(
+                              Icons.receipt_long_outlined,
+                              'Vehicle Plate No.',
+                              visitor?['vehicle_plate_number'] ??
+                                  visitor?['vehicle_plate'] ??
+                                  '-',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (visitor != null) ...[
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        height: 26,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF004385),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 0,
+                            ),
+                          ),
+                          onPressed: () => _handleAction('Fill Form'),
+                          child: Text(
+                            'Fill Form',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              _buildMetadataField(
-                Icons.person_outline_rounded,
-                'Group',
-                visitor?['is_group'] == true ? 'Yes' : 'No',
-              ),
-              _buildMetadataField(
-                Icons.assignment_outlined,
-                'Visitor Status',
-                visitor?['status'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.receipt_long_outlined,
-                'Vehicle Plate No.',
-                visitor?['vehicle_plate'] ?? '-',
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
   Widget _buildPurposeVisitTab(Map<String, dynamic>? visitor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Column
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetadataField(
-                Icons.calendar_today_outlined,
-                'Agenda',
-                visitor?['purpose'] ?? visitor?['agenda'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.more_time_rounded,
-                'Visit Period Start',
-                visitor?['period_start'] ?? visitor?['start_time'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.location_on_outlined,
-                'Site',
-                visitor?['site'] ?? _selectedSite,
-              ),
-            ],
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          height: constraints.maxHeight,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left Column
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildMetadataField(
+                          Icons.calendar_today_outlined,
+                          'Agenda',
+                          visitor?['agenda'] ?? visitor?['purpose'] ?? '-',
+                        ),
+                        _buildMetadataField(
+                          Icons.more_time_rounded,
+                          'Visit Period Start',
+                          visitor?['visitor_period_start'] ??
+                              visitor?['period_start'] ??
+                              '-',
+                        ),
+                        _buildMetadataField(
+                          Icons.location_on_outlined,
+                          'Site',
+                          visitor?['site_place_name'] ?? visitor?['site'] ?? '-',
+                        ),
+                      ],
+                    ),
+                  ),
 
-        // Vertical divider in the middle
-        Container(
-          width: 1,
-          height: double.infinity,
-          color: const Color(0xFFF1F5F9),
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-        ),
+                  // Vertical divider in the middle
+                  Container(
+                    width: 1,
+                    height: 100,
+                    color: const Color(0xFFF1F5F9),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
 
-        // Right Column
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetadataField(
-                Icons.person_pin_circle_outlined,
-                'PIC Host',
-                visitor?['host_name'] ?? '-',
+                  // Right Column
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildMetadataField(
+                          Icons.person_pin_circle_outlined,
+                          'PIC Host',
+                          visitor?['host_name'] ?? '-',
+                        ),
+                        _buildMetadataField(
+                          Icons.event_available_outlined,
+                          'Visit Period End',
+                          visitor?['visitor_period_end'] ?? visitor?['period_end'] ?? '-',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              _buildMetadataField(
-                Icons.event_available_outlined,
-                'Visit Period End',
-                visitor?['period_end'] ?? visitor?['end_time'] ?? '-',
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
   Widget _buildCardTab(Map<String, dynamic>? visitor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    final cardsList =
+        (visitor?['cards'] as List?) ?? (visitor?['card'] as List?) ?? [];
+    if (cardsList.isEmpty) {
+      return Center(
+        child: Text(
+          'No card available',
+          style: GoogleFonts.inter(fontSize: 12, color: _textMuted),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      itemCount: cardsList.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 6),
+      itemBuilder: (context, index) {
+        final card = Map<String, dynamic>.from(cardsList[index] as Map);
+        final cardNum = (card['card_number'] ?? card['card_barcode'] ?? '-')
+            .toString();
+        final cardType = (card['card_type'] ?? 'Barcode').toString();
+        final cardStatus = (card['card_status'] ?? 'Available').toString();
+        final isCurrent = card['current_used'] == true || index == 0;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF00ACC1), width: 1.2),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _buildMetadataField(
-                Icons.credit_card_outlined,
-                'Card Number',
-                visitor?['card_no'] ?? '-',
+              const Icon(
+                Icons.qr_code_scanner_rounded,
+                size: 22,
+                color: Color(0xFF004385),
               ),
-              _buildMetadataField(
-                Icons.nfc_outlined,
-                'Card UID',
-                visitor?['card_uid'] ?? '-',
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          cardNum,
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (isCurrent)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00ACC1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check,
+                                  size: 10,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Current Card',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      cardType,
+                      style: GoogleFonts.inter(
+                        fontSize: 10.5,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              _buildMetadataField(
-                Icons.verified_user_outlined,
-                'Card Status',
-                visitor?['card_status'] ?? 'Active',
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Status',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      cardStatus,
+                      style: GoogleFonts.inter(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
-        Container(
-          width: 1,
-          height: double.infinity,
-          color: const Color(0xFFF1F5F9),
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusMetadataField(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(icon, size: 15, color: const Color(0xFF1E293B)),
+        const SizedBox(width: 7),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              _buildMetadataField(
-                Icons.vpn_key_outlined,
-                'Access Level',
-                visitor?['access_level'] ?? 'Standard Gate',
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              _buildMetadataField(
-                Icons.access_time_outlined,
-                'Issued At',
-                visitor?['issued_at'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.keyboard_return_outlined,
-                'Return At',
-                visitor?['return_at'] ?? '-',
+              const SizedBox(height: 1.5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF94A3B8),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1332,53 +1716,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildHistoryTab(Map<String, dynamic>? visitor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetadataField(
-                Icons.history_rounded,
-                'Previous Visits',
-                '1 Visit',
-              ),
-              _buildMetadataField(
-                Icons.business_center_outlined,
-                'Last Host',
-                visitor?['host_name'] ?? '-',
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: 1,
-          height: double.infinity,
-          color: const Color(0xFFF1F5F9),
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildMetadataField(
-                Icons.login_rounded,
-                'Last Check In',
-                visitor?['check_in'] ?? '-',
-              ),
-              _buildMetadataField(
-                Icons.logout_rounded,
-                'Last Check Out',
-                visitor?['check_out'] ?? '-',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    // History data is empty (API not yet available) matching screenshot
+    return const SizedBox.shrink();
   }
 
   Widget _buildTabHeader(int index, String title) {
@@ -1392,7 +1731,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF003082) : const Color(0xFF1E293B),
+              color: isSelected
+                  ? const Color(0xFF003082)
+                  : const Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 4),
@@ -1416,8 +1757,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF1E293B)),
-        const SizedBox(width: 10),
+        Icon(icon, size: 15, color: const Color(0xFF1E293B)),
+        const SizedBox(width: 7),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1426,20 +1767,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               Text(
                 label,
                 style: GoogleFonts.inter(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1E293B),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 1.5),
+              const SizedBox(height: 1),
               Text(
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 11.5,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w400,
                   color: const Color(0xFF64748B),
                 ),
@@ -1654,18 +1995,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
               const SizedBox(height: 4),
 
-              // Row 5: Access Issuance
+              // Row 5: Access Issuance (Double width matching Scan QR)
               Row(
                 children: [
                   Expanded(
+                    flex: 2,
                     child: _buildActionButton(
                       label: 'Access Issuance',
                       icon: Icons.vpn_key_rounded,
-                      bgColor: const Color(0xFFFB8C00),
+                      bgColor: const Color(0xFFF57C00),
                       onTap: () => _handleAction('Access Issuance'),
                     ),
                   ),
-                  const Spacer(flex: 3),
+                  const SizedBox(width: 5),
+                  const Spacer(flex: 2),
                 ],
               ),
             ],
@@ -1685,9 +2028,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 // Tabs: Live Visitors (0) | Related Visitors (0)
                 Row(
                   children: [
-                    _buildVisitorListTab(0, 'Live Visitors (${controller.rxRelatedVisitors.length})'),
+                    _buildVisitorListTab(
+                      0,
+                      'Live Visitors (${controller.rxRelatedVisitors.length})',
+                    ),
                     const SizedBox(width: 24),
-                    _buildVisitorListTab(1, 'Related Visitors (${controller.rxAllRelatedVisitors.length})'),
+                    _buildVisitorListTab(
+                      1,
+                      'Related Visitors (${controller.rxAllRelatedVisitors.length})',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -1709,19 +2058,32 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Icon(Icons.search_rounded,
-                                size: 17, color: Color(0xFF94A3B8)),
+                            const Icon(
+                              Icons.search_rounded,
+                              size: 17,
+                              color: Color(0xFF94A3B8),
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: TextField(
                                 controller: _visitorSearchController,
                                 textAlignVertical: TextAlignVertical.center,
+                                textCapitalization: TextCapitalization.characters,
+                                inputFormatters: [
+                                  UpperCaseTextFormatter(),
+                                ],
                                 style: GoogleFonts.inter(
-                                    fontSize: 12.5, color: _textDark, height: 1.2),
+                                  fontSize: 12.5,
+                                  color: _textDark,
+                                  height: 1.2,
+                                ),
                                 decoration: InputDecoration(
                                   hintText: 'Search Visitor',
                                   hintStyle: GoogleFonts.inter(
-                                      fontSize: 12.5, color: const Color(0xFF94A3B8), height: 1.2),
+                                    fontSize: 12.5,
+                                    color: const Color(0xFF94A3B8),
+                                    height: 1.2,
+                                  ),
                                   border: InputBorder.none,
                                   isDense: true,
                                   contentPadding: EdgeInsets.zero,
@@ -1746,8 +2108,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                       child: IconButton(
                         padding: EdgeInsets.zero,
-                        icon: const Icon(Icons.filter_alt_outlined,
-                            size: 18, color: Color(0xFF003082)),
+                        icon: const Icon(
+                          Icons.filter_alt_outlined,
+                          size: 18,
+                          color: Color(0xFF003082),
+                        ),
                         onPressed: () {},
                       ),
                     ),
@@ -1783,9 +2148,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
-                              minWidth: 22, minHeight: 22),
-                          icon: const Icon(Icons.chevron_left_rounded,
-                              size: 20, color: Color(0xFF64748B)),
+                            minWidth: 22,
+                            minHeight: 22,
+                          ),
+                          icon: const Icon(
+                            Icons.chevron_left_rounded,
+                            size: 20,
+                            color: Color(0xFF64748B),
+                          ),
                           onPressed: () {},
                         ),
                         Obx(() {
@@ -1803,9 +2173,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
-                              minWidth: 22, minHeight: 22),
-                          icon: const Icon(Icons.chevron_right_rounded,
-                              size: 20, color: Color(0xFF64748B)),
+                            minWidth: 22,
+                            minHeight: 22,
+                          ),
+                          icon: const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 20,
+                            color: Color(0xFF64748B),
+                          ),
                           onPressed: () {},
                         ),
                       ],
@@ -1813,99 +2188,146 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 ),
 
-                const Divider(height: 14, thickness: 1, color: Color(0xFFF1F5F9)),
+                const Divider(
+                  height: 14,
+                  thickness: 1,
+                  color: Color(0xFFF1F5F9),
+                ),
 
-                // Visitor List / Feed Content Area
+                // Visitor List / Feed Content Area (Horizontal Mini-Cards matching screenshot)
                 Expanded(
                   child: Obx(() {
                     final list = controller.rxRelatedVisitors;
                     if (list.isEmpty) {
-                      return const SizedBox.expand();
+                      return const Center(child: Text('No visitors available'));
                     }
 
                     return ListView.separated(
-                      padding: const EdgeInsets.only(top: 4, bottom: 4),
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const Divider(
-                        height: 6,
-                        thickness: 1,
-                        color: Color(0xFFF1F5F9),
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 2,
                       ),
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
                         final item = list[index];
                         final isSelected =
                             controller.rxSelectedVisitor.value?['id'] ==
-                                item['id'];
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              controller.rxSelectedVisitor.value = item;
-                            },
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(
+                            item['id'];
+                        final faceImg =
+                            (item['faceimage'] ?? item['host_faceimage'] ?? '')
+                                .toString();
+                        final isHost = item['occupancy'] == 'Host';
+
+                        return GestureDetector(
+                          onTap: () {
+                            controller.rxSelectedVisitor.value = item;
+                          },
+                          child: Container(
+                            width: 110,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFFEBF3FC)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: isSelected
-                                    ? const Color(0xFFEBF3FC)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
+                                    ? const Color(0xFF003082)
+                                    : const Color(0xFFE2E8F0),
+                                width: isSelected ? 1.5 : 1,
                               ),
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 14,
-                                    backgroundImage: AssetImage(
-                                      item['photo'] ??
-                                          item['image'] ??
-                                          'assets/images/ava_person1.png',
-                                    ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 3,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Avatar with circle frame
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF78909C),
+                                    shape: BoxShape.circle,
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['name'] ?? 'Visitor',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: _textDark,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: faceImg.isNotEmpty
+                                      ? Image.network(
+                                          AppConstants.getCdnImageUrl(faceImg),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 28,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                        )
+                                      : Center(
+                                          child: Icon(
+                                            isHost
+                                                ? Icons.person
+                                                : Icons.account_circle,
+                                            size: 32,
+                                            color: Colors.white,
                                           ),
                                         ),
-                                        Text(
-                                          item['company'] ??
-                                              item['invitation_code'] ??
-                                              '-',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11,
-                                            color: _textMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  item['name'] ?? 'Visitor',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: _textDark,
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      item['status'] ?? 'Expected',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF15803D),
-                                      ),
-                                    ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['company'] ??
+                                      item['organization'] ??
+                                      '-',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: _textMuted,
                                   ),
-                                ],
-                              ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 4),
+                                // Checkbox Indicator
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: isSelected,
+                                    activeColor: const Color(0xFF003082),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                    onChanged: (_) {
+                                      controller.rxSelectedVisitor.value = item;
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
@@ -1914,7 +2336,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   }),
                 ),
 
-                // Bottom Bulk Action Toolbar (Fill Form dropdown & Apply)
+                // Bottom Bulk Action Toolbar (Fill Form dropdown & Apply & Right Action Pills)
                 Row(
                   children: [
                     CompositedTransformTarget(
@@ -1925,7 +2347,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           onTap: _toggleBulkActionMenu,
                           borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            height: 32,
+                            height: 30,
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -1943,7 +2365,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 Text(
                                   _selectedBulkAction,
                                   style: GoogleFonts.inter(
-                                    fontSize: 12,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
                                     color: _textDark,
                                   ),
@@ -1964,7 +2386,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -1976,8 +2398,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         },
                         borderRadius: BorderRadius.circular(6),
                         child: Container(
-                          height: 32,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          height: 30,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(6),
@@ -1986,7 +2408,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             child: Text(
                               'Apply',
                               style: GoogleFonts.inter(
-                                fontSize: 12.5,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF64748B),
                               ),
@@ -1995,6 +2417,42 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ),
                       ),
                     ),
+                    const Spacer(),
+                    // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
+                    Obx(() {
+                      final hasData = controller.rxSelectedVisitor.value != null ||
+                          controller.rxAllRelatedVisitors.isNotEmpty;
+                      if (!hasData) return const SizedBox.shrink();
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildFeedPillButton(
+                            'Extend',
+                            Icons.access_time_rounded,
+                            const Color(0xFFCBD5E1),
+                            const Color(0xFF475569),
+                            () => _handleAction('Extend'),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildFeedPillButton(
+                            'Card Issuance',
+                            Icons.credit_card_rounded,
+                            const Color(0xFF7B1FA2),
+                            Colors.white,
+                            () => _handleAction('Card Issuance'),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildFeedPillButton(
+                            'Print',
+                            Icons.print_rounded,
+                            const Color(0xFF64748B),
+                            Colors.white,
+                            () => _handlePrintAction(),
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ],
@@ -2002,6 +2460,45 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFeedPillButton(
+    String label,
+    IconData icon,
+    Color bgColor,
+    Color textColor,
+    VoidCallback onTap,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: textColor),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -2102,7 +2599,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           flex: 9,
           child: _buildCardContainer(
             key: _keyHostInfo,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2110,9 +2607,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 Text(
                   'Host Information',
                   style: GoogleFonts.inter(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: _textDark,
+                    color: const Color(0xFF0F2B48),
                   ),
                 ),
 
@@ -2120,74 +2617,142 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Circular Avatar (blue-grey)
+                    // Circular Avatar with CDN Face Image
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 58,
+                      height: 58,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF78909C),
+                        color: Color(0xFF758A9E),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.person,
-                        size: 34,
-                        color: Colors.white,
-                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child:
+                          (visitor?['host_faceimage'] != null &&
+                              visitor!['host_faceimage'].toString().isNotEmpty)
+                          ? Image.network(
+                              AppConstants.getCdnImageUrl(
+                                visitor['host_faceimage'].toString(),
+                              ),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(
+                                  Icons.person,
+                                  size: 36,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(
+                                Icons.person,
+                                size: 36,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            visitor?['host_name'] ?? '-',
-                            style: GoogleFonts.inter(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: _textDark,
+                          if (visitor != null &&
+                              visitor['host_name'] != null) ...[
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    visitor['host_name'] ?? 'Host Name',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 9,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00D696),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    visitor['host_status'] ?? 'Available',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            visitor?['host_dept'] ?? '-',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              color: _textMuted,
+                            const SizedBox(height: 2),
+                            Text(
+                              visitor['host_organization_name'] ??
+                                  visitor['host_dept'] ??
+                                  'Organization SPU',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
+                          ] else ...[
+                            Text(
+                              '-',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          const SizedBox(height: 3),
                           Row(
                             children: [
-                              Icon(Icons.phone_outlined,
-                                  size: 12, color: _textDark),
-                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.phone_rounded,
+                                size: 13.5,
+                                color: Color(0xFF1E293B),
+                              ),
+                              const SizedBox(width: 5),
                               Text(
                                 ' :  ${visitor?['host_phone'] ?? "-"}',
                                 style: GoogleFonts.inter(
-                                  fontSize: 11,
+                                  fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: _textDark,
+                                  color: const Color(0xFF1E293B),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 1),
+                          const SizedBox(height: 2),
                           Row(
                             children: [
-                              Icon(Icons.email_outlined,
-                                  size: 12, color: _textDark),
-                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.mail_rounded,
+                                size: 13.5,
+                                color: Color(0xFF1E293B),
+                              ),
+                              const SizedBox(width: 5),
                               Expanded(
                                 child: Text(
                                   ' :  ${visitor?['host_email'] ?? "-"}',
                                   style: GoogleFonts.inter(
-                                    fontSize: 11,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
-                                    color: _textDark,
+                                    color: const Color(0xFF1E293B),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -2201,17 +2766,19 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 ),
 
-                const Divider(height: 6, color: Color(0xFFECEFF1)),
+                const Divider(height: 8, thickness: 1, color: Color(0xFFECEFF1)),
 
-                // 3 Large Action Buttons: Call, Chat, Email (Pastel Fills)
+                // 3 Action Buttons: Call (Dark Blue), Chat (Mint Emerald), Email (Sky Blue)
                 Row(
                   children: [
                     Expanded(
                       child: _buildHostActionButton(
                         label: 'Call',
-                        icon: Icons.phone_outlined,
-                        bgColor: const Color(0xFF789EC6), // Pastel steel blue
-                        onTap: () => _handleContactAction('Calling host...'),
+                        icon: Icons.phone_rounded,
+                        bgColor: const Color(0xFF00529C),
+                        onTap: () => _handleContactAction(
+                          'Calling host ${visitor?['host_name'] ?? ""}...',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -2219,19 +2786,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       child: _buildHostActionButton(
                         label: 'Chat',
                         icon: Icons.chat_bubble_outline_rounded,
-                        bgColor: const Color(0xFF79E7C4), // Pastel mint green
-                        onTap: () =>
-                            _handleContactAction('Opening WhatsApp Chat...'),
+                        bgColor: const Color(0xFF00D696),
+                        onTap: () => _handleContactAction(
+                          'Opening WhatsApp chat with host...',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: _buildHostActionButton(
                         label: 'Email',
-                        icon: Icons.email_outlined,
-                        bgColor: const Color(0xFF9AE6FF), // Pastel soft sky blue
-                        onTap: () =>
-                            _handleContactAction('Composing email to host...'),
+                        icon: Icons.mail_rounded,
+                        bgColor: const Color(0xFF38B6FF),
+                        onTap: () => _handleContactAction(
+                          'Composing email to ${visitor?['host_email'] ?? ""}...',
+                        ),
                       ),
                     ),
                   ],
@@ -2287,10 +2856,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                           items: ['Today', 'This Week', 'This Month']
                               .map(
-                                (f) => DropdownMenuItem(
-                                  value: f,
-                                  child: Text(f),
-                                ),
+                                (f) =>
+                                    DropdownMenuItem(value: f, child: Text(f)),
                               )
                               .toList(),
                           onChanged: (val) {
@@ -2445,29 +3012,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
           height: 32,
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: bgColor.withValues(alpha: 0.25),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 14, color: Colors.white),
-              const SizedBox(width: 5),
+              Icon(icon, size: 15, color: Colors.white),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: GoogleFonts.inter(
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
@@ -2552,12 +3112,380 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Quick Actions Handlers
+  // Quick Actions Handlers & Scan QR Dialog (Matching Screenshots)
   // ─────────────────────────────────────────────────────────────────────────
   void _handleAction(String actionName) {
+    if (actionName == 'Scan QR') {
+      _showScanQrDialog();
+      return;
+    }
+    if (actionName == 'Check In') {
+      controller.executeAction('check_in');
+      return;
+    }
+    if (actionName == 'Check Out') {
+      controller.executeAction('check_out');
+      return;
+    }
+    if (actionName == 'Blacklist') {
+      controller.executeAction('blacklist');
+      return;
+    }
+    if (actionName == 'Whitelist') {
+      controller.executeAction('whitelist');
+      return;
+    }
     AppSnackbar.info(
       title: actionName,
       message: 'Processing $actionName for operator terminal...',
+    );
+  }
+
+  void _showScanQrDialog() {
+    int tabMode = 0; // 0: Manual, 1: Scan Camera
+    final searchInputController = TextEditingController();
+    bool isSearching = false;
+
+    Get.dialog(
+      StatefulBuilder(
+        builder: (context, setModalState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: Colors.white,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 32,
+              vertical: 24,
+            ),
+            child: Container(
+              width: 500,
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: Title + Close Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Scan QR Visitor',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          size: 22,
+                          color: Color(0xFF64748B),
+                        ),
+                        onPressed: () => Get.back(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Tab Switchers (Manual vs Scan Camera)
+                  Row(
+                    children: [
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => setModalState(() => tabMode = 0),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: tabMode == 0
+                                  ? const Color(0xFF004385)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: tabMode == 0
+                                    ? const Color(0xFF004385)
+                                    : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.text_fields_rounded,
+                                  size: 15,
+                                  color: tabMode == 0
+                                      ? Colors.white
+                                      : const Color(0xFF004385),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Manual',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: tabMode == 0
+                                        ? Colors.white
+                                        : const Color(0xFF004385),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => setModalState(() => tabMode = 1),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: tabMode == 1
+                                  ? const Color(0xFF004385)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: tabMode == 1
+                                    ? const Color(0xFF004385)
+                                    : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.photo_camera_outlined,
+                                  size: 15,
+                                  color: tabMode == 1
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Scan Camera',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: tabMode == 1
+                                        ? Colors.white
+                                        : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Mode 0: Manual Input
+                  if (tabMode == 0) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFF004385),
+                          width: 1.5,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
+                      child: TextField(
+                        controller: searchInputController,
+                        autofocus: true,
+                        textCapitalization: TextCapitalization.characters,
+                        inputFormatters: [
+                          UpperCaseTextFormatter(),
+                        ],
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        decoration: const InputDecoration(
+                          hintText:
+                              'Enter Invitation Code (e.g. 15Y1H5-QR5FHL)',
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                        onSubmitted: (val) async {
+                          final code = searchInputController.text.trim().toUpperCase();
+                          if (code.isEmpty) return;
+                          setModalState(() => isSearching = true);
+                          final success = await controller.searchInvitationCode(
+                            code,
+                          );
+                          setModalState(() => isSearching = false);
+                          if (success) {
+                            Get.back();
+                            AppSnackbar.success(
+                              title: 'Success',
+                              message: 'Data retrieved successfully',
+                            );
+                          } else {
+                            AppSnackbar.error(
+                              title: 'Search Failed',
+                              message:
+                                  'No visitor data found for invitation code: $code',
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ] else ...[
+                    // Mode 1: Camera Scanner
+                    Container(
+                      height: 220,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: MobileScanner(
+                        onDetect: (capture) async {
+                          final barcodes = capture.barcodes;
+                          for (final b in barcodes) {
+                            final code = b.rawValue?.trim().toUpperCase() ?? '';
+                            if (code.isNotEmpty) {
+                              setModalState(() => isSearching = true);
+                              final success = await controller
+                                  .searchInvitationCode(code);
+                              setModalState(() => isSearching = false);
+                              if (success) {
+                                Get.back();
+                                AppSnackbar.success(
+                                  title: 'Success',
+                                  message: 'Data retrieved successfully',
+                                );
+                              }
+                              break;
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  // Footer: [New Invitation] (Left) & [Submit] (Right)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF004385),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        icon: const Icon(
+                          Icons.person_outline_rounded,
+                          size: 16,
+                        ),
+                        label: Text(
+                          'New Invitation',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        onPressed: () {
+                          Get.back();
+                          _handleAction('New Invitation');
+                        },
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF004385),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
+                        ),
+                        onPressed: isSearching
+                            ? null
+                            : () async {
+                                final code = searchInputController.text.trim().toUpperCase();
+                                if (code.isEmpty) {
+                                  AppSnackbar.error(
+                                    title: 'Validation Error',
+                                    message: 'Please enter an invitation code',
+                                  );
+                                  return;
+                                }
+                                setModalState(() => isSearching = true);
+                                final success = await controller
+                                    .searchInvitationCode(code);
+                                setModalState(() => isSearching = false);
+                                if (success) {
+                                  Get.back();
+                                  AppSnackbar.success(
+                                    title: 'Success',
+                                    message: 'Data retrieved successfully',
+                                  );
+                                } else {
+                                  AppSnackbar.error(
+                                    title: 'Search Failed',
+                                    message:
+                                        'No visitor data found for code: $code',
+                                  );
+                                }
+                              },
+                        child: isSearching
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                'Submit',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -2569,10 +3497,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   void _handleContactAction(String message) {
-    AppSnackbar.info(
-      title: 'Host Contact',
-      message: message,
-    );
+    AppSnackbar.info(title: 'Host Contact', message: message);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -2621,7 +3546,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 5,
+                    horizontal: 4,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2639,7 +3567,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       const SizedBox(height: 2),
                       _buildVisitorSiteMenuItem(
                         title: 'Blacklist Visitor',
-                        isSelected: _selectedVisitorSiteMenu == 'Blacklist Visitor',
+                        isSelected:
+                            _selectedVisitorSiteMenu == 'Blacklist Visitor',
                         onTap: () {
                           setState(() {
                             _selectedVisitorSiteMenu = 'Blacklist Visitor';
@@ -2685,9 +3614,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         hoverColor: const Color(0xFFF1F5F9),
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected
-                ? const Color(0xFFEBF3FC)
-                : Colors.transparent,
+            color: isSelected ? const Color(0xFFEBF3FC) : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2760,7 +3687,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       // Header: Select Site
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         child: Text(
                           'Select Site',
                           style: GoogleFonts.inter(
@@ -2788,7 +3717,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ? const Color(0xFFEBF3FC)
                                   : Colors.transparent,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               child: Text(
                                 site,
                                 style: GoogleFonts.inter(
@@ -2876,12 +3807,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 4,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ...['Fill Form', 'Checkin', 'Checkout', 'Print Badge'].map((action) {
+                      ...[
+                        'Fill Form',
+                        'Checkin',
+                        'Checkout',
+                        'Print Badge',
+                      ].map((action) {
                         final isSelected = _selectedBulkAction == action;
                         return Material(
                           color: Colors.transparent,
@@ -2902,7 +3841,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 8),
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
                               child: Text(
                                 action,
                                 style: GoogleFonts.inter(

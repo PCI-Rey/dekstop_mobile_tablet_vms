@@ -314,32 +314,31 @@ class DioClient {
       "collection": {
         "data": [
           {
-            "transaction_visitor_id": "9bddf1c6-d00d-431b-9e32-9aa4df7586e2",
+            "transaction_visitor_id": "8c60c085-70ae-446e-b888-ff813bedae14",
             "agenda": "Meeting",
-            "initial_trx_code": "HIPUX9OB7MREJQPT7DE2GXK9A6671KCPY3HU2R7IT6OE6IMOX9HIT18ZI9PN3JM6XJV21E3PK5E1IES4ZSD8448RJDVVICJT5FCYONDV88MH3BBHREAO7P4VJSO5I585",
+            "initial_trx_code": "7OPNW3LJRYHYNU4ZED11ASZ8HP3ZIPYGDOLZCI9CA74Q7V2Q1GFMWS4LTFW15Y4ZAZTWO7EMVGRDRXFAQD7IS21N7AOOA5EWMYM5K4RHCWWNNTL4QET1FDP7PSRROMBE",
             "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
             "host_name": "Endru",
-            "host_organization_name": "SPU",
-            "visitor_period_start": "2026-07-09T03:00:00",
-            "visitor_period_end": "2026-07-09T13:00:00",
-            "group_name": "PCI",
-            "visitor_number": "2651825375",
-            "visitor_code": "2651825375",
-            "invitation_code": "IURKVH-OJAPWV",
+            "host_organization_name": "Organization SPU",
+            "visitor_period_start": "2026-08-13T01:00:00",
+            "visitor_period_end": "2026-08-13T12:00:00",
+            "group_name": "Tera's visitor group",
+            "visitor_number": "8258653021",
+            "visitor_pin": "956248",
+            "visitor_pin4": "9562",
+            "visitor_code": "8258653021",
+            "invitation_code": "15Y1H5-QR5FHL",
             "self_only": false,
-            "checkin_at": "2026-07-09T06:27:06.2192235",
-            "checkin_by": "Admins",
-            "visitor_status": "Checkin",
-            "invitation_created_at": "2026-07-09T03:38:52.0996476",
-            "vehicle_plate_number": "",
-            "remarks": "Invitation",
+            "visitor_status": "Preregis",
+            "invitation_created_at": "2026-08-13T10:23:40.109055",
+            "remarks": "PraRegister",
             "parking_slot": "",
             "parking_area": "",
-            "visitor_id": "76efef06-c8fa-4ab2-9e9f-4d6e8a612e84",
-            "visitor_name": "Kora",
-            "visitor_organization_name": "asdasdas",
-            "visitor_identity_id": "151241231231232",
-            "visitor_phone": "151234123123",
+            "visitor_id": "5b2b3bb4-b6fe-4410-95d0-bd52daa715b1",
+            "visitor_name": "Tera",
+            "visitor_organization_name": "Instansi Tera",
+            "visitor_identity_id": "151696969",
+            "visitor_phone": "0810412120841",
             "visitor_email": "cennandaa@gmail.com",
             "can_track_ble": true,
             "can_parking": true,
@@ -347,27 +346,38 @@ class DioClient {
             "tz": "Asia/Jakarta",
             "is_group": true,
             "visitor_type": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
-            "visitor_type_name": "General Visitor (DKUT)",
-            "is_praregister_done": true,
+            "visitor_type_name": "General Visitor",
+            "is_praregister_done": false,
             "application_id": "074ddc10-9b66-4466-8195-7bf972914603",
-            "site_place_name": "Gedung Visitor",
+            "site_place_name": "Gedung SINERGI",
             "visitor": {
               "visitor_type": "00000000-0000-0000-0000-000000000000",
-              "name": "Kora",
+              "name": "Tera",
               "email": "cennandaa@gmail.com",
-              "id": "76efef06-c8fa-4ab2-9e9f-4d6e8a612e84"
+              "id": "5b2b3bb4-b6fe-4410-95d0-bd52daa715b1"
             },
-            "card": [],
+            "card": [
+              {
+                "card_number": "8258653021",
+                "card_barcode": "8258653021",
+                "card_mac": "",
+                "is_ble": false,
+                "trx_visitor_id": "ccd1f915-111d-402d-afd8-9bd0f86aefa4",
+                "visitor_id": "5b2b3bb4-b6fe-4410-95d0-bd52daa715b1",
+                "last_position_track": "",
+                "is_swapcard": false,
+                "current_used": true,
+                "card_type": "Barcode",
+                "card_status": "Available",
+                "id": "e7f88be8-54f3-4b0c-87e5-b6607514e846"
+              }
+            ],
             "access": [],
             "tracking_ble": [],
             "visitor_role": "Visitor",
-            "trx_visitor_sites": [
-              {
-                "site_name": "Gedung Visitor",
-                "id": "a05b4207-8f44-4191-add6-e149de852d96"
-              }
-            ],
-            "approval_status": "Approved",
+            "trx_visitor_sites": [],
+            "approval_status": "Pending",
+            "is_host": false,
             "hosts": [
               {
                 "person_id": "77182",
@@ -378,24 +388,10 @@ class DioClient {
                 "email": "reyjanumbs@gmail.com",
                 "gender": "Male",
                 "upload_fr": 0,
-                "faceimage": "",
+                "faceimage": "/faces/9a4ab2d1-76b5-43de-8c47-c62bee91209c.jpeg",
                 "head_employee_1": "",
                 "head_employee_2": "",
                 "id": "f2b0c94e-312d-418b-bb6e-05709784e9c3"
-              },
-              {
-                "person_id": "12324",
-                "identity_id": "1232",
-                "type": "Permanent",
-                "name": "Tommy",
-                "phone": "62819267281",
-                "email": "user2@example.com",
-                "gender": "Female",
-                "upload_fr": 0,
-                "faceimage": "/faces/f065aa93-7dc6-4636-a0a6-edea6a97e256.jpg",
-                "head_employee_1": "",
-                "head_employee_2": "",
-                "id": "41e4ee80-a921-43ab-af9f-517d96ec7db0"
               }
             ],
             "visitor_access_system_status": "NotUsed",
@@ -404,7 +400,7 @@ class DioClient {
             "visitor_trackingcctv_system_status": "NotUsed",
             "invited_by": "416befe2-b840-4f35-b310-a079bf1b6a3b",
             "invited_by_name": "Admins",
-            "id": "1b10ef66-1c93-44b7-bca2-33c395e778b2"
+            "id": "ccd1f915-111d-402d-afd8-9bd0f86aefa4"
           }
         ],
         "search-match": "InvitationCode"

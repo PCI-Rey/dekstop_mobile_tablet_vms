@@ -11,6 +11,7 @@ class DashboardView extends GetView<DashboardController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: ResponsiveLayout(
         mobile: MobileDashboard(),
         tablet: DesktopDashboard(), // Tab A8 (800dp+) → Desktop layout
