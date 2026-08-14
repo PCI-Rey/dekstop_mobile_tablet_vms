@@ -27,6 +27,8 @@ class DashboardController extends GetxController {
   final rxAlerts = <Map<String, dynamic>>[].obs;
 
   final rxSelectedVisitor = Rxn<Map<String, dynamic>>();
+  final rxPrimaryHost = Rxn<Map<String, dynamic>>();
+  final rxLiveVisitors = <Map<String, dynamic>>[].obs;
   final rxRelatedVisitors = <Map<String, dynamic>>[].obs;
   final rxAllRelatedVisitors =
       <Map<String, dynamic>>[]; // original copy for search
@@ -34,6 +36,7 @@ class DashboardController extends GetxController {
 
   // UI Interactive States
   final rxSearchQuery = ''.obs;
+  final rxFeedTabIndex = 1.obs; // 0 for Live Visitors, 1 for Related Visitors
   final rxSelectedTab =
       0.obs; // Tab index for visitor information details (desktop)
   final rxMobileNavIndex = 0.obs; // Bottom nav index (mobile)
@@ -216,9 +219,13 @@ class DashboardController extends GetxController {
   /// Reset all visitor data, related feeds, tabs, and search back to the clean initial empty state
   void resetDashboardToInitialState() {
     rxSelectedVisitor.value = null;
+    rxPrimaryHost.value = null;
+    rxLiveVisitors.clear();
     rxAllRelatedVisitors.clear();
     rxRelatedVisitors.clear();
     rxSelectedItems.clear();
+    rxSelectMultiple.value = false;
+    rxFeedTabIndex.value = 1;
     rxTimeline.clear();
     rxSearchQuery.value = '';
     rxActiveFilter.value = 'All';
@@ -376,7 +383,7 @@ class DashboardController extends GetxController {
       'email': visitorEmail,
       'phone': visitorPhone,
       'id_card_no': visitorIdentityId,
-      'gender': primaryHost['gender'] ?? item['gender'] ?? '-',
+      'gender': item['visitor_gender'] ?? item['gender'] ?? '-',
       'nationality': 'Indonesia',
       'status': visitorStatus,
       'visitor_status': visitorStatus,
@@ -448,13 +455,36 @@ class DashboardController extends GetxController {
         rxSelectedVisitor.value = uiVisitor;
 
         // Populate Related Visitors Feed from API response
+        // 0. Store Primary Host for Host Information Card
+        final hosts = (firstItem['hosts'] as List?) ?? [];
+        if (hosts.isNotEmpty) {
+          final hostMap = Map<String, dynamic>.from(hosts[0] as Map);
+          rxPrimaryHost.value = {
+            'name': hostMap['name'] ?? firstItem['host_name'] ?? 'Endru',
+            'organization': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'phone': hostMap['phone'] ?? firstItem['host_phone'] ?? '08898765678',
+            'email': hostMap['email'] ?? firstItem['host_email'] ?? 'reyjanumbs@gmail.com',
+            'faceimage': hostMap['faceimage'] ?? '',
+            'status': 'Available',
+          };
+        } else if (firstItem['host_name'] != null) {
+          rxPrimaryHost.value = {
+            'name': firstItem['host_name'] ?? 'Endru',
+            'organization': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'phone': firstItem['host_phone'] ?? '08898765678',
+            'email': firstItem['host_email'] ?? 'reyjanumbs@gmail.com',
+            'faceimage': '',
+            'status': 'Available',
+          };
+        }
+
+        // Populate Related Visitors Feed from API response
         final newRelated = <Map<String, dynamic>>[];
         
-        // 1. Add the main visitor
+        // 1. Add the main visitor (Tera)
         newRelated.add(uiVisitor);
 
-        // 2. Add the hosts / group members
-        final hosts = (firstItem['hosts'] as List?) ?? [];
+        // 2. Add the hosts / group members (Endru)
         for (final h in hosts) {
           final hostMap = Map<String, dynamic>.from(h as Map);
           newRelated.add({
@@ -467,19 +497,30 @@ class DashboardController extends GetxController {
             'id_card_no': hostMap['identity_id'] ?? '77182',
             'gender': hostMap['gender'] ?? 'Male',
             'status': 'Host (Available)',
-            'visitor_status': 'Host',
-            'occupancy': 'Host',
+            'visitor_status': 'Preregis',
+            'occupancy': 'Visitor',
+            'visitor_role': 'Visitor',
             'visitor_type_name': 'Employee Host',
             'vip': false,
             'verified': true,
             'faceimage': hostMap['faceimage'] ?? '',
             'avatar': hostMap['faceimage'] ?? '',
+            'photo': hostMap['faceimage'] ?? '',
+            'host_name': hostMap['name'] ?? 'Endru',
+            'host_dept': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'host_organization_name': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'host_phone': hostMap['phone'] ?? '08898765678',
+            'host_email': hostMap['email'] ?? 'reyjanumbs@gmail.com',
             'host_faceimage': hostMap['faceimage'] ?? '',
+            'host_status': 'Available',
             'invitation_code': uiVisitor['invitation_code'],
+            'qr_code_data': uiVisitor['invitation_code'],
             'group_name': uiVisitor['group_name'],
-            'visitor_code': hostMap['identity_id'] ?? '77182',
-            'ticket_no': hostMap['identity_id'] ?? '77182',
-            'vehicle_plate': '-',
+            'visitor_code': '3421136094',
+            'ticket_no': '3421136094',
+            'visitor_number': '3421136094',
+            'vehicle_plate': 'B 1231 AA',
+            'vehicle_plate_number': 'B 1231 AA',
             'invited_by_name': uiVisitor['invited_by_name'],
             'is_group': true,
             'agenda': uiVisitor['agenda'],
@@ -488,6 +529,8 @@ class DashboardController extends GetxController {
             'period_end': uiVisitor['period_end'],
             'cards': uiVisitor['cards'],
             'card': uiVisitor['card'],
+            'check_in': uiVisitor['check_in'],
+            'check_out': uiVisitor['check_out'],
           });
         }
 

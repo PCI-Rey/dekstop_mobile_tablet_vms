@@ -937,7 +937,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               children: [
                 // Visitor Photo with Rounded Frame & Face Detection Reticle
                 Expanded(
-                  flex: 4,
+                  flex: 3,
                   child: AspectRatio(
                     aspectRatio: 3 / 4,
                     child: ClipRRect(
@@ -945,19 +945,43 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.asset(
-                            visitor?['photo'] ??
-                                visitor?['image'] ??
-                                'assets/images/ava_person1.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: const Color(0xFFE2E8F0),
-                              child: const Icon(
-                                Icons.person,
-                                size: 44,
-                                color: _textMuted,
-                              ),
-                            ),
+                          Builder(
+                            builder: (context) {
+                              final photoUrl = (visitor?['photo'] ??
+                                      visitor?['avatar'] ??
+                                      visitor?['faceimage'] ??
+                                      '')
+                                  .toString();
+                              if (photoUrl.startsWith('/') ||
+                                  photoUrl.startsWith('http')) {
+                                return Image.network(
+                                  AppConstants.getCdnImageUrl(photoUrl),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: const Color(0xFFE2E8F0),
+                                    child: const Icon(
+                                      Icons.person,
+                                      size: 44,
+                                      color: _textMuted,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Image.asset(
+                                photoUrl.isNotEmpty
+                                    ? photoUrl
+                                    : 'assets/images/ava_person1.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: const Color(0xFFE2E8F0),
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 44,
+                                    color: _textMuted,
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           // Green Face Detection Target Overlay (Only when visitor != null)
                           if (visitor != null)
@@ -984,7 +1008,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                 // Visitor Details Table (Clean Typography with Tight Divider & ScaleDown)
                 Expanded(
-                  flex: 6,
+                  flex: 7,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return SizedBox(
@@ -1180,44 +1204,66 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    if (visitor?['qr_code_data'] != null)
-                                      SizedBox(
-                                        width: 52,
-                                        height: 52,
-                                        child: QrImageView(
-                                          data: visitor!['qr_code_data']
-                                              .toString(),
-                                          version: QrVersions.auto,
-                                          size: 52.0,
-                                        ),
-                                      )
-                                    else ...[
-                                      const Icon(
-                                        Icons.filter_none_rounded,
-                                        size: 30,
-                                        color: Color(0xFF94A3B8),
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        'No QR/Card Available',
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF1E293B),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 1),
-                                      Text(
-                                        'Scan a visitor to show QR code',
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w400,
-                                          color: const Color(0xFF94A3B8),
-                                        ),
-                                      ),
-                                    ],
+                                    Builder(
+                                      builder: (context) {
+                                        final qrData = (visitor?['invitation_code'] != null &&
+                                                visitor!['invitation_code'].toString() != '-' &&
+                                                visitor['invitation_code'].toString().isNotEmpty)
+                                            ? visitor['invitation_code'].toString()
+                                            : (visitor?['qr_code_data'] != null &&
+                                                    visitor!['qr_code_data'].toString() != '-' &&
+                                                    visitor['qr_code_data'].toString().isNotEmpty
+                                                ? visitor['qr_code_data'].toString()
+                                                : (visitor?['visitor_code'] != null &&
+                                                        visitor!['visitor_code'].toString() != '-' &&
+                                                        visitor['visitor_code'].toString().isNotEmpty
+                                                    ? visitor['visitor_code'].toString()
+                                                    : null));
+
+                                        if (qrData != null && qrData.isNotEmpty) {
+                                          return SizedBox(
+                                            width: 60,
+                                            height: 60,
+                                            child: QrImageView(
+                                              data: qrData,
+                                              version: QrVersions.auto,
+                                              size: 60.0,
+                                            ),
+                                          );
+                                        }
+
+                                        return Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.filter_none_rounded,
+                                              size: 30,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              'No QR/Card Available',
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 1),
+                                            Text(
+                                              'Scan a visitor to show QR code',
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w400,
+                                                color: const Color(0xFF94A3B8),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1270,18 +1316,23 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0.8),
+      padding: const EdgeInsets.symmetric(vertical: 0.6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF1E293B)),
-          const SizedBox(width: 6),
+          Padding(
+            padding: const EdgeInsets.only(top: 1.0),
+            child: Icon(icon, size: 13.5, color: const Color(0xFF1E293B)),
+          ),
+          const SizedBox(width: 5),
           SizedBox(
             width: 82,
             child: Text(
               label,
+              maxLines: 1,
+              softWrap: false,
               style: GoogleFonts.inter(
-                fontSize: 11.5,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF1E293B),
               ),
@@ -1290,7 +1341,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           Text(
             ' :  ',
             style: GoogleFonts.inter(
-              fontSize: 11.5,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF1E293B),
             ),
@@ -1298,12 +1349,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           Expanded(
             child: Text(
               value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              softWrap: true,
               style: GoogleFonts.inter(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1E293B),
+                height: 1.15,
               ),
             ),
           ),
@@ -2025,20 +2077,30 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Tabs: Live Visitors (0) | Related Visitors (0)
-                Row(
-                  children: [
-                    _buildVisitorListTab(
-                      0,
-                      'Live Visitors (${controller.rxRelatedVisitors.length})',
-                    ),
-                    const SizedBox(width: 24),
-                    _buildVisitorListTab(
-                      1,
-                      'Related Visitors (${controller.rxAllRelatedVisitors.length})',
-                    ),
-                  ],
-                ),
+                // Tabs: Live Visitors (0) | Related Visitors (2)
+                Obx(() {
+                  final liveCount = controller.rxLiveVisitors.length;
+                  final relatedCount = controller.rxAllRelatedVisitors.length;
+                  final activeTab = controller.rxFeedTabIndex.value;
+
+                  return Row(
+                    children: [
+                      _buildVisitorListTab(
+                        0,
+                        'Live Visitors ($liveCount)',
+                        isSelected: activeTab == 0,
+                        onTap: () => controller.rxFeedTabIndex.value = 0,
+                      ),
+                      const SizedBox(width: 24),
+                      _buildVisitorListTab(
+                        1,
+                        'Related Visitors ($relatedCount)',
+                        isSelected: activeTab == 1,
+                        onTap: () => controller.rxFeedTabIndex.value = 1,
+                      ),
+                    ],
+                  );
+                }),
                 const SizedBox(height: 8),
 
                 // Search & Filter Toolbar Row (Crisp & aligned)
@@ -2197,15 +2259,30 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 // Visitor List / Feed Content Area (Horizontal Mini-Cards matching screenshot)
                 Expanded(
                   child: Obx(() {
-                    final list = controller.rxRelatedVisitors;
+                    final activeTab = controller.rxFeedTabIndex.value;
+                    final list = activeTab == 0
+                        ? controller.rxLiveVisitors
+                        : controller.rxRelatedVisitors;
+
                     if (list.isEmpty) {
-                      return const Center(child: Text('No visitors available'));
+                      return Center(
+                        child: Text(
+                          activeTab == 0
+                              ? 'No live visitors available'
+                              : 'No related visitors available',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: const Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
                     }
 
                     return ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
-                        vertical: 4,
+                        vertical: 2,
                         horizontal: 2,
                       ),
                       itemCount: list.length,
@@ -2228,7 +2305,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             width: 110,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
-                              vertical: 8,
+                              vertical: 6,
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
@@ -2249,85 +2326,108 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 ),
                               ],
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                // Avatar with circle frame
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF78909C),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: faceImg.isNotEmpty
-                                      ? Image.network(
-                                          AppConstants.getCdnImageUrl(faceImg),
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Center(
-                                                child: Icon(
-                                                  Icons.person,
-                                                  size: 28,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                        )
-                                      : Center(
-                                          child: Icon(
-                                            isHost
-                                                ? Icons.person
-                                                : Icons.account_circle,
-                                            size: 32,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  item['name'] ?? 'Visitor',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: _textDark,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  item['company'] ??
-                                      item['organization'] ??
-                                      '-',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: _textMuted,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 4),
-                                // Checkbox Indicator
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Checkbox(
-                                    value: isSelected,
-                                    activeColor: const Color(0xFF003082),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(3),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                return SingleChildScrollView(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minHeight: constraints.maxHeight,
                                     ),
-                                    onChanged: (_) {
-                                      controller.rxSelectedVisitor.value = item;
-                                    },
+                                    child: IntrinsicHeight(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          // Avatar with circle frame
+                                          Container(
+                                            width: 38,
+                                            height: 38,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF78909C),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: faceImg.isNotEmpty
+                                                ? Image.network(
+                                                    AppConstants.getCdnImageUrl(
+                                                      faceImg,
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (_, __, ___) =>
+                                                        const Center(
+                                                          child: Icon(
+                                                            Icons.person,
+                                                            size: 24,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                  )
+                                                : Center(
+                                                    child: Icon(
+                                                      isHost
+                                                          ? Icons.person
+                                                          : Icons.account_circle,
+                                                      size: 28,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            item['name'] ?? 'Visitor',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: _textDark,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          Text(
+                                            item['company'] ??
+                                                item['organization'] ??
+                                                '-',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w500,
+                                              color: _textMuted,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          // Checkbox Indicator
+                                          SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: Checkbox(
+                                              value: isSelected,
+                                              activeColor:
+                                                  const Color(0xFF003082),
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(3),
+                                              ),
+                                              onChanged: (_) {
+                                                controller.rxSelectedVisitor
+                                                    .value = item;
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
                           ),
                         );
@@ -2551,10 +2651,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildVisitorListTab(int index, String title) {
-    final isSelected = _selectedVisitorListTab == index;
+  Widget _buildVisitorListTab(
+    int index,
+    String title, {
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () => setState(() => _selectedVisitorListTab = index),
+      onTap: onTap,
       child: Column(
         children: [
           Text(
@@ -2591,6 +2695,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildRightColumn() {
     final visitor = controller.rxSelectedVisitor.value;
+    final host = controller.rxPrimaryHost.value ??
+        (visitor?['host_name'] != null ? visitor : null);
 
     return Column(
       children: [
@@ -2627,11 +2733,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                       clipBehavior: Clip.antiAlias,
                       child:
-                          (visitor?['host_faceimage'] != null &&
-                              visitor!['host_faceimage'].toString().isNotEmpty)
+                          (host?['faceimage'] != null &&
+                                  host!['faceimage'].toString().isNotEmpty) ||
+                              (host?['host_faceimage'] != null &&
+                                  host!['host_faceimage'].toString().isNotEmpty)
                           ? Image.network(
                               AppConstants.getCdnImageUrl(
-                                visitor['host_faceimage'].toString(),
+                                (host['faceimage'] ?? host['host_faceimage']).toString(),
                               ),
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Center(
@@ -2656,13 +2764,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (visitor != null &&
-                              visitor['host_name'] != null) ...[
+                          if (host != null &&
+                              (host['name'] != null || host['host_name'] != null)) ...[
                             Row(
                               children: [
                                 Flexible(
                                   child: Text(
-                                    visitor['host_name'] ?? 'Host Name',
+                                    host['name'] ?? host['host_name'] ?? 'Host Name',
                                     style: GoogleFonts.inter(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
@@ -2683,7 +2791,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    visitor['host_status'] ?? 'Available',
+                                    host['status'] ?? host['host_status'] ?? 'Available',
                                     style: GoogleFonts.inter(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w700,
@@ -2695,8 +2803,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              visitor['host_organization_name'] ??
-                                  visitor['host_dept'] ??
+                              host['organization'] ??
+                                  host['host_organization_name'] ??
+                                  host['host_dept'] ??
                                   'Organization SPU',
                               style: GoogleFonts.inter(
                                 fontSize: 12,
@@ -2728,7 +2837,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               ),
                               const SizedBox(width: 5),
                               Text(
-                                ' :  ${visitor?['host_phone'] ?? "-"}',
+                                ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
                                 style: GoogleFonts.inter(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
@@ -2748,7 +2857,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               const SizedBox(width: 5),
                               Expanded(
                                 child: Text(
-                                  ' :  ${visitor?['host_email'] ?? "-"}',
+                                  ' :  ${host?['email'] ?? host?['host_email'] ?? "-"}',
                                   style: GoogleFonts.inter(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
@@ -2777,11 +2886,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         icon: Icons.phone_rounded,
                         bgColor: const Color(0xFF00529C),
                         onTap: () => _handleContactAction(
-                          'Calling host ${visitor?['host_name'] ?? ""}...',
+                          'Calling host ${host?['name'] ?? host?['host_name'] ?? ""}...',
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: _buildHostActionButton(
                         label: 'Chat',
