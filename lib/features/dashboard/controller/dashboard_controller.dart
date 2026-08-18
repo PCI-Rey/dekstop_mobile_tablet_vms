@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
@@ -8,6 +9,76 @@ class DashboardController extends GetxController {
   final DashboardRepository _dashboardRepository;
 
   DashboardController(this._dashboardRepository);
+
+  Timer? _liveSyncTimer;
+  String? _activeSearchVisitorId;
+
+  @override
+  void onClose() {
+    _liveSyncTimer?.cancel();
+    super.onClose();
+  }
+
+  void _startLiveAutoSync() {
+    _liveSyncTimer?.cancel();
+    _liveSyncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      syncCurrentInvitationState();
+    });
+  }
+
+  Future<void> syncCurrentInvitationState() async {
+    if (rxAllRelatedVisitors.isEmpty && rxSelectedVisitor.value == null) return;
+    if (rxIsActionLoading.value) return;
+
+    final firstItem = rxAllRelatedVisitors.isNotEmpty ? rxAllRelatedVisitors.first : rxSelectedVisitor.value;
+    final parentId = (_activeSearchVisitorId != null && _activeSearchVisitorId!.isNotEmpty)
+        ? _activeSearchVisitorId!
+        : (firstItem?['id'] ?? firstItem?['transaction_visitor_id'] ?? '').toString();
+    if (parentId.isEmpty) return;
+
+    try {
+      final relatedResult = await _dashboardRepository.getInvitationRelatedVisitors(
+        parentId,
+        start: 0,
+        length: 10,
+        draw: 1,
+      );
+
+      if (relatedResult is Success<Map<String, dynamic>>) {
+        final relatedData = relatedResult.data;
+        final rawList = (relatedData['collection'] is List)
+            ? relatedData['collection'] as List
+            : ((relatedData['collection'] is Map &&
+                    relatedData['collection']['data'] is List)
+                ? relatedData['collection']['data'] as List
+                : (relatedData['data'] is List ? relatedData['data'] as List : []));
+
+        if (rawList.isEmpty) return;
+
+        final currentSelectedId = (rxSelectedVisitor.value?['id'] ?? '').toString();
+
+        for (final vItem in rawList) {
+          final mapped = mapApiVisitorToUi(Map<String, dynamic>.from(vItem as Map));
+          final vId = mapped['id'].toString();
+
+          final matchIdx = rxAllRelatedVisitors.indexWhere((item) => item['id'].toString() == vId);
+          if (matchIdx != -1) {
+            rxAllRelatedVisitors[matchIdx] = mapped;
+          } else {
+            rxAllRelatedVisitors.add(mapped);
+          }
+        }
+
+        if (currentSelectedId.isNotEmpty) {
+          final matched = rxAllRelatedVisitors.firstWhereOrNull((v) => v['id'].toString() == currentSelectedId);
+          if (matched != null) {
+            rxSelectedVisitor.value = Map<String, dynamic>.from(matched);
+          }
+        }
+        applyFiltersAndPagination();
+      }
+    } catch (_) {}
+  }
 
   // Theme State
   final rxIsDarkMode = false.obs;
@@ -112,6 +183,7 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _startLiveAutoSync();
     // Load initial theme state locally to prevent lag
     try {
       final storage = Get.find<StorageService>();
@@ -280,9 +352,26 @@ class DashboardController extends GetxController {
     }
 
     if (lowerAction == 'checkin') {
+      final isPraregisterDone = visitor['is_praregister_done'] == true;
+      final approvalStatus = (visitor['approval_status'] ?? '').toString().toLowerCase();
+
+      if (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone) {
+        AppSnackbar.warning(
+          title: 'Registration Form Required',
+          message: 'Please complete the registration form first. Visitor will be automatically checked in upon form completion.',
+        );
+        return false;
+      }
+      if (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait')) {
+        AppSnackbar.warning(
+          title: 'Awaiting Host Approval',
+          message: 'This visitor is awaiting confirmation from the host. Please wait for approval.',
+        );
+        return false;
+      }
       if (rawStatus.contains('checkin') || rawStatus == 'in') {
         AppSnackbar.warning(
-          title: 'Warning',
+          title: 'Already Checked In',
           message: 'Visitor is already checked in.',
         );
         return false;
@@ -366,6 +455,9 @@ class DashboardController extends GetxController {
           'status': 'checkout',
         });
       } else if (apiAction == 'Block') {
+        updated['is_block'] = true;
+        updated['last_activity'] = 'Block';
+        updated['block_reason'] = actualReason;
         updated['visitor_status'] = 'Block';
         updated['status'] = 'Block';
         rxTimeline.insert(0, {
@@ -375,8 +467,13 @@ class DashboardController extends GetxController {
           'status': 'block',
         });
       } else if (apiAction == 'Unblock') {
-        updated['visitor_status'] = 'Praregis';
-        updated['status'] = 'Praregis';
+        updated['is_block'] = false;
+        updated['last_activity'] = 'UnBlock';
+        final hasCheckinTime = (updated['checkin_at'] != null && updated['checkin_at'] != '-') ||
+            (updated['check_in'] != null && updated['check_in'] != '-');
+        final defaultUnblockStatus = hasCheckinTime ? 'Checkin' : 'Praregis';
+        updated['visitor_status'] = defaultUnblockStatus;
+        updated['status'] = defaultUnblockStatus;
         rxTimeline.insert(0, {
           'time': nowFormatted,
           'title': 'Visitor Unblocked',
@@ -395,6 +492,65 @@ class DashboardController extends GetxController {
       }
       applyFiltersAndPagination();
 
+      // Automatically sync visitor_status and is_block strictly from backend API response
+      try {
+        final queryId = (rxAllRelatedVisitors.isNotEmpty
+                ? (rxAllRelatedVisitors.first['id'] ?? trxId)
+                : trxId)
+            .toString();
+        if (queryId.isNotEmpty) {
+          final relatedResult = await _dashboardRepository.getInvitationRelatedVisitors(
+            queryId,
+            start: 0,
+            length: 10,
+            draw: 1,
+          );
+          if (relatedResult is Success<Map<String, dynamic>>) {
+            final relatedData = relatedResult.data;
+            final rawList = (relatedData['collection'] is List)
+                ? relatedData['collection'] as List
+                : ((relatedData['collection'] is Map &&
+                        relatedData['collection']['data'] is List)
+                    ? relatedData['collection']['data'] as List
+                    : (relatedData['data'] is List
+                        ? relatedData['data'] as List
+                        : []));
+
+            for (final vItem in rawList) {
+              final vMap = Map<String, dynamic>.from(vItem as Map);
+              final vId = (vMap['id'] ?? vMap['transaction_visitor_id'] ?? '').toString();
+              final apiStatus = (vMap['visitor_status'] ?? vMap['status'] ?? '').toString();
+              final apiIsBlock = vMap['is_block'] == true;
+
+              if (vId == trxId) {
+                if (apiStatus.isNotEmpty) {
+                  updated['visitor_status'] = apiStatus;
+                  updated['status'] = apiStatus;
+                }
+                updated['is_block'] = apiIsBlock;
+                updated['last_activity'] = vMap['last_activity'] ?? '';
+                rxSelectedVisitor.value = Map<String, dynamic>.from(updated);
+              }
+
+              final matchIdx = rxAllRelatedVisitors.indexWhere(
+                (item) => (item['id'] ?? item['transaction_visitor_id']).toString() == vId,
+              );
+              if (matchIdx != -1) {
+                final existing = Map<String, dynamic>.from(rxAllRelatedVisitors[matchIdx]);
+                if (apiStatus.isNotEmpty) {
+                  existing['visitor_status'] = apiStatus;
+                  existing['status'] = apiStatus;
+                }
+                existing['is_block'] = apiIsBlock;
+                existing['last_activity'] = vMap['last_activity'] ?? '';
+                rxAllRelatedVisitors[matchIdx] = existing;
+              }
+            }
+            applyFiltersAndPagination();
+          }
+        }
+      } catch (_) {}
+
       AppSnackbar.success(
         title: 'Action Success',
         message:
@@ -405,6 +561,68 @@ class DashboardController extends GetxController {
       AppSnackbar.error(
         title: 'Action Failed',
         message: 'Failed to execute $apiAction on visitor.',
+      );
+      return false;
+    }
+  }
+
+  // --- Multiple Operator Invitation Actions (/api/operator-invitation/multiple-action) ---
+  Future<bool> performMultipleOperatorInvitationAction({
+    required String action,
+    required List<Map<String, dynamic>> visitors,
+    String? reason,
+  }) async {
+    if (visitors.isEmpty) {
+      AppSnackbar.warning(
+        title: 'Warning',
+        message: 'No visitors selected for this action.',
+      );
+      return false;
+    }
+
+    final cleanAction = (action == 'Check In' || action.toLowerCase() == 'checkin')
+        ? 'Checkin'
+        : ((action == 'Check Out' || action.toLowerCase() == 'checkout')
+            ? 'Checkout'
+            : (action.toLowerCase() == 'unblock' ? 'Unblock' : 'Block'));
+
+    final actualReason = (reason != null && reason.trim().isNotEmpty)
+        ? reason.trim()
+        : (cleanAction == 'Checkin'
+            ? 'Checked in by operator'
+            : (cleanAction == 'Checkout'
+                ? 'Checked out by operator'
+                : (cleanAction == 'Unblock'
+                    ? 'Unblocked by operator'
+                    : 'Blocked by operator')));
+
+    final payload = {
+      'data': visitors.map((v) {
+        final trxId = (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id'] ?? '').toString();
+        return {
+          'trx_visitor_id': trxId,
+          'action': cleanAction,
+          'reason': actualReason,
+        };
+      }).toList(),
+    };
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.performMultipleOperatorInvitationAction(payload);
+    rxIsActionLoading.value = false;
+
+    if (result is Success) {
+      await syncCurrentInvitationState();
+
+      AppSnackbar.success(
+        title: 'Action Success',
+        message: '$cleanAction successfully applied to ${visitors.length} visitors.',
+      );
+      return true;
+    } else {
+      AppSnackbar.error(
+        title: 'Action Failed',
+        message: 'Failed to apply $cleanAction to selected visitors.',
       );
       return false;
     }
@@ -617,6 +835,11 @@ class DashboardController extends GetxController {
       'visitor_type_name': visitorTypeName,
       'vip': item['vip'] == true,
       'frequent': false,
+      'is_block': item['is_block'] == true,
+      'last_activity': item['last_activity'] ?? '',
+      'block_reason': item['block_reason'] ?? '',
+      'is_praregister_done': item['is_praregister_done'] == true,
+      'approval_status': item['approval_status'] ?? '',
       'verified':
           item['is_praregister_done'] == true ||
           item['approval_status'] == 'Approved',
@@ -720,6 +943,7 @@ class DashboardController extends GetxController {
         final searchVisitorId =
             (firstItem['id'] ?? firstItem['transaction_visitor_id'] ?? '')
                 .toString();
+        _activeSearchVisitorId = searchVisitorId;
         final newRelated = <Map<String, dynamic>>[];
 
         if (searchVisitorId.isNotEmpty) {

@@ -137,6 +137,26 @@ class DashboardRepository {
     return postApi;
   }
 
+  Future<ApiResult<Map<String, dynamic>>> performMultipleOperatorInvitationAction(
+    Map<String, dynamic> payload,
+  ) async {
+    // 1. Try POST /api/operator-invitation/multiple-action
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/multiple-action',
+      data: payload,
+    );
+    if (postApi is Success) return postApi;
+
+    // 2. Try POST /operator-invitation/multiple-action
+    final postDirect = await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/multiple-action',
+      data: payload,
+    );
+    if (postDirect is Success) return postDirect;
+
+    return postApi;
+  }
+
   Future<ApiResult<Map<String, dynamic>>> performVisitorAction(String id, String action) async {
     return await _dioClient.post<Map<String, dynamic>>(
       '/visitor/action',
@@ -150,74 +170,41 @@ class DashboardRepository {
   Future<ApiResult<Map<String, dynamic>>> searchInvitation(String code) async {
     final cleanCode = code.trim();
 
-    // 1. Try GET /api/operator-invitation/search?code=...
-    final getApiSearch = await _dioClient.get<Map<String, dynamic>>(
-      '/api/operator-invitation/search',
-      queryParameters: {
-        'code': cleanCode,
-        'search': cleanCode,
-        'invitation_code': cleanCode,
-      },
-    );
-    if (getApiSearch is Success) {
-      return getApiSearch;
-    }
-
-    // 2. Try POST /api/operator-invitation/search
+    // 1. Primary: POST /api/operator-invitation/search
     final postApiSearch = await _dioClient.post<Map<String, dynamic>>(
       '/api/operator-invitation/search',
       data: {
+        'code': cleanCode,
         'search': cleanCode,
         'invitation_code': cleanCode,
-        'code': cleanCode,
-      },
-      queryParameters: {
-        'code': cleanCode,
       },
     );
     if (postApiSearch is Success) {
       return postApiSearch;
     }
 
-    // 3. Try GET /operator-invitation/search?code=...
-    final getSearch = await _dioClient.get<Map<String, dynamic>>(
-      '/operator-invitation/search',
-      queryParameters: {
-        'code': cleanCode,
-        'search': cleanCode,
-        'invitation_code': cleanCode,
-      },
-    );
-    if (getSearch is Success) {
-      return getSearch;
-    }
-
-    // 4. Try POST /operator-invitation/search
+    // 2. Secondary: POST /operator-invitation/search
     final postSearch = await _dioClient.post<Map<String, dynamic>>(
       '/operator-invitation/search',
       data: {
+        'code': cleanCode,
         'search': cleanCode,
         'invitation_code': cleanCode,
-        'code': cleanCode,
-      },
-      queryParameters: {
-        'code': cleanCode,
       },
     );
     if (postSearch is Success) {
       return postSearch;
     }
 
-    // 5. Try GET /api/operator-invitation?code=...
-    final getApiDirect = await _dioClient.get<Map<String, dynamic>>(
-      '/api/operator-invitation',
+    // 3. Fallback: GET /api/operator-invitation/search
+    final getApiSearch = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/search',
       queryParameters: {
         'code': cleanCode,
-        'search': cleanCode,
       },
     );
-    if (getApiDirect is Success) {
-      return getApiDirect;
+    if (getApiSearch is Success) {
+      return getApiSearch;
     }
 
     return postApiSearch;

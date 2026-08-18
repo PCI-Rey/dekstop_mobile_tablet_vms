@@ -86,7 +86,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       TextEditingController();
   final TextEditingController _topSearchController = TextEditingController();
   String _selectedSite = 'SPU';
-  String _selectedBulkAction = 'Fill Form';
+  String? _selectedBulkAction;
   String _occupancyFilter = 'Today';
 
   // Design Tokens (from AGENTS.md)
@@ -1473,8 +1473,44 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           Builder(
             builder: (context) {
               final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '').toString().toLowerCase();
+              final isBlocked = visitor['is_block'] == true ||
+                  rawStatus == 'block' ||
+                  rawStatus == 'blacklist';
 
-              if (rawStatus.contains('checkin') || rawStatus == 'in') {
+              // 1. If visitor is blocked (is_block == true): show ONLY the single Unblock button
+              if (isBlocked) {
+                return Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    height: 26,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF004385),
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 0,
+                        ),
+                      ),
+                      onPressed: () => _handleAction('Unblock'),
+                      icon: const Icon(Icons.lock_open_rounded, size: 14, color: Colors.white),
+                      label: Text(
+                        'Unblock',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              // 2. If is_block == false and visitor is Checkin: show BOTH Check Out + Block buttons
+              else if (rawStatus.contains('checkin') || rawStatus == 'in') {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1533,14 +1569,77 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     ),
                   ],
                 );
-              } else if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
+              }
+              // 3. If visitor is Available or Waiting (needs manual check in after approval): show Check In + Block buttons
+              else if (rawStatus.contains('available') || rawStatus.contains('waiting')) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 26,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 0,
+                          ),
+                        ),
+                        onPressed: () => _handleAction('Check In'),
+                        icon: const Icon(Icons.login_rounded, size: 14, color: Colors.white),
+                        label: Text(
+                          'Check In',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 26,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E293B),
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 0,
+                          ),
+                        ),
+                        onPressed: () => _handleAction('Block'),
+                        icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
+                        label: Text(
+                          'Block',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              // 4. If visitor is Checkout: show ONLY the single Block button
+              else if (rawStatus.contains('checkout') || rawStatus == 'out') {
                 return Align(
                   alignment: Alignment.center,
                   child: SizedBox(
                     height: 26,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004385),
+                        backgroundColor: const Color(0xFF1E293B),
                         foregroundColor: Colors.white,
                         elevation: 1,
                         shape: RoundedRectangleBorder(
@@ -1551,10 +1650,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           vertical: 0,
                         ),
                       ),
-                      onPressed: () => _handleAction('Unblock'),
-                      icon: const Icon(Icons.lock_open_rounded, size: 14, color: Colors.white),
+                      onPressed: () => _handleAction('Block'),
+                      icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
                       label: Text(
-                        'Unblock',
+                        'Block',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1563,7 +1662,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     ),
                   ),
                 );
-              } else {
+              }
+              // 5. If visitor is Preregis / Praregis or default: show ONLY Fill Form button
+              else {
                 return Align(
                   alignment: Alignment.center,
                   child: SizedBox(
@@ -1816,6 +1917,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     final lower = displayValue.toLowerCase().replaceAll(' ', '').replaceAll('-', '').replaceAll('_', '');
     if (lower.contains('checkin') || lower == 'in') {
       badgeColor = Colors.green; // Sesuai warna popup notif success
+    } else if (lower.contains('available') || lower.contains('approved')) {
+      badgeColor = const Color(0xFF10B981); // Emerald Green
+    } else if (lower.contains('waiting') || lower.contains('pending')) {
+      badgeColor = const Color(0xFFF59E0B); // Amber Orange
     } else if (lower.contains('checkout') || lower == 'out') {
       badgeColor = Colors.red; // Sesuai warna popup notif gagal/error
     } else if (lower.contains('block') || lower.contains('blacklist')) {
@@ -2430,25 +2535,63 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       key: _keySelectMultiple,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Select Multiple Checkbox
-                        Transform.scale(
-                          scale: 0.85,
-                          child: Checkbox(
-                            value: controller.rxSelectMultiple.value,
-                            activeColor: const Color(0xFF003082),
-                            onChanged: (val) {
-                              controller.rxSelectMultiple.value = val ?? false;
-                            },
-                          ),
-                        ),
-                        Text(
-                          'Select Multiple',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: _textDark,
-                          ),
-                        ),
+                        // Reactive Instant Select Multiple Custom Checkbox & Label
+                        Obx(() {
+                          final isMultiple = controller.rxSelectMultiple.value;
+
+                          void toggleMultiple() {
+                            final nextVal = !isMultiple;
+                            controller.rxSelectMultiple.value = nextVal;
+                            controller.rxSelectedItems.clear();
+                            setState(() {
+                              _selectedBulkAction = null;
+                            });
+                          }
+
+                          return InkWell(
+                            onTap: toggleMultiple,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 17,
+                                  height: 17,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    color: isMultiple
+                                        ? const Color(0xFF003082)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: isMultiple
+                                          ? const Color(0xFF003082)
+                                          : const Color(0xFFCBD5E1),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: isMultiple
+                                      ? const Center(
+                                          child: Icon(
+                                            Icons.check_rounded,
+                                            size: 13,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                                Text(
+                                  'Select Multiple',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: _textDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                         const SizedBox(width: 12),
                         // Pagination Indicator (< 0/0 >)
                         IconButton(
@@ -2509,6 +2652,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         : controller.rxRelatedVisitors;
                     final selectedVisitor = controller.rxSelectedVisitor.value;
                     final selectedId = (selectedVisitor?['id'] ?? selectedVisitor?['transaction_visitor_id'] ?? '').toString();
+                    final isMultipleMode = controller.rxSelectMultiple.value;
+                    // Observe reactive selection state so every tap re-renders in 0ms
+                    final selectedSet = controller.rxSelectedItems.toSet();
 
                     if (list.isEmpty) {
                       return Center(
@@ -2538,40 +2684,62 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           separatorBuilder: (_, __) => const SizedBox(width: 14),
                           itemBuilder: (context, index) {
                             final item = list[index];
-                            final itemId = (item['id'] ?? item['transaction_visitor_id'] ?? '').toString();
-                            final isSelected = selectedId.isNotEmpty && selectedId == itemId;
+                            final itemId = (item['trx_id'] ?? item['id'] ?? item['transaction_visitor_id'] ?? '').toString();
+                            final isSelected = isMultipleMode
+                                ? selectedSet.contains(itemId)
+                                : (selectedId.isNotEmpty && selectedId == itemId);
                             final faceImg =
                                 (item['faceimage'] ?? item['photo'] ?? item['avatar'] ?? item['host_faceimage'] ?? '')
                                     .toString();
 
-                            return GestureDetector(
-                              onTap: () {
-                                controller.rxSelectedVisitor.value = item;
-                              },
-                              child: Container(
-                                width: 105,
-                                height: 138,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF003082)
-                                        : const Color(0xFFE2E8F0),
-                                    width: isSelected ? 1.5 : 1,
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  if (controller.rxSelectMultiple.value) {
+                                    if (controller.rxSelectedItems.contains(itemId)) {
+                                      controller.rxSelectedItems.remove(itemId);
+                                    } else {
+                                      controller.rxSelectedItems.add(itemId);
+                                    }
+                                    final actions = _getAvailableBulkActions();
+                                    if (_selectedBulkAction != null && !actions.contains(_selectedBulkAction)) {
+                                      setState(() {
+                                        _selectedBulkAction = null;
+                                      });
+                                    }
+                                  } else {
+                                    controller.rxSelectedVisitor.value = item;
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(14),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 100),
+                                  width: 105,
+                                  height: 138,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 8,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.03),
-                                      blurRadius: 3,
-                                      offset: const Offset(0, 1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? const Color(0xFF003082)
+                                          : const Color(0xFFE2E8F0),
+                                      width: isSelected ? 1.8 : 1,
                                     ),
-                                  ],
-                                ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: isSelected
+                                            ? const Color(0xFF003082).withValues(alpha: 0.12)
+                                            : Colors.black.withValues(alpha: 0.03),
+                                        blurRadius: isSelected ? 6 : 3,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -2662,95 +2830,141 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  }),
-                ),
+                    ),
+                  );
+                }),
+              ),
 
-                // Bottom Bulk Action Toolbar (Fill Form dropdown & Apply & Right Action Pills)
+                // Bottom Bulk Action Toolbar (Dynamic Actions dropdown & Apply & Right Action Pills)
                 Row(
                   children: [
                     CompositedTransformTarget(
                       link: _bulkActionLayerLink,
                       child: Material(
                         color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _toggleBulkActionMenu,
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            height: 30,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: _isBulkActionMenuOpen
-                                    ? const Color(0xFF003082)
-                                    : const Color(0xFFCBD5E1),
-                                width: _isBulkActionMenuOpen ? 1.2 : 1,
+                        child: Obx(() {
+                          final isMultipleActive = controller.rxSelectMultiple.value;
+                          final hasItems = controller.rxSelectedItems.isNotEmpty;
+                          final actions = _getAvailableBulkActions();
+                          final isDropdownEnabled = isMultipleActive && hasItems && actions.isNotEmpty;
+                          final hasActionSelected = isDropdownEnabled &&
+                              _selectedBulkAction != null &&
+                              actions.contains(_selectedBulkAction);
+
+                          final displayAction = hasActionSelected
+                              ? _selectedBulkAction!
+                              : (isDropdownEnabled ? 'Select Action' : 'Action');
+
+                          return InkWell(
+                            onTap: isDropdownEnabled ? _toggleBulkActionMenu : null,
+                            borderRadius: BorderRadius.circular(6),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              height: 32,
+                              constraints: const BoxConstraints(minWidth: 128),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              decoration: BoxDecoration(
+                                color: isDropdownEnabled ? Colors.white : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: (_isBulkActionMenuOpen && isDropdownEnabled)
+                                      ? const Color(0xFF003082)
+                                      : (isDropdownEnabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
+                                  width: (_isBulkActionMenuOpen && isDropdownEnabled) ? 1.5 : 1,
+                                ),
+                                boxShadow: (_isBulkActionMenuOpen && isDropdownEnabled)
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFF003082).withValues(alpha: 0.1),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 1),
+                                        )
+                                      ]
+                                    : null,
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (hasActionSelected) ...[
+                                    Icon(
+                                      _getActionIcon(displayAction),
+                                      size: 15,
+                                      color: _getActionColor(displayAction),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  Text(
+                                    displayAction,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      fontWeight: hasActionSelected ? FontWeight.w600 : FontWeight.w500,
+                                      color: hasActionSelected ? _textDark : const Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    (_isBulkActionMenuOpen && isDropdownEnabled)
+                                        ? Icons.keyboard_arrow_up_rounded
+                                        : Icons.keyboard_arrow_down_rounded,
+                                    size: 17,
+                                    color: isDropdownEnabled
+                                        ? const Color(0xFF003082)
+                                        : const Color(0xFF94A3B8),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _selectedBulkAction,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: _textDark,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  _isBulkActionMenuOpen
-                                      ? Icons.arrow_drop_up
-                                      : Icons.arrow_drop_down,
-                                  size: 18,
-                                  color: _isBulkActionMenuOpen
-                                      ? const Color(0xFF003082)
-                                      : const Color(0xFF64748B),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                          );
+                        }),
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          AppSnackbar.info(
-                            title: 'Action Applied',
-                            message: 'Action $_selectedBulkAction applied.',
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          height: 30,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE5E7EB),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Apply',
-                              style: GoogleFonts.inter(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF64748B),
+                    Obx(() {
+                      final isMultipleActive = controller.rxSelectMultiple.value;
+                      final hasItems = controller.rxSelectedItems.isNotEmpty;
+                      final actions = _getAvailableBulkActions();
+                      final isEnabled = isMultipleActive &&
+                          hasItems &&
+                          actions.isNotEmpty &&
+                          _selectedBulkAction != null &&
+                          actions.contains(_selectedBulkAction);
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: isEnabled ? _applyBulkAction : null,
+                          borderRadius: BorderRadius.circular(6),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: isEnabled
+                                  ? const Color(0xFF004385)
+                                  : const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Apply',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isEnabled
+                                      ? Colors.white
+                                      : const Color(0xFF94A3B8),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                     const Spacer(),
                     // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
                     Obx(() {
@@ -2764,8 +2978,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           _buildFeedPillButton(
                             'Extend',
                             Icons.access_time_rounded,
-                            const Color(0xFFCBD5E1),
-                            const Color(0xFF475569),
+                            const Color(0xFFFBBF24),
+                            Colors.white,
                             () => _handleAction('Extend'),
                           ),
                           const SizedBox(width: 6),
@@ -3462,6 +3676,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   void _handleAction(String actionName) {
     final visitor = controller.rxSelectedVisitor.value;
     final rawStatus = (visitor?['visitor_status'] ?? visitor?['status'] ?? '').toString().toLowerCase();
+    final isBlocked = visitor?['is_block'] == true ||
+        rawStatus == 'block' ||
+        rawStatus == 'blacklist';
 
     if (actionName == 'Scan QR') {
       _showScanQrDialog();
@@ -3472,6 +3689,41 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
         return;
       }
+      final isPraregisterDone = visitor['is_praregister_done'] == true;
+      final approvalStatus = (visitor['approval_status'] ?? '').toString().toLowerCase();
+      final isAvailable = rawStatus.contains('available') || approvalStatus == 'approved';
+
+      // Rule 1: Blocked visitor
+      if (isBlocked) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Action Denied',
+          message: 'Cannot check in a blocked visitor. Please unblock first.',
+        );
+        return;
+      }
+
+      // Rule 2: Preregis / Form incomplete (only if not Available / Approved)
+      if (!isAvailable && (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone)) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Registration Form Required',
+          message: 'Please complete the visitor registration form first. The visitor will be automatically checked in upon form completion.',
+        );
+        return;
+      }
+
+      // Rule 3: Waiting / Pending host approval (only if still pending/waiting)
+      if (!isAvailable && (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait'))) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Awaiting Host Approval',
+          message: 'This visitor is currently awaiting confirmation from the host. Please wait for host approval before checking in.',
+        );
+        return;
+      }
+
+      // Rule 4: Already checked in
       if (rawStatus.contains('checkin') || rawStatus == 'in') {
         _showWarningNoticeDialog(
           context,
@@ -3480,14 +3732,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         );
         return;
       }
-      if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
-        _showWarningNoticeDialog(
-          context,
-          title: 'Action Denied',
-          message: 'Cannot check in a blocked visitor. Please unblock first.',
-        );
-        return;
-      }
+
       _showConfirmationActionDialog(context, action: 'Checkin', question: 'Do you want to check in?');
       return;
     }
@@ -3496,11 +3741,35 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
         return;
       }
-      if (!rawStatus.contains('checkin') && !rawStatus.contains('in')) {
+      if (isBlocked) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Action Denied',
+          message: 'Cannot check out a blocked visitor. Please unblock first.',
+        );
+        return;
+      }
+      if (rawStatus.contains('waiting')) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Action Denied',
+          message: 'Visitor is currently awaiting host confirmation and has not checked in yet. Please wait for approval and check in first.',
+        );
+        return;
+      }
+      if (rawStatus.contains('available')) {
         _showWarningNoticeDialog(
           context,
           title: 'Check In Required',
-          message: 'Please check in the visitor first before checking out.',
+          message: 'Visitor has not checked in yet. Please check in the visitor first before checking out.',
+        );
+        return;
+      }
+      if (rawStatus.contains('preregis') || rawStatus.contains('praregis')) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Check In Required',
+          message: 'Visitor has not completed registration or checked in. Please complete registration and check in first.',
         );
         return;
       }
@@ -3512,6 +3781,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         );
         return;
       }
+      if (!rawStatus.contains('checkin') && !rawStatus.contains('in')) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Check In Required',
+          message: 'Please check in the visitor first before checking out.',
+        );
+        return;
+      }
       _showConfirmationActionDialog(context, action: 'Checkout', question: 'Do you want to check out?');
       return;
     }
@@ -3520,8 +3797,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
         return;
       }
-      if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
-        AppSnackbar.warning(title: 'Warning', message: 'Visitor is already blocked.');
+      if (isBlocked) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Already Blocked',
+          message: 'Visitor ${visitor['name'] ?? ''} is already blocked.',
+        );
         return;
       }
       _showReasonActionDialog(context, action: 'Block');
@@ -3530,6 +3811,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     if (actionName == 'Whitelist' || actionName == 'Unblock') {
       if (visitor == null) {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      if (!isBlocked) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Not Blocked',
+          message: 'Visitor ${visitor['name'] ?? ''} is not currently blocked.',
+        );
         return;
       }
       _showReasonActionDialog(context, action: 'Unblock');
@@ -4653,8 +4942,495 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Custom Floating Bulk Action Dropdown Menu (Fill Form, Checkin, Checkout, Print Badge)
+  // Dynamic Bulk Actions List & Apply Logic
   // ─────────────────────────────────────────────────────────────────────────
+  List<String> _getAvailableBulkActions() {
+    // Bulk actions only exist when Select Multiple is active and at least one visitor is checked
+    if (!controller.rxSelectMultiple.value || controller.rxSelectedItems.isEmpty) {
+      return [];
+    }
+
+    final selectedList = <Map<String, dynamic>>[];
+    for (final id in controller.rxSelectedItems) {
+      final match = controller.rxAllRelatedVisitors.firstWhereOrNull(
+        (v) => (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id']).toString() == id.toString(),
+      );
+      if (match != null) selectedList.add(match);
+    }
+
+    if (selectedList.isEmpty) {
+      return [];
+    }
+
+    final actions = <String>{};
+    for (final v in selectedList) {
+      final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
+      final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
+
+      if (isBlocked) {
+        actions.add('Unblock');
+      } else if (rawStatus.contains('checkin') || rawStatus == 'in') {
+        actions.add('Check Out');
+        actions.add('Block');
+      } else if (rawStatus.contains('available') || rawStatus.contains('waiting')) {
+        actions.add('Check In');
+        actions.add('Block');
+      } else if (rawStatus.contains('checkout') || rawStatus == 'out') {
+        actions.add('Block');
+      } else {
+        // Praregis / Preregis / default
+        actions.add('Fill Form');
+      }
+    }
+
+    return actions.toList();
+  }
+
+  void _applyBulkAction() {
+    if (_selectedBulkAction == null) {
+      AppSnackbar.warning(
+        title: 'Action Required',
+        message: 'Please choose an action from the dropdown first.',
+      );
+      return;
+    }
+    final action = _selectedBulkAction!;
+
+    final selectedVisitors = <Map<String, dynamic>>[];
+    if (controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty) {
+      for (final id in controller.rxSelectedItems) {
+        final match = controller.rxAllRelatedVisitors.firstWhereOrNull(
+          (v) => (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id']).toString() == id.toString(),
+        );
+        if (match != null) selectedVisitors.add(match);
+      }
+    }
+
+    if (selectedVisitors.isEmpty) {
+      AppSnackbar.warning(
+        title: 'Warning',
+        message: 'Please select at least one visitor to apply $action.',
+      );
+      return;
+    }
+
+    if (action == 'Fill Form') {
+      _handleAction('Fill Form');
+      return;
+    }
+
+    final validVisitors = <Map<String, dynamic>>[];
+    for (final v in selectedVisitors) {
+      final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
+      final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
+
+      if ((action == 'Check In' || action == 'Checkin') && !isBlocked && (rawStatus.contains('available') || rawStatus.contains('waiting'))) {
+        validVisitors.add(v);
+      } else if ((action == 'Check Out' || action == 'Checkout') && !isBlocked && (rawStatus.contains('checkin') || rawStatus == 'in')) {
+        validVisitors.add(v);
+      } else if (action == 'Block' && !isBlocked) {
+        validVisitors.add(v);
+      } else if (action == 'Unblock' && isBlocked) {
+        validVisitors.add(v);
+      }
+    }
+
+    if (validVisitors.isEmpty) {
+      AppSnackbar.warning(
+        title: 'Action Not Applicable',
+        message: 'None of the selected visitors are eligible for $action.',
+      );
+      return;
+    }
+
+    if (action == 'Block' || action == 'Unblock') {
+      _showMultipleReasonActionDialog(context, action: action, validVisitors: validVisitors);
+    } else {
+      _showMultipleConfirmationActionDialog(context, action: action, validVisitors: validVisitors);
+    }
+  }
+
+  void _showMultipleConfirmationActionDialog(
+    BuildContext context, {
+    required String action,
+    required List<Map<String, dynamic>> validVisitors,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            width: 360,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 8),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 22,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF86EFAC),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 38,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Do you want to apply $action to ${validVisitors.length} selected visitors?',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5A6A80),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                            controller.performMultipleOperatorInvitationAction(
+                              action: action,
+                              visitors: validVisitors,
+                            );
+                          },
+                          child: Text(
+                            'Yes',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMultipleReasonActionDialog(
+    BuildContext context, {
+    required String action,
+    required List<Map<String, dynamic>> validVisitors,
+  }) {
+    final reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final isBlock = action.toLowerCase() == 'block';
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            width: 360,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 8),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 22,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFED7AA),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.priority_high_rounded,
+                      size: 38,
+                      color: Color(0xFFF59E0B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  isBlock ? 'Multiple Block Action' : 'Multiple Unblock Action',
+                  style: GoogleFonts.inter(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Please provide a reason for applying $action to ${validVisitors.length} visitors:',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TextField(
+                    controller: reasonController,
+                    autofocus: true,
+                    style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B)),
+                    decoration: InputDecoration(
+                      hintText: 'Enter reason...',
+                      hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5A6A80),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () {
+                            final reason = reasonController.text.trim();
+                            if (reason.isEmpty) {
+                              AppSnackbar.warning(
+                                title: 'Reason Required',
+                                message: 'Please enter a reason before submitting.',
+                              );
+                              return;
+                            }
+                            Navigator.of(dialogContext).pop();
+                            controller.performMultipleOperatorInvitationAction(
+                              action: action,
+                              visitors: validVisitors,
+                              reason: reason,
+                            );
+                          },
+                          child: Text(
+                            'Submit',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Custom Floating Bulk Action Dropdown Menu & Helpers
+  // ─────────────────────────────────────────────────────────────────────────
+  IconData _getActionIcon(String action) {
+    switch (action.toLowerCase()) {
+      case 'check in':
+      case 'checkin':
+        return Icons.login_rounded;
+      case 'check out':
+      case 'checkout':
+        return Icons.logout_rounded;
+      case 'block':
+        return Icons.block_rounded;
+      case 'unblock':
+        return Icons.lock_open_rounded;
+      case 'fill form':
+      default:
+        return Icons.edit_note_rounded;
+    }
+  }
+
+  Color _getActionColor(String action) {
+    switch (action.toLowerCase()) {
+      case 'check in':
+      case 'checkin':
+        return const Color(0xFF10B981);
+      case 'check out':
+      case 'checkout':
+        return const Color(0xFFEF4444);
+      case 'block':
+        return const Color(0xFF475569);
+      case 'unblock':
+        return const Color(0xFF004385);
+      case 'fill form':
+      default:
+        return const Color(0xFF004385);
+    }
+  }
+
   void _toggleBulkActionMenu() {
     if (_bulkActionOverlay != null) {
       _closeBulkActionMenu();
@@ -4665,24 +5441,25 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _isBulkActionMenuOpen = true;
     });
 
+    final actions = _getAvailableBulkActions();
+    final menuHeight = (actions.length * 38.0) + 12.0;
+
     final overlay = Overlay.of(context);
     _bulkActionOverlay = OverlayEntry(
       builder: (context) => Stack(
         children: [
-          // Dismiss on tap outside
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: _closeBulkActionMenu,
             ),
           ),
-          // Sleek Floating dropdown menu opening cleanly upward above the toolbar
           Positioned(
-            width: 150,
+            width: 155,
             child: CompositedTransformFollower(
               link: _bulkActionLayerLink,
               showWhenUnlinked: false,
-              offset: const Offset(0, -146),
+              offset: Offset(0, -(menuHeight + 4)),
               child: Material(
                 color: Colors.transparent,
                 child: Container(
@@ -4690,29 +5467,27 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
-                        color: Color(0x1F000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 4),
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   padding: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 4,
+                    vertical: 5,
+                    horizontal: 5,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ...[
-                        'Fill Form',
-                        'Checkin',
-                        'Checkout',
-                        'Print Badge',
-                      ].map((action) {
+                      ...actions.map((action) {
                         final isSelected = _selectedBulkAction == action;
+                        final itemColor = _getActionColor(action);
+                        final itemIcon = _getActionIcon(action);
+
                         return Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -4723,29 +5498,48 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               _closeBulkActionMenu();
                             },
                             borderRadius: BorderRadius.circular(6),
-                            hoverColor: const Color(0xFFF1F5F9),
+                            hoverColor: const Color(0xFFF8FAFC),
                             child: Container(
+                              height: 36,
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? const Color(0xFFEBF3FC)
+                                    ? const Color(0xFFEFF6FF)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
-                                vertical: 8,
+                                vertical: 6,
                               ),
-                              child: Text(
-                                action,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.5,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isSelected
-                                      ? const Color(0xFF003082)
-                                      : const Color(0xFF334155),
-                                ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    itemIcon,
+                                    size: 16,
+                                    color: itemColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      action,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? const Color(0xFF003082)
+                                            : const Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(
+                                      Icons.check_rounded,
+                                      size: 15,
+                                      color: Color(0xFF003082),
+                                    ),
+                                ],
                               ),
                             ),
                           ),
