@@ -86,20 +86,28 @@ class DashboardController extends GetxController {
   // Loading States
   final rxIsLoading = false.obs;
   final rxIsActionLoading = false.obs;
+  final rxIsOccupancyLoading = false.obs;
 
   // Data States
   final rxOccupancy = <String, int>{
-    'employees': 142,
-    'visitors': 28,
-    'contractors': 15,
-    'vehicles': 46,
+    'staff': 2,
   }.obs;
+  final rxUpcomingPurpose = <Map<String, dynamic>>[].obs;
+  final rxUpcomingVisitorsList = <Map<String, dynamic>>[].obs;
+  final rxIsUpcomingVisitorsLoading = false.obs;
+  final rxUpcomingVisitorsTotal = 0.obs;
+  final rxUpcomingVisitorsPage = 1.obs;
+  final rxUpcomingVisitorsLength = 10.obs;
+  final rxUpcomingVisitorsSearch = ''.obs;
+  final rxSelectedPurposeCategory = ''.obs;
+  final rxSelectedPurposeId = ''.obs;
 
   final rxAlerts = <Map<String, dynamic>>[].obs;
 
   final rxSelectedVisitor = Rxn<Map<String, dynamic>>();
   final rxPrimaryHost = Rxn<Map<String, dynamic>>();
   final rxLiveVisitors = <Map<String, dynamic>>[].obs;
+  final rxAllLiveVisitors = <Map<String, dynamic>>[];
   final rxRelatedVisitors = <Map<String, dynamic>>[].obs;
   final rxAllRelatedVisitors =
       <Map<String, dynamic>>[]; // original copy for search
@@ -107,7 +115,7 @@ class DashboardController extends GetxController {
 
   // UI Interactive States
   final rxSearchQuery = ''.obs;
-  final rxFeedTabIndex = 1.obs; // 0 for Live Visitors, 1 for Related Visitors
+  final rxFeedTabIndex = 0.obs; // 0 for Live Visitors, 1 for Related Visitors
   final rxSelectedTab =
       0.obs; // Tab index for visitor information details (desktop)
   final rxMobileNavIndex = 0.obs; // Bottom nav index (mobile)
@@ -194,10 +202,180 @@ class DashboardController extends GetxController {
 
     // Initial empty state
     resetDashboardToInitialState();
+    fetchUpcomingPurpose(filter: 'Today');
+  }
+
+  Future<void> fetchUpcomingPurpose({String filter = 'Today'}) async {
+    rxIsOccupancyLoading.value = true;
+    final result = await _dashboardRepository.getUpcomingPurpose(filter: filter);
+    rxIsOccupancyLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'] ?? [];
+      if (rawList is List) {
+        final parsed = rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        rxUpcomingPurpose.assignAll(parsed);
+
+        // Also sync rxOccupancy map for quick reference
+        final newMap = <String, int>{};
+        for (final item in parsed) {
+          final name = (item['name'] ?? item['purpose'] ?? '').toString().toLowerCase();
+          final count = int.tryParse(item['count']?.toString() ?? '0') ?? 0;
+          if (name.isNotEmpty) {
+            newMap[name] = count;
+          }
+        }
+        if (newMap.isNotEmpty) {
+          rxOccupancy.assignAll(newMap);
+        }
+
+        // Fetch Live Visitors for the first purpose category
+        if (parsed.isNotEmpty) {
+          final firstId = (parsed.first['id'] ?? '').toString();
+          if (firstId.isNotEmpty) {
+            fetchLiveVisitors(visitorTypeId: firstId);
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> fetchLiveVisitors({
+    String? visitorTypeId,
+    String? search,
+  }) async {
+    String typeId = visitorTypeId ?? '';
+    if (typeId.isEmpty && rxUpcomingPurpose.isNotEmpty) {
+      typeId = (rxUpcomingPurpose.first['id'] ?? '').toString();
+    }
+    if (typeId.isEmpty) return;
+
+    final result = await _dashboardRepository.getUpcomingVisitors(
+      visitorTypeId: typeId,
+      start: 0,
+      length: 100,
+      search: search,
+    );
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'] ?? [];
+      if (rawList is List) {
+        final mappedList = rawList.map((e) {
+          final m = Map<String, dynamic>.from(e as Map);
+          m['name'] = (m['visitor_name'] ?? m['name'] ?? 'Visitor').toString();
+          m['visitor_name'] = m['name'];
+          m['organization'] = (m['visitor_organization_name'] ?? m['organization'] ?? m['company'] ?? '').toString();
+          m['visitor_organization_name'] = m['organization'];
+          m['email'] = (m['visitor_email'] ?? m['email'] ?? '-').toString();
+          m['phone'] = (m['visitor_phone'] ?? m['phone'] ?? '-').toString();
+          m['identity_id'] = (m['identity_id'] ?? m['id_number'] ?? m['nik'] ?? '-').toString();
+          m['gender'] = (m['visitor_gender'] ?? m['gender'] ?? 'Male').toString();
+          m['occupancy'] = (m['visitor_type_name'] ?? m['occupancy'] ?? 'Visitor').toString();
+          m['faceimage'] = (m['selfie_image'] ?? m['visitor_face'] ?? m['faceimage'] ?? m['photo'] ?? '').toString();
+          m['invitation_code'] = (m['invitation_code'] ?? m['visitor_code'] ?? m['initial_trx_code'] ?? '').toString();
+          m['visitor_code'] = m['invitation_code'];
+          m['transaction_visitor_id'] = (m['transaction_visitor_id'] ?? m['id'] ?? '').toString();
+          m['id'] = m['invitation_code'].isNotEmpty ? m['invitation_code'] : m['transaction_visitor_id'];
+          m['visitor_status'] = (m['visitor_status'] ?? m['status'] ?? 'Waiting').toString();
+          m['status'] = m['visitor_status'];
+          m['agenda'] = (m['agenda'] ?? m['purpose'] ?? 'Meeting').toString();
+          m['purpose'] = m['agenda'];
+          m['vehicle_plate_number'] = (m['vehicle_plate_number'] ?? m['plate_number'] ?? '').toString();
+          m['vehicle_type'] = (m['vehicle_type'] ?? 'Car').toString();
+          m['host_name'] = (m['host_name'] ?? m['host'] ?? 'Host').toString();
+          m['host'] = m['host_name'];
+          m['host_organization_name'] = (m['host_organization_name'] ?? m['host_organization'] ?? '').toString();
+          m['host_email'] = (m['host_email'] ?? '').toString();
+          m['host_phone'] = (m['host_phone'] ?? '').toString();
+          m['host_faceimage'] = (m['host_faceimage'] ?? m['host_photo'] ?? '').toString();
+          return m;
+        }).toList();
+
+        rxAllLiveVisitors.clear();
+        rxAllLiveVisitors.addAll(mappedList);
+
+        if (search != null && search.trim().isNotEmpty) {
+          final query = search.trim().toLowerCase();
+          final filtered = mappedList.where((item) {
+            final name = (item['name'] ?? '').toString().toLowerCase();
+            return name.contains(query);
+          }).toList();
+          rxLiveVisitors.assignAll(filtered);
+        } else {
+          rxLiveVisitors.assignAll(mappedList);
+        }
+      } else {
+        rxLiveVisitors.clear();
+        rxAllLiveVisitors.clear();
+      }
+    } else {
+      rxLiveVisitors.clear();
+      rxAllLiveVisitors.clear();
+    }
+  }
+
+  Future<void> fetchUpcomingVisitors({
+    String? visitorTypeId,
+    int? page,
+    int? length,
+    String? search,
+  }) async {
+    final typeId = visitorTypeId ?? rxSelectedPurposeId.value;
+    if (typeId.isEmpty) return;
+
+    final targetPage = page ?? rxUpcomingVisitorsPage.value;
+    final targetLength = length ?? rxUpcomingVisitorsLength.value;
+    final targetSearch = search ?? rxUpcomingVisitorsSearch.value;
+
+    rxIsUpcomingVisitorsLoading.value = true;
+    final start = (targetPage - 1) * targetLength;
+    final result = await _dashboardRepository.getUpcomingVisitors(
+      visitorTypeId: typeId,
+      start: start,
+      length: targetLength,
+      search: targetSearch.isNotEmpty ? targetSearch : null,
+    );
+    rxIsUpcomingVisitorsLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'] ?? [];
+
+      if (rawList is List) {
+        var mappedList = rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+
+        // Strict filtering by Visitor Name
+        if (targetSearch.trim().isNotEmpty) {
+          final query = targetSearch.trim().toLowerCase();
+          mappedList = mappedList.where((item) {
+            final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '').toString().toLowerCase();
+            return name.contains(query);
+          }).toList();
+        }
+
+        final total = targetSearch.trim().isNotEmpty
+            ? mappedList.length
+            : (resData['RecordsTotal'] ?? resData['recordsTotal'] ?? resData['RecordsFiltered'] ?? mappedList.length);
+
+        rxUpcomingVisitorsTotal.value = int.tryParse(total.toString()) ?? mappedList.length;
+        rxUpcomingVisitorsPage.value = targetPage;
+        rxUpcomingVisitorsLength.value = targetLength;
+        rxUpcomingVisitorsList.assignAll(mappedList);
+      } else {
+        rxUpcomingVisitorsList.clear();
+        rxUpcomingVisitorsTotal.value = 0;
+      }
+    } else {
+      rxUpcomingVisitorsList.clear();
+      rxUpcomingVisitorsTotal.value = 0;
+    }
   }
 
   Future<void> fetchDashboardData() async {
     // No automatic summary/visitors calls since API endpoints do not exist in backend
+    fetchUpcomingPurpose(filter: 'Today');
   }
 
   // --- Real-time Search, Status Filtering, and Pagination computation ---
@@ -291,21 +469,40 @@ class DashboardController extends GetxController {
     }
   }
 
+  void filterVisitors(String query) {
+    rxSearchQuery.value = query;
+    if (rxFeedTabIndex.value == 0) {
+      if (query.trim().isEmpty) {
+        rxLiveVisitors.assignAll(rxAllLiveVisitors);
+      } else {
+        final lower = query.trim().toLowerCase();
+        final filtered = rxAllLiveVisitors.where((item) {
+          final name = (item['name'] ?? item['visitor_name'] ?? '').toString().toLowerCase();
+          final org = (item['organization'] ?? item['visitor_organization_name'] ?? '').toString().toLowerCase();
+          final code = (item['invitation_code'] ?? item['visitor_code'] ?? '').toString().toLowerCase();
+          return name.contains(lower) || org.contains(lower) || code.contains(lower);
+        }).toList();
+        rxLiveVisitors.assignAll(filtered);
+      }
+    } else {
+      applyFiltersAndPagination();
+    }
+  }
+
   void clearSearch() {
     rxSearchQuery.value = '';
-    applyFiltersAndPagination();
+    filterVisitors('');
   }
 
   /// Reset all visitor data, related feeds, tabs, and search back to the clean initial empty state
   void resetDashboardToInitialState() {
     rxSelectedVisitor.value = null;
     rxPrimaryHost.value = null;
-    rxLiveVisitors.clear();
     rxAllRelatedVisitors.clear();
     rxRelatedVisitors.clear();
     rxSelectedItems.clear();
     rxSelectMultiple.value = false;
-    rxFeedTabIndex.value = 1;
+    rxFeedTabIndex.value = 0;
     rxTimeline.clear();
     rxSearchQuery.value = '';
     rxActiveFilter.value = 'All';
@@ -566,6 +763,128 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<bool> extendVisitorPeriod({
+    required int period,
+    bool applyToAll = false,
+    String? visitorId,
+  }) async {
+    String targetId = visitorId ?? '';
+    if (targetId.isEmpty) {
+      final v = rxSelectedVisitor.value;
+      targetId = (v?['raw']?['id'] ??
+              v?['trx_id'] ??
+              v?['id'] ??
+              v?['transaction_visitor_id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    if (targetId.isEmpty) {
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'No visitor selected to extend period',
+      );
+      return false;
+    }
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.extendVisitorPeriod(
+      id: targetId,
+      period: period,
+      applyToAll: applyToAll,
+    );
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final msg = resData['msg'] ??
+          resData['message'] ??
+          'Visitor period extended by $period minutes successfully';
+
+      // 1. Calculate and update visitor period end and extend_visitor_period dynamically
+      final currentVisitor = rxSelectedVisitor.value;
+      if (currentVisitor != null) {
+        final updated = Map<String, dynamic>.from(currentVisitor);
+        final rawEnd = updated['raw']?['visitor_period_end'] ??
+            updated['visitor_period_end'] ??
+            updated['period_end'];
+
+        DateTime currentEndDt = parseApiDateTime(rawEnd) ??
+            DateTime.now().add(const Duration(hours: 4));
+        final newEndDt = currentEndDt.add(Duration(minutes: period));
+        final newIsoEnd = newEndDt.toIso8601String();
+        final newFormattedEnd = formatLocalDateTime(newEndDt);
+
+        final currentExtend = int.tryParse(
+                (updated['extend_visitor_period'] ?? 0).toString()) ??
+            0;
+        final newExtend = currentExtend + period;
+
+        updated['extend_visitor_period'] = newExtend;
+        updated['visitor_period_end'] = newFormattedEnd;
+        updated['period_end'] = newFormattedEnd;
+        if (updated['raw'] is Map) {
+          final updatedRaw = Map<String, dynamic>.from(updated['raw'] as Map);
+          updatedRaw['extend_visitor_period'] = newExtend;
+          updatedRaw['visitor_period_end'] = newIsoEnd;
+          updated['raw'] = updatedRaw;
+        }
+
+        rxSelectedVisitor.value = updated;
+
+        // Also update all matching related visitors in memory
+        for (int i = 0; i < rxAllRelatedVisitors.length; i++) {
+          final item = Map<String, dynamic>.from(rxAllRelatedVisitors[i]);
+          final itemId = (item['raw']?['id'] ??
+                  item['trx_id'] ??
+                  item['id'] ??
+                  item['invitation_code'] ??
+                  '')
+              .toString();
+          if (applyToAll || itemId == targetId) {
+            item['extend_visitor_period'] = newExtend;
+            item['visitor_period_end'] = newFormattedEnd;
+            item['period_end'] = newFormattedEnd;
+            rxAllRelatedVisitors[i] = item;
+          }
+        }
+        applyFiltersAndPagination();
+
+        // 2. Add Timeline Entry
+        final nowFormatted =
+            formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+        rxTimeline.insert(0, {
+          'time': nowFormatted,
+          'title': 'Period Extended',
+          'desc': 'Extended by +$period min (End: $newFormattedEnd)',
+          'status': 'extend',
+        });
+      }
+
+      AppSnackbar.success(
+        title: 'Period Extended',
+        message: msg.toString(),
+      );
+
+      // Refresh visitor invitation details to reflect extended period
+      final invCode =
+          rxSelectedVisitor.value?['invitation_code']?.toString() ?? '';
+      if (invCode.isNotEmpty && invCode != '-') {
+        searchInvitationCode(invCode);
+      }
+      return true;
+    } else if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      AppSnackbar.error(
+        title: 'Extend Failed',
+        message: err.isNotEmpty ? err : 'Failed to extend visitor period',
+      );
+      return false;
+    }
+    return false;
+  }
+
   // --- Multiple Operator Invitation Actions (/api/operator-invitation/multiple-action) ---
   Future<bool> performMultipleOperatorInvitationAction({
     required String action,
@@ -656,33 +975,56 @@ class DashboardController extends GetxController {
   DateTime? parseApiDateTime(dynamic dateStr) {
     if (dateStr == null || dateStr.toString().trim().isEmpty) return null;
     final s = dateStr.toString().trim();
+    if (s == '-' || s == 'null') return null;
+
+    // 1. Try ISO-8601 (Backend stores UTC timestamps e.g. 2026-08-18T01:00:00 -> convert to Local GMT+7)
     try {
-      if (!s.endsWith('Z') && !RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(s)) {
-        // Backend stores timestamps in UTC without trailing 'Z'
-        return DateTime.parse('${s}Z').toLocal();
+      if (s.contains('T')) {
+        if (!s.endsWith('Z') && !RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(s)) {
+          return DateTime.parse('${s}Z').toLocal();
+        }
+        return DateTime.parse(s).toLocal();
       }
       return DateTime.parse(s).toLocal();
-    } catch (_) {
-      try {
-        return DateTime.parse(s).toLocal();
-      } catch (_) {
-        return null;
+    } catch (_) {}
+
+    // 2. Try Human formatted date: "18 August 2026, 19:00" (Already in Local GMT+7)
+    try {
+      const months = {
+        'january': 1,
+        'february': 2,
+        'march': 3,
+        'april': 4,
+        'may': 5,
+        'june': 6,
+        'july': 7,
+        'august': 8,
+        'september': 9,
+        'october': 10,
+        'november': 11,
+        'december': 12,
+      };
+      final clean = s.replaceAll(',', '').trim();
+      final parts = clean.split(RegExp(r'\s+'));
+      if (parts.length >= 4) {
+        final day = int.tryParse(parts[0]);
+        final monthStr = parts[1].toLowerCase();
+        final month = months[monthStr];
+        final year = int.tryParse(parts[2]);
+        final timeParts = parts[3].split(':');
+        final hour = int.tryParse(timeParts[0]);
+        final minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) : 0;
+
+        if (day != null && month != null && year != null && hour != null) {
+          return DateTime(year, month, day, hour, minute ?? 0);
+        }
       }
-    }
+    } catch (_) {}
+
+    return null;
   }
 
-  String? formatApiTime(dynamic dateStr) {
-    final dt = parseApiDateTime(dateStr);
-    if (dt == null) return null;
-    final hour = dt.hour.toString().padLeft(2, '0');
-    final minute = dt.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
-  String formatApiDate(dynamic dateStr) {
-    if (dateStr == null || dateStr.toString().trim().isEmpty) return '-';
-    final dt = parseApiDateTime(dateStr);
-    if (dt == null) return dateStr.toString();
+  String formatLocalDateTime(DateTime dt) {
     const months = [
       'January',
       'February',
@@ -703,6 +1045,21 @@ class DashboardController extends GetxController {
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
     return '$day $month $year, $hour:$minute';
+  }
+
+  String? formatApiTime(dynamic dateStr) {
+    final dt = parseApiDateTime(dateStr);
+    if (dt == null) return null;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String formatApiDate(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().trim().isEmpty) return '-';
+    final dt = parseApiDateTime(dateStr);
+    if (dt == null) return dateStr.toString();
+    return formatLocalDateTime(dt);
   }
 
   Map<String, dynamic> mapApiVisitorToUi(Map<String, dynamic> item) {
@@ -785,8 +1142,24 @@ class DashboardController extends GetxController {
       item['site_place_name'] ?? item['site'],
       fallback: 'Gedung SINERGI',
     );
-    final periodStart = formatApiDate(item['visitor_period_start']);
-    final periodEnd = formatApiDate(item['visitor_period_end']);
+    final extendMinutes = int.tryParse(
+            (item['extend_visitor_period'] ?? item['extend_period'] ?? 0)
+                .toString()) ??
+        0;
+    final rawPeriodStart =
+        item['visitor_period_start'] ?? item['period_start'];
+    final rawPeriodEnd = item['visitor_period_end'] ?? item['period_end'];
+
+    final periodStart = formatApiDate(rawPeriodStart);
+
+    DateTime? endDt = parseApiDateTime(rawPeriodEnd);
+    if (endDt != null && extendMinutes > 0) {
+      endDt = endDt.add(Duration(minutes: extendMinutes));
+    }
+    final periodEnd = endDt != null
+        ? formatLocalDateTime(endDt)
+        : formatApiDate(rawPeriodEnd);
+
     final checkinAt = formatApiDate(item['checkin_at'] ?? item['check_in']);
     final isGroup = item['is_group'] == true || (groupName != '-');
 
@@ -859,6 +1232,7 @@ class DashboardController extends GetxController {
       'visit_purpose': agenda,
       'site': siteName,
       'site_place_name': siteName,
+      'extend_visitor_period': extendMinutes,
       'period_start': periodStart,
       'period_end': periodEnd,
       'visitor_period_start': periodStart,
@@ -887,6 +1261,100 @@ class DashboardController extends GetxController {
     };
   }
 
+  void syncHostForVisitor(Map<String, dynamic>? visitor) {
+    if (visitor == null) return;
+
+    final hostName = (visitor['host_name'] ??
+            visitor['host'] ??
+            visitor['pic_host'] ??
+            visitor['invited_by_name'] ??
+            '')
+        .toString()
+        .trim();
+
+    final hostOrg = (visitor['host_organization_name'] ??
+            visitor['host_organization'] ??
+            visitor['host_dept'] ??
+            '')
+        .toString()
+        .trim();
+
+    String hostPhone = (visitor['host_phone'] ?? '').toString().trim();
+    String hostEmail = (visitor['host_email'] ?? '').toString().trim();
+    String hostFaceImage = (visitor['host_faceimage'] ?? visitor['host_photo'] ?? '').toString().trim();
+
+    // 1. Check if visitor item has hosts array
+    final rawHosts = (visitor['hosts'] as List?) ?? [];
+    if (rawHosts.isNotEmpty) {
+      final h = Map<String, dynamic>.from(rawHosts.first as Map);
+      if (hostPhone.isEmpty || hostPhone == '-') {
+        hostPhone = (h['phone'] ?? h['host_phone'] ?? '').toString().trim();
+      }
+      if (hostEmail.isEmpty || hostEmail == '-') {
+        hostEmail = (h['email'] ?? h['host_email'] ?? '').toString().trim();
+      }
+      if (hostFaceImage.isEmpty || hostFaceImage == '-') {
+        hostFaceImage = (h['faceimage'] ?? h['avatar'] ?? h['photo'] ?? '').toString().trim();
+      }
+    }
+
+    // 2. Search across all related visitors and live visitors for someone matching hostName
+    if (hostName.isNotEmpty && hostName != '-') {
+      final matchingHost = rxAllRelatedVisitors.firstWhereOrNull(
+        (v) => (v['name'] ?? v['visitor_name'] ?? '').toString().trim().toLowerCase() == hostName.toLowerCase(),
+      ) ?? rxAllLiveVisitors.firstWhereOrNull(
+        (v) => (v['name'] ?? v['visitor_name'] ?? '').toString().trim().toLowerCase() == hostName.toLowerCase(),
+      );
+
+      if (matchingHost != null) {
+        if (hostPhone.isEmpty || hostPhone == '-') {
+          hostPhone = (matchingHost['phone'] ?? matchingHost['visitor_phone'] ?? '').toString().trim();
+        }
+        if (hostEmail.isEmpty || hostEmail == '-') {
+          hostEmail = (matchingHost['email'] ?? matchingHost['visitor_email'] ?? '').toString().trim();
+        }
+        if (hostFaceImage.isEmpty || hostFaceImage == '-') {
+          hostFaceImage = (matchingHost['faceimage'] ??
+                  matchingHost['photo'] ??
+                  matchingHost['avatar'] ??
+                  matchingHost['selfie_image'] ??
+                  '')
+              .toString()
+              .trim();
+        }
+      }
+    }
+
+    // 3. Fallback from existing rxPrimaryHost if it had valid phone/email/avatar
+    final prev = rxPrimaryHost.value;
+    if (prev != null) {
+      final prevName = (prev['name'] ?? '').toString().trim();
+      if (prevName.isEmpty || prevName.toLowerCase() == hostName.toLowerCase() || hostName.isEmpty || hostName == '-') {
+        if ((hostPhone.isEmpty || hostPhone == '-') && prev['phone'] != null && prev['phone'] != '-') {
+          hostPhone = prev['phone'].toString().trim();
+        }
+        if ((hostEmail.isEmpty || hostEmail == '-') && prev['email'] != null && prev['email'] != '-') {
+          hostEmail = prev['email'].toString().trim();
+        }
+        if ((hostFaceImage.isEmpty || hostFaceImage == '-') && prev['faceimage'] != null && prev['faceimage'] != '') {
+          hostFaceImage = prev['faceimage'].toString().trim();
+        }
+      }
+    }
+
+    final finalName = hostName.isNotEmpty && hostName != '-' ? hostName : (prev?['name'] ?? 'Host');
+    final finalOrg = hostOrg.isNotEmpty && hostOrg != '-' ? hostOrg : (prev?['organization'] ?? 'Organization SPU');
+
+    rxPrimaryHost.value = {
+      'name': finalName,
+      'organization': finalOrg,
+      'phone': hostPhone.isNotEmpty ? hostPhone : '-',
+      'email': hostEmail.isNotEmpty ? hostEmail : '-',
+      'faceimage': hostFaceImage,
+      'status': 'Available',
+    };
+  }
+
   Future<bool> searchInvitationCode(String code) async {
     final cleanCode = code.trim().toUpperCase();
     if (cleanCode.isEmpty) return false;
@@ -910,34 +1378,6 @@ class DashboardController extends GetxController {
 
         rxSelectedVisitor.value = uiVisitor;
 
-        // Populate Primary Host for Host Information Card
-        final hosts = (firstItem['hosts'] as List?) ?? [];
-        if (hosts.isNotEmpty) {
-          final hostMap = Map<String, dynamic>.from(hosts[0] as Map);
-          rxPrimaryHost.value = {
-            'name': hostMap['name'] ?? firstItem['host_name'] ?? 'Endru',
-            'organization':
-                firstItem['host_organization_name'] ?? 'Organization SPU',
-            'phone':
-                hostMap['phone'] ?? firstItem['host_phone'] ?? '08898765678',
-            'email':
-                hostMap['email'] ??
-                firstItem['host_email'] ??
-                'reyjanumbs@gmail.com',
-            'faceimage': hostMap['faceimage'] ?? '',
-            'status': 'Available',
-          };
-        } else if (firstItem['host_name'] != null) {
-          rxPrimaryHost.value = {
-            'name': firstItem['host_name'] ?? 'Endru',
-            'organization':
-                firstItem['host_organization_name'] ?? 'Organization SPU',
-            'phone': firstItem['host_phone'] ?? '08898765678',
-            'email': firstItem['host_email'] ?? 'reyjanumbs@gmail.com',
-            'faceimage': '',
-            'status': 'Available',
-          };
-        }
         // 2. Fetch all related visitors via API:
         // /api/operator-invitation/invitation-related-visitor/{id}
         final searchVisitorId =
@@ -979,24 +1419,6 @@ class DashboardController extends GetxController {
           newRelated.add(uiVisitor);
         }
 
-        // If Host Information is not yet set from primaryHost, check if any visitor is marked is_host
-        final hostItem = newRelated.firstWhereOrNull(
-          (v) => v['is_host'] == true || v['visitor_role'] == 'Host',
-        );
-        if (hostItem != null &&
-            (rxPrimaryHost.value == null ||
-                rxPrimaryHost.value?['name'] == '-' ||
-                rxPrimaryHost.value?['name'] == null)) {
-          rxPrimaryHost.value = {
-            'name': hostItem['name'] ?? 'Endru',
-            'organization': hostItem['organization'] ?? 'Organization SPU',
-            'phone': hostItem['phone'] ?? '08898765678',
-            'email': hostItem['email'] ?? 'reyjanumbs@gmail.com',
-            'faceimage': hostItem['avatar'] ?? '',
-            'status': 'Available',
-          };
-        }
-
         // Ensure selected visitor is synced
         final matchedSelected =
             newRelated.firstWhereOrNull(
@@ -1007,7 +1429,9 @@ class DashboardController extends GetxController {
 
         rxAllRelatedVisitors.clear();
         rxAllRelatedVisitors.addAll(newRelated);
+        rxFeedTabIndex.value = 1; // Direct automatically to Related Visitors tab
         applyFiltersAndPagination();
+        syncHostForVisitor(matchedSelected);
 
         // Update Timeline
         rxTimeline.clear();

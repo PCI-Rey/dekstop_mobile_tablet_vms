@@ -97,6 +97,74 @@ class DioClient {
     }
   }
 
+  // Wrapper for PUT requests
+  Future<ApiResult<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    T Function(dynamic json)? fromJson,
+  }) async {
+    try {
+      final isDemo = await _isDemoServer();
+      if (isDemo) {
+        return await _handleDemoPost(path, data, fromJson);
+      }
+
+      final activeDio = await dio;
+      final response = await activeDio.put(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(response.data));
+      } else {
+        return ApiResult.success(response.data as T);
+      }
+    } on DioException catch (e) {
+      return ApiResult.failure(NetworkException.fromDioException(e));
+    } catch (e) {
+      return ApiResult.failure(UnknownException(e.toString()));
+    }
+  }
+
+  // Wrapper for PATCH requests
+  Future<ApiResult<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    T Function(dynamic json)? fromJson,
+  }) async {
+    try {
+      final isDemo = await _isDemoServer();
+      if (isDemo) {
+        return await _handleDemoPost(path, data, fromJson);
+      }
+
+      final activeDio = await dio;
+      final response = await activeDio.patch(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(response.data));
+      } else {
+        return ApiResult.success(response.data as T);
+      }
+    } on DioException catch (e) {
+      return ApiResult.failure(NetworkException.fromDioException(e));
+    } catch (e) {
+      return ApiResult.failure(UnknownException(e.toString()));
+    }
+  }
+
   Future<bool> _isDemoServer() async {
     final url = await _storageService.getServerUrl();
     return url.contains('example.com') || url.isEmpty;
@@ -169,6 +237,19 @@ class DioClient {
         return ApiResult.success(fromJson(mockActionRes));
       }
       return ApiResult.success(mockActionRes as T);
+    }
+
+    if (path.contains('/operator-invitation/extend-period')) {
+      final mockExtendRes = {
+        'status': 'success',
+        'status_code': 200,
+        'title': 'success',
+        'msg': 'Period extended successfully',
+      };
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockExtendRes));
+      }
+      return ApiResult.success(mockExtendRes as T);
     }
 
     if (path.contains('/operator-invitation/search')) {

@@ -209,4 +209,133 @@ class DashboardRepository {
 
     return postApiSearch;
   }
+
+  Future<ApiResult<Map<String, dynamic>>> getUpcomingPurpose({
+    String filter = 'Today',
+  }) async {
+    final queryParams = <String, dynamic>{
+      'all-visitor-type': 'true',
+    };
+
+    final now = DateTime.now();
+    if (filter.toLowerCase() == 'today') {
+      queryParams['today'] = 'true';
+    } else if (filter.toLowerCase().contains('week')) {
+      final monday = now.subtract(Duration(days: now.weekday - 1));
+      final sunday = monday.add(const Duration(days: 6));
+      queryParams['start-date'] =
+          "${monday.year.toString().padLeft(4, '0')}-${monday.month.toString().padLeft(2, '0')}-${monday.day.toString().padLeft(2, '0')}";
+      queryParams['end-date'] =
+          "${sunday.year.toString().padLeft(4, '0')}-${sunday.month.toString().padLeft(2, '0')}-${sunday.day.toString().padLeft(2, '0')}";
+    } else if (filter.toLowerCase().contains('month')) {
+      final firstDay = DateTime(now.year, now.month, 1);
+      final lastDay = DateTime(now.year, now.month + 1, 0);
+      queryParams['start-date'] =
+          "${firstDay.year.toString().padLeft(4, '0')}-${firstDay.month.toString().padLeft(2, '0')}-${firstDay.day.toString().padLeft(2, '0')}";
+      queryParams['end-date'] =
+          "${lastDay.year.toString().padLeft(4, '0')}-${lastDay.month.toString().padLeft(2, '0')}-${lastDay.day.toString().padLeft(2, '0')}";
+    } else {
+      queryParams['today'] = 'true';
+    }
+
+    // 1. Try GET /api/operator-invitation/upcoming-purpose
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/upcoming-purpose',
+      queryParameters: queryParams,
+    );
+    if (getApi is Success) return getApi;
+
+    // 2. Try GET /operator-invitation/upcoming-purpose
+    final getDirect = await _dioClient.get<Map<String, dynamic>>(
+      '/operator-invitation/upcoming-purpose',
+      queryParameters: queryParams,
+    );
+    if (getDirect is Success) return getDirect;
+
+    return getApi;
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> getUpcomingVisitors({
+    required String visitorTypeId,
+    int start = 0,
+    int length = 10,
+    String? search,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'today': 'true',
+      'visitor-type': visitorTypeId,
+      'all-visitor-type': 'true',
+      'start': start,
+      'length': length,
+      'show-checkout': 'false',
+      'show-block': 'false',
+      'show-expired': 'false',
+      if (search != null && search.isNotEmpty) 'search[value]': search,
+    };
+
+    // 1. Try GET /api/operator-invitation/upcoming-visitor
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/upcoming-visitor',
+      queryParameters: queryParams,
+    );
+    if (getApi is Success) return getApi;
+
+    // 2. Try GET /operator-invitation/upcoming-visitor
+    final getDirect = await _dioClient.get<Map<String, dynamic>>(
+      '/operator-invitation/upcoming-visitor',
+      queryParameters: queryParams,
+    );
+    if (getDirect is Success) return getDirect;
+
+    return getApi;
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> extendVisitorPeriod({
+    required String id,
+    required int period,
+    bool applyToAll = false,
+  }) async {
+    final body = {
+      'id': id,
+      'period': period,
+      'apply_to_all': applyToAll,
+    };
+
+    // 1. Try PUT /operator-invitation/extend-period (Standard for updating period resource)
+    final putDirect = await _dioClient.put<Map<String, dynamic>>(
+      '/operator-invitation/extend-period',
+      data: body,
+    );
+    if (putDirect is Success) return putDirect;
+
+    // 2. Try PUT /api/operator-invitation/extend-period
+    final putApi = await _dioClient.put<Map<String, dynamic>>(
+      '/api/operator-invitation/extend-period',
+      data: body,
+    );
+    if (putApi is Success) return putApi;
+
+    // 3. Try POST /api/operator-invitation/extend-period
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/extend-period',
+      data: body,
+    );
+    if (postApi is Success) return postApi;
+
+    // 4. Try POST /operator-invitation/extend-period
+    final postDirect = await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/extend-period',
+      data: body,
+    );
+    if (postDirect is Success) return postDirect;
+
+    // 5. Try PATCH /operator-invitation/extend-period
+    final patchDirect = await _dioClient.patch<Map<String, dynamic>>(
+      '/operator-invitation/extend-period',
+      data: body,
+    );
+    if (patchDirect is Success) return patchDirect;
+
+    return putDirect;
+  }
 }

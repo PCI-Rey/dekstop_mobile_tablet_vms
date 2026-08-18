@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -87,7 +88,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   final TextEditingController _topSearchController = TextEditingController();
   String _selectedSite = 'SPU';
   String? _selectedBulkAction;
-  String _occupancyFilter = 'Today';
 
   // Design Tokens (from AGENTS.md)
   static const Color _bgSlate = Color(0xFFF4F7FB);
@@ -2482,6 +2482,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               fontSize: 12.5,
                               color: _textDark,
                             ),
+                            onChanged: (query) {
+                              controller.filterVisitors(query);
+                            },
                             decoration: InputDecoration(
                               hintText: 'Search Visitor',
                               hintStyle: GoogleFonts.inter(
@@ -2651,7 +2654,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ? controller.rxLiveVisitors
                         : controller.rxRelatedVisitors;
                     final selectedVisitor = controller.rxSelectedVisitor.value;
-                    final selectedId = (selectedVisitor?['id'] ?? selectedVisitor?['transaction_visitor_id'] ?? '').toString();
+                    final selectedId = (selectedVisitor?['invitation_code'] ??
+                            selectedVisitor?['visitor_code'] ??
+                            selectedVisitor?['id'] ??
+                            selectedVisitor?['transaction_visitor_id'] ??
+                            '')
+                        .toString();
                     final isMultipleMode = controller.rxSelectMultiple.value;
                     // Observe reactive selection state so every tap re-renders in 0ms
                     final selectedSet = controller.rxSelectedItems.toSet();
@@ -2674,17 +2682,34 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       alignment: Alignment.topLeft,
                       child: SizedBox(
                         height: 142,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 4,
-                            horizontal: 2,
+                        child: ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            dragDevices: {
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.mouse,
+                              PointerDeviceKind.stylus,
+                              PointerDeviceKind.trackpad,
+                            },
                           ),
-                          itemCount: list.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 14),
-                          itemBuilder: (context, index) {
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 2,
+                            ),
+                            itemCount: list.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (context, index) {
                             final item = list[index];
-                            final itemId = (item['trx_id'] ?? item['id'] ?? item['transaction_visitor_id'] ?? '').toString();
+                            final itemId = (item['invitation_code'] ??
+                                    item['visitor_code'] ??
+                                    item['id'] ??
+                                    item['transaction_visitor_id'] ??
+                                    '')
+                                .toString();
                             final isSelected = isMultipleMode
                                 ? selectedSet.contains(itemId)
                                 : (selectedId.isNotEmpty && selectedId == itemId);
@@ -2695,7 +2720,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             return Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
+                                onTap: () async {
                                   if (controller.rxSelectMultiple.value) {
                                     if (controller.rxSelectedItems.contains(itemId)) {
                                       controller.rxSelectedItems.remove(itemId);
@@ -2709,7 +2734,26 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       });
                                     }
                                   } else {
-                                    controller.rxSelectedVisitor.value = item;
+                                    final currentActiveTab = controller.rxFeedTabIndex.value;
+                                    if (currentActiveTab == 0) {
+                                      // 1. Tapping Live Visitor card directly searches its invitation code & loads Related Visitors
+                                      final invCode = (item['invitation_code'] ??
+                                              item['visitor_code'] ??
+                                              item['initial_trx_code'] ??
+                                              '')
+                                          .toString()
+                                          .trim();
+                                      if (invCode.isNotEmpty && invCode != '-') {
+                                        await controller.searchInvitationCode(invCode);
+                                      } else {
+                                        controller.rxSelectedVisitor.value = item;
+                                        controller.rxFeedTabIndex.value = 1;
+                                      }
+                                    } else {
+                                      // 2. Tapping Related Visitor card selects that specific visitor & syncs complete host info
+                                      controller.rxSelectedVisitor.value = item;
+                                      controller.syncHostForVisitor(item);
+                                    }
                                   }
                                 },
                                 borderRadius: BorderRadius.circular(14),
@@ -2748,12 +2792,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     Container(
                                       width: 48,
                                       height: 48,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF758A9E),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
                                         shape: BoxShape.circle,
+                                        border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
                                       ),
                                       clipBehavior: Clip.antiAlias,
                                       child: (faceImg.isNotEmpty &&
+                                              faceImg != '-' &&
+                                              faceImg != 'null' &&
                                               !faceImg.startsWith('assets/'))
                                           ? Image.network(
                                               AppConstants.getCdnImageUrl(faceImg),
@@ -2762,16 +2809,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   const Center(
                                                 child: Icon(
                                                   Icons.person,
-                                                  size: 30,
-                                                  color: Colors.white,
+                                                  size: 28,
+                                                  color: Color(0xFF003082),
                                                 ),
                                               ),
                                             )
                                           : const Center(
                                               child: Icon(
                                                 Icons.person,
-                                                size: 30,
-                                                color: Colors.white,
+                                                size: 28,
+                                                color: Color(0xFF003082),
                                               ),
                                             ),
                                     ),
@@ -2835,174 +2882,183 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         },
                       ),
                     ),
-                  );
-                }),
-              ),
+                  ),
+                );
+              }),
+            ),
 
-                // Bottom Bulk Action Toolbar (Dynamic Actions dropdown & Apply & Right Action Pills)
-                Row(
-                  children: [
-                    CompositedTransformTarget(
-                      link: _bulkActionLayerLink,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Obx(() {
-                          final isMultipleActive = controller.rxSelectMultiple.value;
-                          final hasItems = controller.rxSelectedItems.isNotEmpty;
-                          final actions = _getAvailableBulkActions();
-                          final isDropdownEnabled = isMultipleActive && hasItems && actions.isNotEmpty;
-                          final hasActionSelected = isDropdownEnabled &&
-                              _selectedBulkAction != null &&
-                              actions.contains(_selectedBulkAction);
+                // Bottom Bulk Action Toolbar (Only for Related Visitors; Hidden on Live Visitors)
+                Obx(() {
+                  final activeTab = controller.rxFeedTabIndex.value;
+                  if (activeTab == 0) {
+                    // Live Visitors tab is purely for displaying data, no bottom action bar
+                    return const SizedBox.shrink();
+                  }
 
-                          final displayAction = hasActionSelected
-                              ? _selectedBulkAction!
-                              : (isDropdownEnabled ? 'Select Action' : 'Action');
+                  return Row(
+                    children: [
+                      CompositedTransformTarget(
+                        link: _bulkActionLayerLink,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Obx(() {
+                            final isMultipleActive = controller.rxSelectMultiple.value;
+                            final hasItems = controller.rxSelectedItems.isNotEmpty;
+                            final actions = _getAvailableBulkActions();
+                            final isDropdownEnabled = isMultipleActive && hasItems && actions.isNotEmpty;
+                            final hasActionSelected = isDropdownEnabled &&
+                                _selectedBulkAction != null &&
+                                actions.contains(_selectedBulkAction);
 
-                          return InkWell(
-                            onTap: isDropdownEnabled ? _toggleBulkActionMenu : null,
+                            final displayAction = hasActionSelected
+                                ? _selectedBulkAction!
+                                : (isDropdownEnabled ? 'Select Action' : 'Action');
+
+                            return InkWell(
+                              onTap: isDropdownEnabled ? _toggleBulkActionMenu : null,
+                              borderRadius: BorderRadius.circular(6),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 32,
+                                constraints: const BoxConstraints(minWidth: 128),
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: isDropdownEnabled ? Colors.white : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: (_isBulkActionMenuOpen && isDropdownEnabled)
+                                        ? const Color(0xFF003082)
+                                        : (isDropdownEnabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
+                                    width: (_isBulkActionMenuOpen && isDropdownEnabled) ? 1.5 : 1,
+                                  ),
+                                  boxShadow: (_isBulkActionMenuOpen && isDropdownEnabled)
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0xFF003082).withValues(alpha: 0.1),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          )
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (hasActionSelected) ...[
+                                      Icon(
+                                        _getActionIcon(displayAction),
+                                        size: 15,
+                                        color: _getActionColor(displayAction),
+                                      ),
+                                      const SizedBox(width: 6),
+                                    ],
+                                    Text(
+                                      displayAction,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11.5,
+                                        fontWeight: hasActionSelected ? FontWeight.w600 : FontWeight.w500,
+                                        color: hasActionSelected ? _textDark : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      (_isBulkActionMenuOpen && isDropdownEnabled)
+                                          ? Icons.keyboard_arrow_up_rounded
+                                          : Icons.keyboard_arrow_down_rounded,
+                                      size: 17,
+                                      color: isDropdownEnabled
+                                          ? const Color(0xFF003082)
+                                          : const Color(0xFF94A3B8),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Obx(() {
+                        final isMultipleActive = controller.rxSelectMultiple.value;
+                        final hasItems = controller.rxSelectedItems.isNotEmpty;
+                        final actions = _getAvailableBulkActions();
+                        final isEnabled = isMultipleActive &&
+                            hasItems &&
+                            actions.isNotEmpty &&
+                            _selectedBulkAction != null &&
+                            actions.contains(_selectedBulkAction);
+
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: isEnabled ? _applyBulkAction : null,
                             borderRadius: BorderRadius.circular(6),
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
+                              duration: const Duration(milliseconds: 200),
                               height: 32,
-                              constraints: const BoxConstraints(minWidth: 128),
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
-                                color: isDropdownEnabled ? Colors.white : const Color(0xFFF8FAFC),
+                                color: isEnabled
+                                    ? const Color(0xFF004385)
+                                    : const Color(0xFFE5E7EB),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: (_isBulkActionMenuOpen && isDropdownEnabled)
-                                      ? const Color(0xFF003082)
-                                      : (isDropdownEnabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-                                  width: (_isBulkActionMenuOpen && isDropdownEnabled) ? 1.5 : 1,
-                                ),
-                                boxShadow: (_isBulkActionMenuOpen && isDropdownEnabled)
-                                    ? [
-                                        BoxShadow(
-                                          color: const Color(0xFF003082).withValues(alpha: 0.1),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 1),
-                                        )
-                                      ]
-                                    : null,
                               ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (hasActionSelected) ...[
-                                    Icon(
-                                      _getActionIcon(displayAction),
-                                      size: 15,
-                                      color: _getActionColor(displayAction),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  Text(
-                                    displayAction,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11.5,
-                                      fontWeight: hasActionSelected ? FontWeight.w600 : FontWeight.w500,
-                                      color: hasActionSelected ? _textDark : const Color(0xFF94A3B8),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    (_isBulkActionMenuOpen && isDropdownEnabled)
-                                        ? Icons.keyboard_arrow_up_rounded
-                                        : Icons.keyboard_arrow_down_rounded,
-                                    size: 17,
-                                    color: isDropdownEnabled
-                                        ? const Color(0xFF003082)
+                              child: Center(
+                                child: Text(
+                                  'Apply',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isEnabled
+                                        ? Colors.white
                                         : const Color(0xFF94A3B8),
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Obx(() {
-                      final isMultipleActive = controller.rxSelectMultiple.value;
-                      final hasItems = controller.rxSelectedItems.isNotEmpty;
-                      final actions = _getAvailableBulkActions();
-                      final isEnabled = isMultipleActive &&
-                          hasItems &&
-                          actions.isNotEmpty &&
-                          _selectedBulkAction != null &&
-                          actions.contains(_selectedBulkAction);
-
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: isEnabled ? _applyBulkAction : null,
-                          borderRadius: BorderRadius.circular(6),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            height: 32,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: isEnabled
-                                  ? const Color(0xFF004385)
-                                  : const Color(0xFFE5E7EB),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Apply',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isEnabled
-                                      ? Colors.white
-                                      : const Color(0xFF94A3B8),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
-                    const Spacer(),
-                    // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
-                    Obx(() {
-                      final hasData = controller.rxSelectedVisitor.value != null ||
-                          controller.rxAllRelatedVisitors.isNotEmpty;
-                      if (!hasData) return const SizedBox.shrink();
+                        );
+                      }),
+                      const Spacer(),
+                      // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
+                      Obx(() {
+                        final hasData = controller.rxSelectedVisitor.value != null ||
+                            controller.rxAllRelatedVisitors.isNotEmpty;
+                        if (!hasData) return const SizedBox.shrink();
 
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildFeedPillButton(
-                            'Extend',
-                            Icons.access_time_rounded,
-                            const Color(0xFFFBBF24),
-                            Colors.white,
-                            () => _handleAction('Extend'),
-                          ),
-                          const SizedBox(width: 6),
-                          _buildFeedPillButton(
-                            'Card Issuance',
-                            Icons.credit_card_rounded,
-                            const Color(0xFF7B1FA2),
-                            Colors.white,
-                            () => _handleAction('Card Issuance'),
-                          ),
-                          const SizedBox(width: 6),
-                          _buildFeedPillButton(
-                            'Print',
-                            Icons.print_rounded,
-                            const Color(0xFF64748B),
-                            Colors.white,
-                            () => _handlePrintAction(),
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildFeedPillButton(
+                              'Extend',
+                              Icons.access_time_rounded,
+                              const Color(0xFFFBBF24),
+                              Colors.white,
+                              () => _handleAction('Extend'),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildFeedPillButton(
+                              'Card Issuance',
+                              Icons.credit_card_rounded,
+                              const Color(0xFF7B1FA2),
+                              Colors.white,
+                              () => _handleAction('Card Issuance'),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildFeedPillButton(
+                              'Print',
+                              Icons.print_rounded,
+                              const Color(0xFF64748B),
+                              Colors.white,
+                              () => _handlePrintAction(),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  );
+                }),
               ],
             ),
           ),
@@ -3173,39 +3229,49 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Circular Avatar with CDN Face Image
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF758A9E),
-                        shape: BoxShape.circle,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child:
-                          (host?['faceimage'] != null &&
-                                  host!['faceimage'].toString().isNotEmpty) ||
-                              (host?['host_faceimage'] != null &&
-                                  host!['host_faceimage'].toString().isNotEmpty)
-                          ? Image.network(
-                              AppConstants.getCdnImageUrl(
-                                (host['faceimage'] ?? host['host_faceimage']).toString(),
-                              ),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Center(
-                                child: Icon(
-                                  Icons.person,
-                                  size: 36,
-                                  color: Colors.white,
+                    Builder(
+                      builder: (context) {
+                        final hostFace = (host?['faceimage'] ??
+                                host?['host_faceimage'] ??
+                                host?['avatar'] ??
+                                host?['photo'] ??
+                                '')
+                            .toString()
+                            .trim();
+
+                        return Container(
+                          width: 58,
+                          height: 58,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: (hostFace.isNotEmpty &&
+                                  hostFace != '-' &&
+                                  hostFace != 'null' &&
+                                  !hostFace.startsWith('assets/'))
+                              ? Image.network(
+                                  AppConstants.getCdnImageUrl(hostFace),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 34,
+                                      color: Color(0xFF003082),
+                                    ),
+                                  ),
+                                )
+                              : const Center(
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 34,
+                                    color: Color(0xFF003082),
+                                  ),
                                 ),
-                              ),
-                            )
-                          : const Center(
-                              child: Icon(
-                                Icons.person,
-                                size: 36,
-                                color: Colors.white,
-                              ),
-                            ),
+                        );
+                      },
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -3386,70 +3452,164 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     Text(
                       'Live Occupancy',
                       style: GoogleFonts.inter(
-                        fontSize: 14,
+                        fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F2B48),
                       ),
                     ),
                     Container(
                       height: 28,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF00529C), width: 1.2),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _occupancyFilter,
-                          icon: const Icon(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Today',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
                             Icons.arrow_drop_down,
                             size: 18,
                             color: Color(0xFF64748B),
                           ),
-                          style: GoogleFonts.inter(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF1E293B),
-                          ),
-                          items: ['Today', 'This Week', 'This Month']
-                              .map(
-                                (f) =>
-                                    DropdownMenuItem(value: f, child: Text(f)),
-                              )
-                              .toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _occupancyFilter = val);
-                            }
-                          },
-                        ),
+                        ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFBFDFF),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'No visiting purpose available.',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF1E293B),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Obx(() {
+                      if (controller.rxIsOccupancyLoading.value && controller.rxUpcomingPurpose.isEmpty) {
+                        return const Center(
+                          child: SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF003082),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final items = controller.rxUpcomingPurpose;
+                      if (items.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No live occupancy data available.',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              color: const Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }
+
+                      final bgColors = [
+                        const Color(0xFF99D636), // Vibrant Lime Green (exact match from screenshot)
+                        const Color(0xFF38B6FF), // Sky Blue
+                        const Color(0xFFFFA726), // Warm Amber Orange
+                        const Color(0xFFAB47BC), // Purple
+                        const Color(0xFF10B981), // Emerald Green
+                      ];
+
+                      return ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(
+                          dragDevices: {
+                            PointerDeviceKind.touch,
+                            PointerDeviceKind.mouse,
+                            PointerDeviceKind.stylus,
+                            PointerDeviceKind.trackpad,
+                          },
                         ),
-                      ),
-                    ),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          itemCount: items.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 10),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            final label = (item['name'] ?? item['purpose'] ?? 'Purpose').toString();
+                            final count = (item['count'] ?? item['total'] ?? 0).toString();
+                            final bgColor = bgColors[index % bgColors.length];
+
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () {
+                                  final categoryId = (item['id'] ?? item['visitor_type_id'] ?? '').toString();
+                                  final categoryName = (item['name'] ?? item['purpose'] ?? 'Visitors').toString();
+                                  _showUpcomingVisitorsDialog(
+                                    context,
+                                    categoryName: categoryName,
+                                    categoryId: categoryId,
+                                  );
+                                },
+                                child: Container(
+                                  width: 135,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: bgColor,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: bgColor.withValues(alpha: 0.35),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        label,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        count,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ],
@@ -3598,6 +3758,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+
   // ─────────────────────────────────────────────────────────────────────────
   // Card Container Utility with Soft Shadow & Border
   // ─────────────────────────────────────────────────────────────────────────
@@ -3682,6 +3843,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
     if (actionName == 'Scan QR') {
       _showScanQrDialog();
+      return;
+    }
+    if (actionName == 'Extend') {
+      _showExtendVisitDialog(context);
       return;
     }
     if (actionName == 'Check In') {
@@ -4669,6 +4834,263 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+  void _showExtendVisitDialog(BuildContext context) {
+    final visitor = controller.rxSelectedVisitor.value;
+    if (visitor == null) {
+      AppSnackbar.warning(
+        title: 'Warning',
+        message: 'Please select a visitor first to extend visit period.',
+      );
+      return;
+    }
+
+    int? selectedPeriod;
+    bool applyToAll = false;
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final periodOptions = [15, 30, 45, 60, 90, 120, 150, 180];
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 490,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header: Title & Close Button
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 16, 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Extend Visit',
+                            style: GoogleFonts.inter(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => Navigator.of(dialogContext).pop(),
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 22,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Duration Pill Buttons in 2 Rows matching screenshot
+                          Center(
+                            child: Wrap(
+                              spacing: 10,
+                              runSpacing: 12,
+                              alignment: WrapAlignment.center,
+                              children: periodOptions.map((period) {
+                                final isSelected = selectedPeriod == period;
+
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      setModalState(() {
+                                        selectedPeriod = period;
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 9,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFF004385)
+                                            : const Color(0xFFEDEDED),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF004385)
+                                              : const Color(0xFFE2E8F0),
+                                          width: 1,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: const Color(0xFF004385).withValues(alpha: 0.25),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Text(
+                                        '$period min',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                          color: isSelected ? Colors.white : const Color(0xFF334155),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // "Apply to another visitor" Checkbox Row
+                          InkWell(
+                            onTap: () {
+                              setModalState(() {
+                                applyToAll = !applyToAll;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      color: applyToAll ? const Color(0xFF004385) : Colors.white,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: applyToAll ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: applyToAll
+                                        ? const Center(
+                                            child: Icon(
+                                              Icons.check_rounded,
+                                              size: 13,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    'Apply to another visitor',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          // Extend Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: selectedPeriod != null
+                                    ? const Color(0xFF004385)
+                                    : const Color(0xFFEDEDED),
+                                foregroundColor: selectedPeriod != null
+                                    ? Colors.white
+                                    : const Color(0xFF94A3B8),
+                                elevation: selectedPeriod != null ? 2 : 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: (selectedPeriod == null || isSubmitting)
+                                  ? null
+                                  : () async {
+                                      setModalState(() => isSubmitting = true);
+                                      final success = await controller.extendVisitorPeriod(
+                                        period: selectedPeriod!,
+                                        applyToAll: applyToAll,
+                                      );
+                                      setModalState(() => isSubmitting = false);
+                                      if (success) {
+                                        Navigator.of(dialogContext).pop();
+                                      }
+                                    },
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Extend',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: selectedPeriod != null
+                                            ? Colors.white
+                                            : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _handlePrintAction() {
     AppSnackbar.success(
       title: 'Print Badge',
@@ -5568,5 +5990,954 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         });
       }
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Upcoming Visitors Modal Dialog (Live Occupancy Drill-Down - No Horizontal Scroll)
+  // ─────────────────────────────────────────────────────────────────────────
+  void _showUpcomingVisitorsDialog(
+    BuildContext context, {
+    required String categoryName,
+    required String categoryId,
+  }) {
+    controller.rxSelectedPurposeCategory.value = categoryName;
+    controller.rxSelectedPurposeId.value = categoryId;
+    controller.rxUpcomingVisitorsSearch.value = '';
+    controller.rxUpcomingVisitorsPage.value = 1;
+    controller.rxUpcomingVisitorsLength.value = 10;
+
+    final searchController = TextEditingController();
+    Timer? searchDebounce;
+
+    // Trigger API call
+    controller.fetchUpcomingVisitors(
+      visitorTypeId: categoryId,
+      page: 1,
+      length: 10,
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final screenWidth = MediaQuery.of(dialogContext).size.width;
+        final screenHeight = MediaQuery.of(dialogContext).size.height;
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Container(
+            width: (screenWidth * 0.94).clamp(750.0, 1150.0),
+            height: (screenHeight * 0.88).clamp(460.0, 680.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F2B48).withValues(alpha: 0.16),
+                  blurRadius: 32,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Dialog Header & Toolbar ────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF003082), Color(0xFF00529C)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF003082).withValues(alpha: 0.25),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.badge_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    '$categoryName Visitors',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF0F2B48),
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Obx(() {
+                                    final total = controller.rxUpcomingVisitorsTotal.value;
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(color: const Color(0xFF93C5FD)),
+                                      ),
+                                      child: Text(
+                                        '$total ${total == 1 ? "Visitor" : "Visitors"}',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF003082),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Live upcoming schedule & check-in details for today',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          // Search Box with Instant Auto-Search & Reactive Clear Button
+                          ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: searchController,
+                            builder: (context, value, _) {
+                              final hasText = value.text.isNotEmpty;
+                              return Container(
+                                width: 280,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                ),
+                                alignment: Alignment.center,
+                                child: TextField(
+                                  controller: searchController,
+                                  textAlignVertical: TextAlignVertical.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFF1E293B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    hintText: 'Search visitor name...',
+                                    hintStyle: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      color: const Color(0xFF94A3B8),
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.search_rounded,
+                                      size: 17,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    prefixIconConstraints: const BoxConstraints(
+                                      minWidth: 34,
+                                      minHeight: 36,
+                                    ),
+                                    suffixIcon: hasText
+                                        ? IconButton(
+                                            icon: const Icon(
+                                              Icons.cancel_rounded,
+                                              size: 16,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                            onPressed: () {
+                                              searchDebounce?.cancel();
+                                              searchController.clear();
+                                              controller.rxUpcomingVisitorsSearch.value = '';
+                                              controller.fetchUpcomingVisitors(
+                                                visitorTypeId: categoryId,
+                                                page: 1,
+                                                search: '',
+                                              );
+                                            },
+                                            splashRadius: 14,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(minWidth: 30, minHeight: 36),
+                                          )
+                                        : null,
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  onChanged: (query) {
+                                    searchDebounce?.cancel();
+                                    if (query.trim().isEmpty) {
+                                      controller.rxUpcomingVisitorsSearch.value = '';
+                                      controller.fetchUpcomingVisitors(
+                                        visitorTypeId: categoryId,
+                                        page: 1,
+                                        search: '',
+                                      );
+                                    } else {
+                                      searchDebounce = Timer(const Duration(milliseconds: 350), () {
+                                        controller.rxUpcomingVisitorsSearch.value = query.trim();
+                                        controller.fetchUpcomingVisitors(
+                                          visitorTypeId: categoryId,
+                                          page: 1,
+                                          search: query.trim(),
+                                        );
+                                      });
+                                    }
+                                  },
+                                  onSubmitted: (query) {
+                                    searchDebounce?.cancel();
+                                    controller.rxUpcomingVisitorsSearch.value = query.trim();
+                                    controller.fetchUpcomingVisitors(
+                                      visitorTypeId: categoryId,
+                                      page: 1,
+                                      search: query.trim(),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 14),
+                          Material(
+                            color: const Color(0xFFF1F5F9),
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                searchDebounce?.cancel();
+                                Navigator.of(dialogContext).pop();
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.all(7.0),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Table Column Headers (Fixed 100% Width, Zero Scroll) ──
+                Container(
+                  margin: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 32,
+                        child: Text(
+                          'No',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 6,
+                        child: Text(
+                          'Visitor Details',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          'Host',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 4,
+                        child: Text(
+                          'Invitation Code',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 5,
+                        child: Text(
+                          'Agenda & Schedule',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Vehicle Plate',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Status',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Table Body (Clean Responsive Rows, No Horizontal Scroll) ──
+                Expanded(
+                  child: Obx(() {
+                    if (controller.rxIsUpcomingVisitorsLoading.value) {
+                      return const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF003082)),
+                            SizedBox(height: 12),
+                            Text(
+                              'Loading upcoming visitors...',
+                              style: TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final list = controller.rxUpcomingVisitorsList;
+                    if (list.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF1F5F9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.people_outline_rounded, size: 28, color: Color(0xFF94A3B8)),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No upcoming visitors found.',
+                              style: GoogleFonts.inter(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'No visitors currently scheduled under this category for today.',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                color: const Color(0xFF94A3B8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final page = controller.rxUpcomingVisitorsPage.value;
+                    final length = controller.rxUpcomingVisitorsLength.value;
+                    final startIndex = (page - 1) * length;
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
+                      itemBuilder: (context, index) {
+                        final item = list[index];
+                        final no = startIndex + index + 1;
+                        final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '-').toString();
+                        final host = (item['host_name'] ?? item['host'] ?? '-').toString();
+                        final invCode = (item['invitation_code'] ?? item['visitor_code'] ?? item['initial_trx_code'] ?? '-').toString();
+                        final org = (item['visitor_organization_name'] ?? item['organization'] ?? '').toString();
+                        final agenda = (item['agenda'] ?? item['purpose'] ?? item['remarks'] ?? 'Meeting').toString();
+                        final periodStart = _formatUpcomingDate(item['visitor_period_start']?.toString());
+                        final periodEnd = _formatUpcomingDate(item['visitor_period_end']?.toString());
+                        final rawStatus = (item['visitor_status'] ?? item['status'] ?? '-').toString();
+                        final plate = (item['vehicle_plate_number'] ?? item['plate_number'] ?? '').toString();
+                        final rawSelfie = (item['selfie_image'] ?? item['visitor_face'] ?? item['faceimage'] ?? item['photo'] ?? '').toString().trim();
+                        final cdnUrl = AppConstants.getCdnImageUrl(rawSelfie);
+                        final hasSelfie = rawSelfie.isNotEmpty && rawSelfie != '-' && rawSelfie != 'null' && cdnUrl.isNotEmpty;
+
+                        final isCheckin = rawStatus.toLowerCase().contains('checkin') || rawStatus.toLowerCase() == 'in';
+                        final isCheckout = rawStatus.toLowerCase().contains('checkout') || rawStatus.toLowerCase() == 'out';
+                        final isBlocked = rawStatus.toLowerCase().contains('block') || rawStatus.toLowerCase().contains('black');
+
+                        Color statusBg = const Color(0xFFEFF6FF);
+                        Color statusColor = const Color(0xFF003082);
+                        Color statusBorder = const Color(0xFFBFDBFE);
+
+                        if (isCheckin) {
+                          statusBg = const Color(0xFFDCFCE7);
+                          statusColor = const Color(0xFF10B981);
+                          statusBorder = const Color(0xFF86EFAC);
+                        } else if (isCheckout) {
+                          statusBg = const Color(0xFFFEE2E2);
+                          statusColor = const Color(0xFFEF4444);
+                          statusBorder = const Color(0xFFFCA5A5);
+                        } else if (isBlocked) {
+                          statusBg = const Color(0xFFFEF2F2);
+                          statusColor = const Color(0xFF991B1B);
+                          statusBorder = const Color(0xFFFECACA);
+                        }
+
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: index % 2 == 0 ? Colors.white : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                          ),
+                          child: Row(
+                            children: [
+                              // 1. No
+                              SizedBox(
+                                width: 32,
+                                child: Text(
+                                  no.toString().padLeft(2, '0'),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // 2. Visitor Details (Tappable Avatar Image + Name + Org)
+                              Expanded(
+                                flex: 6,
+                                child: Row(
+                                  children: [
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(20),
+                                        onTap: () {
+                                          _showVisitorImageModal(
+                                            context,
+                                            visitorName: name,
+                                            imageUrl: cdnUrl,
+                                            hasImage: hasSelfie,
+                                          );
+                                        },
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEFF6FF),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: hasSelfie
+                                              ? Image.network(
+                                                  cdnUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) => const Center(
+                                                    child: Icon(
+                                                      Icons.person,
+                                                      size: 20,
+                                                      color: Color(0xFF003082),
+                                                    ),
+                                                  ),
+                                                )
+                                              : const Center(
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    size: 20,
+                                                    color: Color(0xFF003082),
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            name,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF1E293B),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          if (org.isNotEmpty && org != '-')
+                                            Text(
+                                              org,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF64748B),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // 3. Host
+                              Expanded(
+                                flex: 4,
+                                child: Text(
+                                  host,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF334155),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // 4. Invitation Code
+                              Expanded(
+                                flex: 4,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                                    ),
+                                    child: Text(
+                                      invCode,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF003082),
+                                        letterSpacing: 0.3,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // 5. Agenda & Schedule
+                              Expanded(
+                                flex: 5,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      agenda,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF1E293B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      '$periodStart - $periodEnd',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w400,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // 6. Vehicle Plate
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  plate.isNotEmpty && plate != '-' ? plate : '-',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF475569),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // 7. Status
+                              Expanded(
+                                flex: 3,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                                    decoration: BoxDecoration(
+                                      color: statusBg,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: statusBorder),
+                                    ),
+                                    child: Text(
+                                      rawStatus,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: statusColor,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }),
+                ),
+
+                // ── Dialog Bottom Pagination Footer ────────────────────────
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                    border: Border(
+                      top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                    ),
+                  ),
+                  child: Obx(() {
+                    final total = controller.rxUpcomingVisitorsTotal.value;
+                    final page = controller.rxUpcomingVisitorsPage.value;
+                    final length = controller.rxUpcomingVisitorsLength.value;
+                    final totalPages = total > 0 ? (total / length).ceil() : 1;
+                    final start = total == 0 ? 0 : (page - 1) * length + 1;
+                    final end = (page * length).clamp(0, total);
+                    final hasPrev = page > 1;
+                    final hasNext = page < totalPages;
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Showing $start-$end of $total visitors',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Text(
+                                'Max rows: $length',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                              ),
+                              child: Text(
+                                'Page $page of $totalPages',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF003082),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_left_rounded, size: 20),
+                                    color: hasPrev ? const Color(0xFF003082) : const Color(0xFFCBD5E1),
+                                    onPressed: hasPrev
+                                        ? () {
+                                            controller.fetchUpcomingVisitors(
+                                              visitorTypeId: categoryId,
+                                              page: page - 1,
+                                            );
+                                          }
+                                        : null,
+                                    tooltip: hasPrev ? 'Previous Page' : null,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(minWidth: 34, minHeight: 30),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 20,
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                                    color: hasNext ? const Color(0xFF003082) : const Color(0xFFCBD5E1),
+                                    onPressed: hasNext
+                                        ? () {
+                                            controller.fetchUpcomingVisitors(
+                                              visitorTypeId: categoryId,
+                                              page: page + 1,
+                                            );
+                                          }
+                                        : null,
+                                    tooltip: hasNext ? 'Next Page' : null,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(minWidth: 34, minHeight: 30),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatUpcomingDate(String? raw) {
+    if (raw == null || raw.isEmpty) return '-';
+    try {
+      DateTime dt;
+      final clean = raw.trim();
+      if (clean.endsWith('Z') || clean.contains('+') || (clean.length > 19 && clean.substring(19).contains('-'))) {
+        dt = DateTime.parse(clean).toLocal();
+      } else {
+        dt = DateTime.parse('${clean}Z').toLocal();
+      }
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = months[dt.month - 1];
+      final hour = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '$day $month $hour:$min';
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Visitor Profile Image Modal Preview (Darkened Backdrop + Close Button)
+  // ─────────────────────────────────────────────────────────────────────────
+  void _showVisitorImageModal(
+    BuildContext context, {
+    required String visitorName,
+    required String imageUrl,
+    required bool hasImage,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top "X" close button directly above the profile circle
+                Container(
+                  width: 250,
+                  alignment: Alignment.centerRight,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Material(
+                    color: Colors.white,
+                    shape: const CircleBorder(),
+                    elevation: 6,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => Navigator.of(dialogContext).pop(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Large Circular Profile Image
+                Container(
+                  width: 240,
+                  height: 240,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        blurRadius: 28,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: hasImage && imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(
+                              Icons.person,
+                              size: 90,
+                              color: Color(0xFF003082),
+                            ),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 90,
+                            color: Color(0xFF003082),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
