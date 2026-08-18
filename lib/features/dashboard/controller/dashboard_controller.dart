@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_result.dart';
+import '../../../core/shared/widgets/app_snackbar.dart';
 import '../repository/dashboard_repository.dart';
 import '../../../core/services/storage_service.dart';
 
@@ -140,13 +140,20 @@ class DashboardController extends GetxController {
     }
 
     // 1. Search Query filtering
-    final query = rxSearchQuery.value;
+    final query = rxSearchQuery.value.trim().toLowerCase();
     if (query.isNotEmpty) {
       list = list.where((visitor) {
-        final name = (visitor['name'] as String).toLowerCase();
-        final company = (visitor['company'] as String).toLowerCase();
-        return name.contains(query.toLowerCase()) ||
-            company.contains(query.toLowerCase());
+        final name = (visitor['name'] ?? '').toString().toLowerCase();
+        final company = (visitor['company'] ?? visitor['organization'] ?? '')
+            .toString()
+            .toLowerCase();
+        final code =
+            (visitor['invitation_code'] ?? visitor['visitor_code'] ?? '')
+                .toString()
+                .toLowerCase();
+        return name.contains(query) ||
+            company.contains(query) ||
+            code.contains(query);
       }).toList();
     }
 
@@ -198,7 +205,8 @@ class DashboardController extends GetxController {
       rxCurrentPage.value = 1;
     }
 
-    final startIndex = (rxCurrentPage.value > 0 ? (rxCurrentPage.value - 1) : 0) * pageSize;
+    final startIndex =
+        (rxCurrentPage.value > 0 ? (rxCurrentPage.value - 1) : 0) * pageSize;
     final endIndex = startIndex + pageSize;
 
     if (startIndex < list.length) {
@@ -234,70 +242,177 @@ class DashboardController extends GetxController {
     applyFiltersAndPagination();
   }
 
-  // --- Visitor Actions ---
-  Future<void> executeAction(String action) async {
+  // --- Operator Invitation Actions (/api/operator-invitation/action/{trxid}) ---
+  Future<bool> performOperatorInvitationAction({
+    required String action,
+    String? reason,
+  }) async {
     final visitor = rxSelectedVisitor.value;
-    if (visitor == null) return;
+    if (visitor == null) {
+      AppSnackbar.warning(
+        title: 'Warning',
+        message: 'Please select a visitor first.',
+      );
+      return false;
+    }
+
+    final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '')
+        .toString()
+        .toLowerCase();
+    final lowerAction = action.toLowerCase();
+
+    // Validation rules
+    if (lowerAction == 'checkout') {
+      if (!rawStatus.contains('checkin') && !rawStatus.contains('in')) {
+        AppSnackbar.warning(
+          title: 'Cannot Check Out',
+          message: 'Please check in the visitor first before checking out.',
+        );
+        return false;
+      }
+      if (rawStatus.contains('checkout') || rawStatus == 'out') {
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Visitor has already checked out.',
+        );
+        return false;
+      }
+    }
+
+    if (lowerAction == 'checkin') {
+      if (rawStatus.contains('checkin') || rawStatus == 'in') {
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Visitor is already checked in.',
+        );
+        return false;
+      }
+      if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
+        AppSnackbar.error(
+          title: 'Action Denied',
+          message: 'Cannot check in a blocked visitor. Please unblock first.',
+        );
+        return false;
+      }
+    }
+
+    final trxId =
+        (visitor['trx_id'] ??
+                visitor['id'] ??
+                visitor['transaction_visitor_id'] ??
+                '')
+            .toString();
+    if (trxId.isEmpty) {
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Invalid visitor transaction ID.',
+      );
+      return false;
+    }
+
+    final actualReason = (reason != null && reason.trim().isNotEmpty)
+        ? reason.trim()
+        : (lowerAction == 'checkin'
+              ? 'Checked in by operator'
+              : lowerAction == 'checkout'
+              ? 'Checked out by operator'
+              : lowerAction == 'block'
+              ? 'Blocked by operator'
+              : 'Unblocked by operator');
+
+    final apiAction = (lowerAction == 'checkin')
+        ? 'Checkin'
+        : (lowerAction == 'checkout')
+        ? 'Checkout'
+        : (lowerAction == 'block')
+        ? 'Block'
+        : (lowerAction == 'unblock')
+        ? 'Unblock'
+        : action;
 
     rxIsActionLoading.value = true;
-    final visitorId = visitor['id'] ?? "";
-
-    final result = await _dashboardRepository.performVisitorAction(
-      visitorId,
-      action,
+    final result = await _dashboardRepository.performOperatorInvitationAction(
+      trxId: trxId,
+      action: apiAction,
+      reason: actualReason,
     );
     rxIsActionLoading.value = false;
 
     if (result is Success) {
-      // Modify state locally to provide instant visual update
       final updated = Map<String, dynamic>.from(visitor);
+      final nowFormatted =
+          formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+      final nowFullDate = formatApiDate(DateTime.now().toIso8601String());
 
-      if (action == 'check_in') {
-        updated['status'] = 'Checked In';
-        updated['check_in_time'] =
-            '${DateTime.now().hour}:${DateTime.now().minute}';
-        // Add to timeline
+      if (apiAction == 'Checkin') {
+        updated['visitor_status'] = 'Checkin';
+        updated['status'] = 'Checkin';
+        updated['checkin_at'] = nowFullDate;
+        updated['check_in'] = nowFullDate;
         rxTimeline.insert(0, {
-          'time': '${DateTime.now().hour}:${DateTime.now().minute}',
+          'time': nowFormatted,
           'title': 'Checked In',
-          'desc': 'By Operator VMS',
-          'status': 'checked_in',
+          'desc': 'Status: Checkin',
+          'status': 'checkin',
         });
-      } else if (action == 'check_out') {
-        updated['status'] = 'Checked Out';
-        updated['check_out_time'] =
-            '${DateTime.now().hour}:${DateTime.now().minute}';
+      } else if (apiAction == 'Checkout') {
+        updated['visitor_status'] = 'Checkout';
+        updated['status'] = 'Checkout';
+        updated['check_out'] = nowFullDate;
         rxTimeline.insert(0, {
-          'time': '${DateTime.now().hour}:${DateTime.now().minute}',
+          'time': nowFormatted,
           'title': 'Checked Out',
-          'desc': 'By Operator VMS',
-          'status': 'checked_out',
+          'desc': 'Status: Checkout',
+          'status': 'checkout',
         });
-      } else if (action == 'blacklist') {
-        updated['vip'] = false;
-        updated['status'] = 'Blacklisted';
-      } else if (action == 'whitelist') {
-        updated['status'] = 'Whitelisted';
+      } else if (apiAction == 'Block') {
+        updated['visitor_status'] = 'Block';
+        updated['status'] = 'Block';
+        rxTimeline.insert(0, {
+          'time': nowFormatted,
+          'title': 'Visitor Blocked',
+          'desc': 'Reason: $actualReason',
+          'status': 'block',
+        });
+      } else if (apiAction == 'Unblock') {
+        updated['visitor_status'] = 'Praregis';
+        updated['status'] = 'Praregis';
+        rxTimeline.insert(0, {
+          'time': nowFormatted,
+          'title': 'Visitor Unblocked',
+          'desc': 'Reason: $actualReason',
+          'status': 'unblock',
+        });
       }
 
       rxSelectedVisitor.value = updated;
 
-      Get.snackbar(
-        'Success',
-        'Visitor ${visitor['name']} action executed: $action',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+      final indexInAll = rxAllRelatedVisitors.indexWhere(
+        (v) => (v['id'] ?? v['transaction_visitor_id']).toString() == trxId,
       );
+      if (indexInAll != -1) {
+        rxAllRelatedVisitors[indexInAll] = updated;
+      }
+      applyFiltersAndPagination();
+
+      AppSnackbar.success(
+        title: 'Action Success',
+        message:
+            '$apiAction successfully executed for ${visitor['name'] ?? 'Visitor'}',
+      );
+      return true;
     } else {
-      Get.snackbar(
-        'Failed',
-        'Failed to execute action.',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.error(
+        title: 'Action Failed',
+        message: 'Failed to execute $apiAction on visitor.',
       );
+      return false;
     }
+  }
+
+  // --- Visitor Actions ---
+  Future<void> executeAction(String action) async {
+    return;
   }
 
   void toggleSelectItem(String name) {
@@ -320,23 +435,56 @@ class DashboardController extends GetxController {
     } catch (_) {}
   }
 
+  DateTime? parseApiDateTime(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().trim().isEmpty) return null;
+    final s = dateStr.toString().trim();
+    try {
+      if (!s.endsWith('Z') && !RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(s)) {
+        // Backend stores timestamps in UTC without trailing 'Z'
+        return DateTime.parse('${s}Z').toLocal();
+      }
+      return DateTime.parse(s).toLocal();
+    } catch (_) {
+      try {
+        return DateTime.parse(s).toLocal();
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  String? formatApiTime(dynamic dateStr) {
+    final dt = parseApiDateTime(dateStr);
+    if (dt == null) return null;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
   String formatApiDate(dynamic dateStr) {
     if (dateStr == null || dateStr.toString().trim().isEmpty) return '-';
-    try {
-      final dt = DateTime.parse(dateStr.toString().trim()).toLocal();
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      final day = dt.day.toString().padLeft(2, '0');
-      final month = months[dt.month - 1];
-      final year = dt.year;
-      final hour = dt.hour.toString().padLeft(2, '0');
-      final minute = dt.minute.toString().padLeft(2, '0');
-      return '$day $month $year, $hour:$minute';
-    } catch (_) {
-      return dateStr.toString();
-    }
+    final dt = parseApiDateTime(dateStr);
+    if (dt == null) return dateStr.toString();
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = months[dt.month - 1];
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day $month $year, $hour:$minute';
   }
 
   Map<String, dynamic> mapApiVisitorToUi(Map<String, dynamic> item) {
@@ -347,43 +495,120 @@ class DashboardController extends GetxController {
     }
 
     final rawCards = (item['card'] as List?) ?? [];
-    final parsedCards = rawCards.map((c) => Map<String, dynamic>.from(c as Map)).toList();
+    final parsedCards = rawCards
+        .map((c) => Map<String, dynamic>.from(c as Map))
+        .toList();
 
-    final visitorName = (item['visitor_name'] ?? item['visitor']?['name'] ?? item['name'] ?? '-').toString();
-    final visitorOrg = (item['visitor_organization_name'] ?? item['company'] ?? item['organization'] ?? '-').toString();
-    final visitorEmail = (item['visitor_email'] ?? item['visitor']?['email'] ?? item['email'] ?? '-').toString();
-    final visitorPhone = (item['visitor_phone'] ?? item['phone'] ?? '-').toString();
-    final visitorIdentityId = (item['visitor_identity_id'] ?? item['id_number'] ?? item['visitor_number'] ?? '-').toString();
-    final visitorRole = (item['visitor_role'] ?? 'Visitor').toString();
-    final visitorTypeName = (item['visitor_type_name'] ?? 'General Visitor').toString();
-    final visitorStatus = (item['visitor_status'] ?? item['status'] ?? 'Preregis').toString();
-    final invitationCode = (item['invitation_code'] ?? item['initial_trx_code'] ?? '-').toString();
-    final groupName = (item['group_name'] ?? '-').toString();
-    final visitorNumber = (item['visitor_number'] ?? item['visitor_code'] ?? '-').toString();
-    final vehiclePlate = (item['vehicle_plate_number'] ?? item['parking_slot'] ?? '-').toString();
-    final invitedBy = (item['invited_by_name'] ?? item['host_name'] ?? '-').toString();
-    final agenda = (item['agenda'] ?? item['remarks'] ?? 'Meeting').toString();
-    final siteName = (item['site_place_name'] ?? 'Gedung SINERGI').toString();
+    String sanitize(dynamic val, {String fallback = '-'}) {
+      if (val == null) return fallback;
+      final s = val.toString().trim();
+      if (s.isEmpty || s == 'null') return fallback;
+      return s;
+    }
+
+    final visitorName = sanitize(
+      item['visitor_name'] ??
+          item['visitor']?['name'] ??
+          item['visitor']?['employee']?['name'] ??
+          item['name'],
+      fallback: 'Visitor',
+    );
+    final visitorOrg = sanitize(
+      item['visitor_organization_name'] ??
+          item['organization'] ??
+          item['company'] ??
+          item['host_organization_name'],
+    );
+    final visitorEmail = sanitize(
+      item['visitor_email'] ?? item['visitor']?['email'] ?? item['email'],
+    );
+    final visitorPhone = sanitize(item['visitor_phone'] ?? item['phone']);
+    final visitorIdentityId = sanitize(
+      item['visitor_identity_id'] ??
+          item['visitor']?['employee']?['identity_id'] ??
+          item['id_number'] ??
+          item['visitor_number'] ??
+          item['identity_id'],
+    );
+    final visitorGender = sanitize(
+      item['visitor_gender'] ??
+          item['visitor']?['employee']?['gender'] ??
+          item['gender'],
+    );
+    final visitorRole = sanitize(item['visitor_role'], fallback: 'Visitor');
+    final visitorTypeName = sanitize(
+      item['visitor_type_name'],
+      fallback: 'General Visitor',
+    );
+    final visitorStatus = sanitize(
+      item['visitor_status'] ?? item['status'] ?? item['transaction_status'],
+      fallback: 'Preregis',
+    );
+    final invitationCode = sanitize(
+      item['invitation_code'] ?? item['initial_trx_code'],
+    );
+    final groupName = sanitize(item['group_name']);
+    final visitorNumber = sanitize(
+      item['visitor_number'] ?? item['visitor_code'] ?? item['ticket_no'],
+    );
+    final rawPlate = sanitize(
+      item['vehicle_plate_number'] ??
+          item['vehicle_plate'] ??
+          item['parking_slot'],
+    );
+    final vehiclePlate = rawPlate;
+    final vehicleType = (rawPlate != '-') ? 'Car' : '-';
+    final invitedBy = sanitize(item['invited_by_name'] ?? item['host_name']);
+    final agenda = sanitize(
+      item['agenda'] ?? item['remarks'],
+      fallback: 'Meeting',
+    );
+    final siteName = sanitize(
+      item['site_place_name'] ?? item['site'],
+      fallback: 'Gedung SINERGI',
+    );
     final periodStart = formatApiDate(item['visitor_period_start']);
     final periodEnd = formatApiDate(item['visitor_period_end']);
-    final checkinAt = formatApiDate(item['checkin_at']);
-    final isGroup = item['is_group'] == true;
+    final checkinAt = formatApiDate(item['checkin_at'] ?? item['check_in']);
+    final isGroup = item['is_group'] == true || (groupName != '-');
 
-    final hostName = (primaryHost['name'] ?? item['host_name'] ?? '-').toString();
-    final hostOrg = (item['host_organization_name'] ?? 'Organization SPU').toString();
-    final hostPhone = (primaryHost['phone'] ?? item['host_phone'] ?? '-').toString();
-    final hostEmail = (primaryHost['email'] ?? item['host_email'] ?? '-').toString();
-    final hostFaceImage = (primaryHost['faceimage'] ?? '').toString();
+    final photo =
+        (item['selfie_image'] ??
+                item['visitor_face'] ??
+                item['faceimage'] ??
+                item['visitor']?['faceimage'] ??
+                item['avatar'] ??
+                item['photo'] ??
+                '')
+            .toString()
+            .trim();
+
+    final hostName = sanitize(primaryHost['name'] ?? item['host_name']);
+    final hostOrg = sanitize(
+      item['host_organization_name'] ?? primaryHost['organization'],
+      fallback: 'Organization SPU',
+    );
+    final hostPhone = sanitize(primaryHost['phone'] ?? item['host_phone']);
+    final hostEmail = sanitize(primaryHost['email'] ?? item['host_email']);
+    final hostFaceImage = sanitize(primaryHost['faceimage'], fallback: '');
 
     return {
-      'id': item['visitor_id'] ?? item['id'] ?? item['transaction_visitor_id'] ?? 'v_${DateTime.now().millisecondsSinceEpoch}',
+      'id':
+          item['id'] ??
+          item['transaction_visitor_id'] ??
+          item['visitor_id'] ??
+          'v_${DateTime.now().millisecondsSinceEpoch}',
+      'trx_id': item['id'] ?? item['transaction_visitor_id'] ?? '',
+      'visitor_id': item['visitor_id'] ?? '',
+      'transaction_visitor_id':
+          item['transaction_visitor_id'] ?? item['id'] ?? '',
       'name': visitorName,
       'company': visitorOrg,
       'organization': visitorOrg,
       'email': visitorEmail,
       'phone': visitorPhone,
       'id_card_no': visitorIdentityId,
-      'gender': item['visitor_gender'] ?? item['gender'] ?? '-',
+      'gender': visitorGender,
       'nationality': 'Indonesia',
       'status': visitorStatus,
       'visitor_status': visitorStatus,
@@ -392,9 +617,13 @@ class DashboardController extends GetxController {
       'visitor_type_name': visitorTypeName,
       'vip': item['vip'] == true,
       'frequent': false,
-      'verified': item['is_praregister_done'] == true || item['approval_status'] == 'Approved',
-      'avatar': 'assets/images/ava_person1.png',
-      'photo': 'assets/images/ava_person1.png',
+      'verified':
+          item['is_praregister_done'] == true ||
+          item['approval_status'] == 'Approved',
+      'avatar': photo,
+      'photo': photo,
+      'faceimage': photo,
+      'selfie_image': photo,
       'host_name': hostName,
       'host_dept': hostOrg,
       'host_organization_name': hostOrg,
@@ -415,12 +644,15 @@ class DashboardController extends GetxController {
       'visitor_code': item['visitor_code'] ?? visitorNumber,
       'ticket_no': visitorNumber,
       'visitor_number': visitorNumber,
-      'vehicle_type': vehiclePlate.isNotEmpty && vehiclePlate != '-' ? 'Car' : '-',
+      'vehicle_type': vehicleType,
       'vehicle_plate': vehiclePlate,
       'vehicle_plate_number': vehiclePlate,
       'invited_by_name': invitedBy,
       'is_group': isGroup,
-      'qr_code_data': item['initial_trx_code'] ?? invitationCode,
+      'is_host': item['is_host'] == true,
+      'qr_code_data': invitationCode != '-'
+          ? invitationCode
+          : (item['initial_trx_code'] ?? visitorNumber),
       'invitation_code': invitationCode,
       'check_in': checkinAt,
       'check_out': '-',
@@ -446,93 +678,108 @@ class DashboardController extends GetxController {
           ? data['collection'] as Map<String, dynamic>
           : (data['data'] is Map ? data['data'] as Map<String, dynamic> : data);
 
-      final list = (collection['data'] as List?) ?? (data['data'] as List?) ?? [];
-      
+      final list =
+          (collection['data'] as List?) ?? (data['data'] as List?) ?? [];
+
       if (list.isNotEmpty) {
         final firstItem = Map<String, dynamic>.from(list[0] as Map);
         final uiVisitor = mapApiVisitorToUi(firstItem);
-        
+
         rxSelectedVisitor.value = uiVisitor;
 
-        // Populate Related Visitors Feed from API response
-        // 0. Store Primary Host for Host Information Card
+        // Populate Primary Host for Host Information Card
         final hosts = (firstItem['hosts'] as List?) ?? [];
         if (hosts.isNotEmpty) {
           final hostMap = Map<String, dynamic>.from(hosts[0] as Map);
           rxPrimaryHost.value = {
             'name': hostMap['name'] ?? firstItem['host_name'] ?? 'Endru',
-            'organization': firstItem['host_organization_name'] ?? 'Organization SPU',
-            'phone': hostMap['phone'] ?? firstItem['host_phone'] ?? '08898765678',
-            'email': hostMap['email'] ?? firstItem['host_email'] ?? 'reyjanumbs@gmail.com',
+            'organization':
+                firstItem['host_organization_name'] ?? 'Organization SPU',
+            'phone':
+                hostMap['phone'] ?? firstItem['host_phone'] ?? '08898765678',
+            'email':
+                hostMap['email'] ??
+                firstItem['host_email'] ??
+                'reyjanumbs@gmail.com',
             'faceimage': hostMap['faceimage'] ?? '',
             'status': 'Available',
           };
         } else if (firstItem['host_name'] != null) {
           rxPrimaryHost.value = {
             'name': firstItem['host_name'] ?? 'Endru',
-            'organization': firstItem['host_organization_name'] ?? 'Organization SPU',
+            'organization':
+                firstItem['host_organization_name'] ?? 'Organization SPU',
             'phone': firstItem['host_phone'] ?? '08898765678',
             'email': firstItem['host_email'] ?? 'reyjanumbs@gmail.com',
             'faceimage': '',
             'status': 'Available',
           };
         }
-
-        // Populate Related Visitors Feed from API response
+        // 2. Fetch all related visitors via API:
+        // /api/operator-invitation/invitation-related-visitor/{id}
+        final searchVisitorId =
+            (firstItem['id'] ?? firstItem['transaction_visitor_id'] ?? '')
+                .toString();
         final newRelated = <Map<String, dynamic>>[];
-        
-        // 1. Add the main visitor (Tera)
-        newRelated.add(uiVisitor);
 
-        // 2. Add the hosts / group members (Endru)
-        for (final h in hosts) {
-          final hostMap = Map<String, dynamic>.from(h as Map);
-          newRelated.add({
-            'id': hostMap['id'] ?? hostMap['person_id'] ?? 'host_1',
-            'name': hostMap['name'] ?? 'Endru',
-            'company': firstItem['host_organization_name'] ?? 'Organization SPU',
-            'organization': firstItem['host_organization_name'] ?? 'Organization SPU',
-            'email': hostMap['email'] ?? 'reyjanumbs@gmail.com',
-            'phone': hostMap['phone'] ?? '08898765678',
-            'id_card_no': hostMap['identity_id'] ?? '77182',
-            'gender': hostMap['gender'] ?? 'Male',
-            'status': 'Host (Available)',
-            'visitor_status': 'Preregis',
-            'occupancy': 'Visitor',
-            'visitor_role': 'Visitor',
-            'visitor_type_name': 'Employee Host',
-            'vip': false,
-            'verified': true,
-            'faceimage': hostMap['faceimage'] ?? '',
-            'avatar': hostMap['faceimage'] ?? '',
-            'photo': hostMap['faceimage'] ?? '',
-            'host_name': hostMap['name'] ?? 'Endru',
-            'host_dept': firstItem['host_organization_name'] ?? 'Organization SPU',
-            'host_organization_name': firstItem['host_organization_name'] ?? 'Organization SPU',
-            'host_phone': hostMap['phone'] ?? '08898765678',
-            'host_email': hostMap['email'] ?? 'reyjanumbs@gmail.com',
-            'host_faceimage': hostMap['faceimage'] ?? '',
-            'host_status': 'Available',
-            'invitation_code': uiVisitor['invitation_code'],
-            'qr_code_data': uiVisitor['invitation_code'],
-            'group_name': uiVisitor['group_name'],
-            'visitor_code': '3421136094',
-            'ticket_no': '3421136094',
-            'visitor_number': '3421136094',
-            'vehicle_plate': 'B 1231 AA',
-            'vehicle_plate_number': 'B 1231 AA',
-            'invited_by_name': uiVisitor['invited_by_name'],
-            'is_group': true,
-            'agenda': uiVisitor['agenda'],
-            'site': uiVisitor['site'],
-            'period_start': uiVisitor['period_start'],
-            'period_end': uiVisitor['period_end'],
-            'cards': uiVisitor['cards'],
-            'card': uiVisitor['card'],
-            'check_in': uiVisitor['check_in'],
-            'check_out': uiVisitor['check_out'],
-          });
+        if (searchVisitorId.isNotEmpty) {
+          final relatedResult = await _dashboardRepository
+              .getInvitationRelatedVisitors(
+                searchVisitorId,
+                start: 0,
+                length: 10,
+                draw: 1,
+              );
+          if (relatedResult is Success<Map<String, dynamic>>) {
+            final relatedData = relatedResult.data;
+            final rawList = (relatedData['collection'] is List)
+                ? relatedData['collection'] as List
+                : ((relatedData['collection'] is Map &&
+                          relatedData['collection']['data'] is List)
+                      ? relatedData['collection']['data'] as List
+                      : (relatedData['data'] is List
+                            ? relatedData['data'] as List
+                            : []));
+
+            for (final vItem in rawList) {
+              final mapped = mapApiVisitorToUi(
+                Map<String, dynamic>.from(vItem as Map),
+              );
+              newRelated.add(mapped);
+            }
+          }
         }
+
+        // Fallback: If related visitors endpoint returned empty, ensure at least uiVisitor is present
+        if (newRelated.isEmpty) {
+          newRelated.add(uiVisitor);
+        }
+
+        // If Host Information is not yet set from primaryHost, check if any visitor is marked is_host
+        final hostItem = newRelated.firstWhereOrNull(
+          (v) => v['is_host'] == true || v['visitor_role'] == 'Host',
+        );
+        if (hostItem != null &&
+            (rxPrimaryHost.value == null ||
+                rxPrimaryHost.value?['name'] == '-' ||
+                rxPrimaryHost.value?['name'] == null)) {
+          rxPrimaryHost.value = {
+            'name': hostItem['name'] ?? 'Endru',
+            'organization': hostItem['organization'] ?? 'Organization SPU',
+            'phone': hostItem['phone'] ?? '08898765678',
+            'email': hostItem['email'] ?? 'reyjanumbs@gmail.com',
+            'faceimage': hostItem['avatar'] ?? '',
+            'status': 'Available',
+          };
+        }
+
+        // Ensure selected visitor is synced
+        final matchedSelected =
+            newRelated.firstWhereOrNull(
+              (v) => v['id'].toString() == searchVisitorId,
+            ) ??
+            newRelated.first;
+        rxSelectedVisitor.value = matchedSelected;
 
         rxAllRelatedVisitors.clear();
         rxAllRelatedVisitors.addAll(newRelated);
@@ -540,15 +787,19 @@ class DashboardController extends GetxController {
 
         // Update Timeline
         rxTimeline.clear();
+        final createdTime =
+            formatApiTime(firstItem['invitation_created_at']) ?? '10:46';
+        final periodStartTime =
+            formatApiTime(firstItem['visitor_period_start']) ?? '02:00';
         rxTimeline.addAll([
           {
-            'time': '10:23',
+            'time': createdTime,
             'title': 'Invitation Created',
             'desc': 'By ${uiVisitor['invited_by_name']}',
             'status': 'invitation',
           },
           {
-            'time': '10:25',
+            'time': periodStartTime,
             'title': 'Pra-Register Status',
             'desc': 'Status: ${uiVisitor['status']}',
             'status': 'preregis',
@@ -559,5 +810,38 @@ class DashboardController extends GetxController {
       }
     }
     return false;
+  }
+
+  Future<void> fetchTransactionVisitors(String transactionId) async {
+    if (transactionId.isEmpty) return;
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.getVisitorsByTransactionId(
+      transactionId,
+    );
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final trxData = result.data;
+      final trxList = (trxData['collection'] is List)
+          ? trxData['collection'] as List
+          : (trxData['data'] is List ? trxData['data'] as List : []);
+
+      if (trxList.isNotEmpty) {
+        final newRelated = <Map<String, dynamic>>[];
+        for (final vItem in trxList) {
+          final mapped = mapApiVisitorToUi(
+            Map<String, dynamic>.from(vItem as Map),
+          );
+          newRelated.add(mapped);
+        }
+
+        if (newRelated.isNotEmpty) {
+          rxSelectedVisitor.value = newRelated.first;
+          rxAllRelatedVisitors.clear();
+          rxAllRelatedVisitors.addAll(newRelated);
+          applyFiltersAndPagination();
+        }
+      }
+    }
   }
 }

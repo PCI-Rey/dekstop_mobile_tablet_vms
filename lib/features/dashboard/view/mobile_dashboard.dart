@@ -176,30 +176,26 @@ class MobileDashboard extends GetView<DashboardController> {
                   ),
                 ],
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14),
-                    child: Icon(Icons.search, size: 20, color: Colors.grey),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      onChanged: (val) => controller.rxSearchQuery.value = val,
-                      textAlignVertical: TextAlignVertical.center,
-                      style: theme.textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: 'Search visitor by name, code or email',
-                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[400],
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                        isDense: true,
-                      ),
+              child: Center(
+                child: TextFormField(
+                  onChanged: (val) => controller.rxSearchQuery.value = val,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Search visitor by name, code or email',
+                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[400],
                     ),
+                    prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 40,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.only(right: 12),
+                    isDense: true,
                   ),
-                ],
+                ),
               ),
             ),
           ),

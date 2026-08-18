@@ -752,52 +752,47 @@ class _CardTapViewState extends State<CardTapView> {
           flex: 3,
           child: Container(
             height: 34,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.search_rounded,
-                  size: 16,
-                  color: _textMuted,
+            child: Center(
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) {
+                  setState(() {
+                    _currentPage = 0;
+                  });
+                  if (_pageController.hasClients) {
+                    _pageController.jumpToPage(0);
+                  }
+                },
+                textAlignVertical: TextAlignVertical.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: _textDark,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (_) {
-                      setState(() {
-                        _currentPage = 0;
-                      });
-                      if (_pageController.hasClients) {
-                        _pageController.jumpToPage(0);
-                      }
-                    },
-                    textAlignVertical: TextAlignVertical.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: _textDark,
-                      height: 1.2,
-                    ),
-                    decoration: const InputDecoration(
-                      hintText: 'Search Visitor...',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: _textMuted,
-                        height: 1.2,
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                decoration: const InputDecoration(
+                  hintText: 'Search Visitor...',
+                  hintStyle: TextStyle(
+                    fontSize: 12,
+                    color: _textMuted,
                   ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    size: 16,
+                    color: _textMuted,
+                  ),
+                  prefixIconConstraints: BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 34,
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.only(right: 8),
                 ),
-              ],
+              ),
             ),
           ),
         ),

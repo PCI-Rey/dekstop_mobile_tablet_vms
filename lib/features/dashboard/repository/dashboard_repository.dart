@@ -10,8 +10,131 @@ class DashboardRepository {
     return await _dioClient.get<Map<String, dynamic>>('/dashboard-summary');
   }
 
+  Future<ApiResult<Map<String, dynamic>>> getTransactionDataTable({
+    int page = 1,
+    int length = 20,
+    String? search,
+  }) async {
+    // 1. Try GET /api/visitor/transaction/dt
+    final getApiDt = await _dioClient.get<Map<String, dynamic>>(
+      '/api/visitor/transaction/dt',
+      queryParameters: {
+        'page': page,
+        'length': length,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    if (getApiDt is Success) return getApiDt;
+
+    // 2. Try GET /visitor/transaction/dt
+    final getDt = await _dioClient.get<Map<String, dynamic>>(
+      '/visitor/transaction/dt',
+      queryParameters: {
+        'page': page,
+        'length': length,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    if (getDt is Success) return getDt;
+
+    // 3. Try POST /api/visitor/transaction/dt
+    final postApiDt = await _dioClient.post<Map<String, dynamic>>(
+      '/api/visitor/transaction/dt',
+      data: {
+        'page': page,
+        'length': length,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    if (postApiDt is Success) return postApiDt;
+
+    return getApiDt;
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> getVisitorsByTransactionId(String transactionId) async {
+    final cleanId = transactionId.trim();
+
+    // 1. Try GET /api/visitor/transaction/{transaction_visitor_id}/visitors
+    final getApiVisitors = await _dioClient.get<Map<String, dynamic>>(
+      '/api/visitor/transaction/$cleanId/visitors',
+    );
+    if (getApiVisitors is Success) return getApiVisitors;
+
+    // 2. Try GET /visitor/transaction/{transaction_visitor_id}/visitors
+    final getVisitors = await _dioClient.get<Map<String, dynamic>>(
+      '/visitor/transaction/$cleanId/visitors',
+    );
+    if (getVisitors is Success) return getVisitors;
+
+    return getApiVisitors;
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> getInvitationRelatedVisitors(
+    String id, {
+    int start = 0,
+    int length = 10,
+    int draw = 1,
+  }) async {
+    final cleanId = id.trim();
+
+    // 1. Try GET /api/operator-invitation/invitation-related-visitor/{id}
+    final getApiRelated = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/invitation-related-visitor/$cleanId',
+      queryParameters: {
+        'start': start,
+        'length': length,
+        'draw': draw,
+      },
+    );
+    if (getApiRelated is Success) return getApiRelated;
+
+    // 2. Try GET /operator-invitation/invitation-related-visitor/{id}
+    final getRelated = await _dioClient.get<Map<String, dynamic>>(
+      '/operator-invitation/invitation-related-visitor/$cleanId',
+      queryParameters: {
+        'start': start,
+        'length': length,
+        'draw': draw,
+      },
+    );
+    if (getRelated is Success) return getRelated;
+
+    // 3. Fallback GET /api/visitor/transaction/{transaction_visitor_id}/visitors
+    return await getVisitorsByTransactionId(cleanId);
+  }
+
   Future<ApiResult<Map<String, dynamic>>> getVisitorsData() async {
     return await _dioClient.get<Map<String, dynamic>>('/visitors');
+  }
+
+  Future<ApiResult<Map<String, dynamic>>> performOperatorInvitationAction({
+    required String trxId,
+    required String action,
+    required String reason,
+  }) async {
+    final cleanId = trxId.trim();
+
+    // 1. Try POST /api/operator-invitation/action/{trxid}
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/action/$cleanId',
+      data: {
+        'action': action,
+        'reason': reason,
+      },
+    );
+    if (postApi is Success) return postApi;
+
+    // 2. Try POST /operator-invitation/action/{trxid}
+    final postDirect = await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/action/$cleanId',
+      data: {
+        'action': action,
+        'reason': reason,
+      },
+    );
+    if (postDirect is Success) return postDirect;
+
+    return postApi;
   }
 
   Future<ApiResult<Map<String, dynamic>>> performVisitorAction(String id, String action) async {

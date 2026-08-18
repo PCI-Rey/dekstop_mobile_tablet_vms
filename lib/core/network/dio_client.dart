@@ -103,8 +103,24 @@ class DioClient {
   }
 
   // Simulating backend endpoints when no real backend server is plugged in
-  Future<ApiResult<T>> _handleDemoGet<T>(String path, Map<String, dynamic>? queryParams, T Function(dynamic json)? fromJson) async {
-    if (path.contains('/visitors')) {
+  Future<ApiResult<T>> _handleDemoGet<T>(
+    String path,
+    Map<String, dynamic>? queryParams,
+    T Function(dynamic json)? fromJson,
+  ) async {
+    if (path.contains('/visitor/transaction/dt')) {
+      final mockDt = _getMockTransactionDataTable();
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockDt));
+      }
+      return ApiResult.success(mockDt as T);
+    } else if (path.contains('/visitor/transaction/') && path.contains('/visitors')) {
+      final mockTrxVisitors = _getMockTransactionVisitors();
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockTrxVisitors));
+      }
+      return ApiResult.success(mockTrxVisitors as T);
+    } else if (path.contains('/visitors')) {
       final mockData = _getMockVisitors();
       if (fromJson != null) {
         return ApiResult.success(fromJson(mockData));
@@ -116,6 +132,12 @@ class DioClient {
         return ApiResult.success(fromJson(mockSummary));
       }
       return ApiResult.success(mockSummary as T);
+    } else if (path.contains('/operator-invitation/invitation-related-visitor')) {
+      final mockRelated = _getMockInvitationRelatedVisitors();
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockRelated));
+      }
+      return ApiResult.success(mockRelated as T);
     } else if (path.contains('/operator-invitation/search')) {
       final mockSearch = _getMockSearchResult();
       if (fromJson != null) {
@@ -128,6 +150,27 @@ class DioClient {
   }
 
   Future<ApiResult<T>> _handleDemoPost<T>(String path, dynamic data, T Function(dynamic json)? fromJson) async {
+    if (path.contains('/visitor/transaction/dt')) {
+      final mockDt = _getMockTransactionDataTable();
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockDt));
+      }
+      return ApiResult.success(mockDt as T);
+    }
+
+    if (path.contains('/operator-invitation/action')) {
+      final mockActionRes = {
+        'status': 'success',
+        'status_code': 200,
+        'title': 'success',
+        'msg': 'Action executed successfully',
+      };
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockActionRes));
+      }
+      return ApiResult.success(mockActionRes as T);
+    }
+
     if (path.contains('/operator-invitation/search')) {
       final mockSearch = _getMockSearchResult();
       if (fromJson != null) {
@@ -314,32 +357,32 @@ class DioClient {
       "collection": {
         "data": [
           {
-            "transaction_visitor_id": "8c60c085-70ae-446e-b888-ff813bedae14",
+            "transaction_visitor_id": "9ea167d3-99f3-4f43-9391-0a3080ce078f",
             "agenda": "Meeting",
-            "initial_trx_code": "7OPNW3LJRYHYNU4ZED11ASZ8HP3ZIPYGDOLZCI9CA74Q7V2Q1GFMWS4LTFW15Y4ZAZTWO7EMVGRDRXFAQD7IS21N7AOOA5EWMYM5K4RHCWWNNTL4QET1FDP7PSRROMBE",
+            "initial_trx_code": "NXUI3ZX6OCM7FPBYC36LEE82H18BT9ZB4ZYS9V712B2ZAXLYHC4T3ZJ4GWHTD32CGYOREQUFJUZ2JVEEDD1EDL768P98UMVHDMK62ZC5RACS9XX7Y3DBZW61FSFCMAL9",
             "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
             "host_name": "Endru",
             "host_organization_name": "Organization SPU",
-            "visitor_period_start": "2026-08-13T01:00:00",
-            "visitor_period_end": "2026-08-13T12:00:00",
-            "group_name": "Tera's visitor group",
-            "visitor_number": "8258653021",
-            "visitor_pin": "956248",
-            "visitor_pin4": "9562",
-            "visitor_code": "8258653021",
-            "invitation_code": "15Y1H5-QR5FHL",
+            "visitor_period_start": "2026-08-14T02:00:00",
+            "visitor_period_end": "2026-08-14T12:00:00",
+            "group_name": "Dion's visitor group",
+            "visitor_number": "1906100658",
+            "visitor_pin": "263388",
+            "visitor_pin4": "2633",
+            "visitor_code": "1906100658",
+            "invitation_code": "EOOPVS-DGC6SO",
             "self_only": false,
             "visitor_status": "Preregis",
-            "invitation_created_at": "2026-08-13T10:23:40.109055",
+            "invitation_created_at": "2026-08-14T10:46:27.72007",
             "remarks": "PraRegister",
             "parking_slot": "",
             "parking_area": "",
-            "visitor_id": "5b2b3bb4-b6fe-4410-95d0-bd52daa715b1",
-            "visitor_name": "Tera",
-            "visitor_organization_name": "Instansi Tera",
-            "visitor_identity_id": "151696969",
-            "visitor_phone": "0810412120841",
-            "visitor_email": "cennandaa@gmail.com",
+            "visitor_id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43",
+            "visitor_name": "Dion",
+            "visitor_organization_name": "Organization PI",
+            "visitor_identity_id": "12312312",
+            "visitor_phone": "084123123123",
+            "visitor_email": "dion1215@gmail.com",
             "can_track_ble": true,
             "can_parking": true,
             "can_access": true,
@@ -352,24 +395,33 @@ class DioClient {
             "site_place_name": "Gedung SINERGI",
             "visitor": {
               "visitor_type": "00000000-0000-0000-0000-000000000000",
-              "name": "Tera",
-              "email": "cennandaa@gmail.com",
-              "id": "5b2b3bb4-b6fe-4410-95d0-bd52daa715b1"
+              "name": "Dion",
+              "email": "dion1215@gmail.com",
+              "employee": {
+                "person_id": "",
+                "identity_id": "",
+                "type": "Permanent",
+                "name": "Dion",
+                "gender": "Male",
+                "other_id": "",
+                "id": "eb133466-990d-414b-8311-a0faa899cfe8"
+              },
+              "id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43"
             },
             "card": [
               {
-                "card_number": "8258653021",
-                "card_barcode": "8258653021",
+                "card_number": "1906100658",
+                "card_barcode": "1906100658",
                 "card_mac": "",
                 "is_ble": false,
-                "trx_visitor_id": "ccd1f915-111d-402d-afd8-9bd0f86aefa4",
-                "visitor_id": "5b2b3bb4-b6fe-4410-95d0-bd52daa715b1",
+                "trx_visitor_id": "014efaa0-76b0-454c-b585-0ebce7d77bd7",
+                "visitor_id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43",
                 "last_position_track": "",
                 "is_swapcard": false,
                 "current_used": true,
                 "card_type": "Barcode",
                 "card_status": "Available",
-                "id": "e7f88be8-54f3-4b0c-87e5-b6607514e846"
+                "id": "d57d0c94-1b23-4285-937e-0ed3a1fa9233"
               }
             ],
             "access": [],
@@ -398,13 +450,441 @@ class DioClient {
             "visitor_parking_system_status": "NotUsed",
             "visitor_trackingble_system_status": "NotUsed",
             "visitor_trackingcctv_system_status": "NotUsed",
-            "invited_by": "416befe2-b840-4f35-b310-a079bf1b6a3b",
-            "invited_by_name": "Admins",
-            "id": "ccd1f915-111d-402d-afd8-9bd0f86aefa4"
+            "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+            "invited_by_name": "Operator 1",
+            "id": "014efaa0-76b0-454c-b585-0ebce7d77bd7"
           }
         ],
         "search-match": "InvitationCode"
       }
+    };
+  }
+
+  Map<String, dynamic> _getMockInvitationRelatedVisitors() {
+    return {
+      "status": "success",
+      "status_code": 200,
+      "title": "success",
+      "msg": "Data retrieved successfully",
+      "collection": [
+        {
+          "transaction_visitor_id": "9ea167d3-99f3-4f43-9391-0a3080ce078f",
+          "agenda": "Meeting",
+          "initial_trx_code": "NXUI3ZX6OCM7FPBYC36LEE82H18BT9ZB4ZYS9V712B2ZAXLYHC4T3ZJ4GWHTD32CGYOREQUFJUZ2JVEEDD1EDL768P98UMVHDMK62ZC5RACS9XX7Y3DBZW61FSFCMAL9",
+          "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
+          "host_name": "Endru",
+          "host_organization_name": "Organization SPU",
+          "visitor_period_start": "2026-08-14T02:00:00",
+          "visitor_period_end": "2026-08-14T12:00:00",
+          "group_name": "Dion's visitor group",
+          "visitor_number": "1906100658",
+          "visitor_pin": "263388",
+          "visitor_pin4": "2633",
+          "visitor_code": "1906100658",
+          "invitation_code": "EOOPVS-DGC6SO",
+          "self_only": false,
+          "visitor_status": "Preregis",
+          "invitation_created_at": "2026-08-14T10:46:27.72007",
+          "remarks": "PraRegister",
+          "parking_slot": "",
+          "parking_area": "",
+          "visitor_id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43",
+          "visitor_name": "Dion",
+          "visitor_organization_name": "Organization PI",
+          "visitor_identity_id": "12312312",
+          "visitor_phone": "084123123123",
+          "visitor_email": "dion1215@gmail.com",
+          "can_track_ble": true,
+          "can_parking": true,
+          "can_access": true,
+          "tz": "Asia/Jakarta",
+          "is_group": true,
+          "visitor_type": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+          "visitor_type_name": "General Visitor",
+          "is_praregister_done": false,
+          "application_id": "074ddc10-9b66-4466-8195-7bf972914603",
+          "site_place_name": "Gedung SINERGI",
+          "visitor": {
+            "visitor_type": "00000000-0000-0000-0000-000000000000",
+            "name": "Dion",
+            "email": "dion1215@gmail.com",
+            "employee": {
+              "person_id": "",
+              "identity_id": "",
+              "type": "Permanent",
+              "name": "Dion",
+              "gender": "Male",
+              "other_id": "",
+              "id": "eb133466-990d-414b-8311-a0faa899cfe8"
+            },
+            "id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43"
+          },
+          "card": [
+            {
+              "card_number": "1906100658",
+              "card_barcode": "1906100658",
+              "card_mac": "",
+              "is_ble": false,
+              "trx_visitor_id": "014efaa0-76b0-454c-b585-0ebce7d77bd7",
+              "visitor_id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43",
+              "last_position_track": "",
+              "is_swapcard": false,
+              "current_used": true,
+              "card_type": "Barcode",
+              "card_status": "Available",
+              "id": "d57d0c94-1b23-4285-937e-0ed3a1fa9233"
+            }
+          ],
+          "access": [],
+          "tracking_ble": [],
+          "visitor_role": "Visitor",
+          "trx_visitor_sites": [],
+          "approval_status": "Pending",
+          "is_host": false,
+          "visitor_access_system_status": "NotUsed",
+          "visitor_parking_system_status": "NotUsed",
+          "visitor_trackingble_system_status": "NotUsed",
+          "visitor_trackingcctv_system_status": "NotUsed",
+          "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "invited_by_name": "Operator 1",
+          "id": "014efaa0-76b0-454c-b585-0ebce7d77bd7"
+        },
+        {
+          "transaction_visitor_id": "9ea167d3-99f3-4f43-9391-0a3080ce078f",
+          "agenda": "Meeting",
+          "initial_trx_code": "NXUI3ZX6OCM7FPBYC36LEE82H18BT9ZB4ZYS9V712B2ZAXLYHC4T3ZJ4GWHTD32CGYOREQUFJUZ2JVEEDD1EDL768P98UMVHDMK62ZC5RACS9XX7Y3DBZW61FSFCMAL9",
+          "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
+          "host_name": "Endru",
+          "host_organization_name": "Organization SPU",
+          "visitor_period_start": "2026-08-14T02:00:00",
+          "visitor_period_end": "2026-08-14T12:00:00",
+          "group_name": "Dion's visitor group",
+          "visitor_number": "1331928888",
+          "visitor_pin": "443552",
+          "visitor_pin4": "4435",
+          "visitor_code": "1331928888",
+          "visitor_card": "0019277182",
+          "visitor_face": "/faces/9a4ab2d1-76b5-43de-8c47-c62bee91209c.jpeg",
+          "visitor_ble_card": "0019277182",
+          "invitation_code": "EOOPVS-368GV8",
+          "self_only": false,
+          "visitor_status": "Preregis",
+          "invitation_created_at": "2026-08-14T10:46:27.7084453",
+          "vehicle_plate_number": "B 1231 AA",
+          "remarks": "PraRegister",
+          "parking_slot": "",
+          "parking_area": "",
+          "visitor_id": "c8a3ea3e-7ba4-4494-8314-c050e330a6a2",
+          "visitor_name": "Endru",
+          "visitor_organization_name": "Organization SPU",
+          "visitor_identity_id": "77182",
+          "visitor_phone": "08898765678",
+          "visitor_email": "reyjanumbs@gmail.com",
+          "visitor_gender": "Male",
+          "selfie_image": "/faces/9a4ab2d1-76b5-43de-8c47-c62bee91209c.jpeg",
+          "can_track_ble": true,
+          "can_parking": true,
+          "can_access": true,
+          "tz": "Asia/Jakarta",
+          "is_group": true,
+          "visitor_type": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+          "visitor_type_name": "General Visitor",
+          "is_praregister_done": false,
+          "application_id": "074ddc10-9b66-4466-8195-7bf972914603",
+          "site_place_name": "Gedung SINERGI",
+          "visitor": {
+            "visitor_type": "00000000-0000-0000-0000-000000000000",
+            "name": "Endru",
+            "email": "reyjanumbs@gmail.com",
+            "employee": {
+              "person_id": "",
+              "identity_id": "",
+              "type": "Permanent",
+              "name": "Endru",
+              "gender": "Male",
+              "other_id": "",
+              "id": "f2b0c94e-312d-418b-bb6e-05709784e9c3"
+            },
+            "id": "c8a3ea3e-7ba4-4494-8314-c050e330a6a2"
+          },
+          "card": [
+            {
+              "card_number": "0019277182",
+              "card_barcode": "1331928888",
+              "card_mac": "",
+              "is_ble": false,
+              "is_employee_used": true,
+              "trx_visitor_id": "93b68910-74a3-4a21-bc9f-3359e80332fc",
+              "visitor_id": "c8a3ea3e-7ba4-4494-8314-c050e330a6a2",
+              "last_position_track": "",
+              "is_swapcard": false,
+              "current_used": true,
+              "card_type": "RFID",
+              "card_status": "Available",
+              "id": "0c44c57b-9f1e-434d-8a95-e852fef845a4"
+            }
+          ],
+          "access": [],
+          "tracking_ble": [],
+          "visitor_role": "Visitor",
+          "trx_visitor_sites": [],
+          "approval_status": "Pending",
+          "is_host": true,
+          "visitor_access_system_status": "NotUsed",
+          "visitor_parking_system_status": "NotUsed",
+          "visitor_trackingble_system_status": "NotUsed",
+          "visitor_trackingcctv_system_status": "NotUsed",
+          "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "invited_by_name": "Operator 1",
+          "id": "93b68910-74a3-4a21-bc9f-3359e80332fc"
+        }
+      ]
+    };
+  }
+
+  Map<String, dynamic> _getMockTransactionDataTable() {
+    return {
+      "RecordsTotal": 475,
+      "RecordsFiltered": 475,
+      "Draw": 1,
+      "status": "success",
+      "status_code": 200,
+      "title": "success",
+      "msg": "Data retrieved successfully",
+      "collection": [
+        {
+          "initial_trx_code": "NXUI3ZX6OCM7FPBYC36LEE82H18BT9ZB4ZYS9V712B2ZAXLYHC4T3ZJ4GWHTD32CGYOREQUFJUZ2JVEEDD1EDL768P98UMVHDMK62ZC5RACS9XX7Y3DBZW61FSFCMAL9",
+          "agenda": "Meeting",
+          "host_name": "Endru",
+          "host_organization_name": "Organization SPU",
+          "invitation_created_at": "2026-08-14T10:46:27.72007",
+          "can_track_ble": true,
+          "can_track_cctv": true,
+          "can_parking": true,
+          "can_access": true,
+          "remarks": "PraRegister",
+          "site_id": "e3facb54-eae1-48d5-9457-3ef7d3f7ba3b",
+          "visitor_type_id": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+          "visitor_type_name": "General Visitor",
+          "visitor_period_start": "2026-08-14T02:00:00",
+          "visitor_period_end": "2026-08-14T12:00:00",
+          "tz": "Asia/Jakarta",
+          "visitor_role": "Visitor",
+          "transaction_status": "UnderCreated",
+          "flow": "Praregister",
+          "list_visitor": [],
+          "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "invited_by_name": "Operator 1",
+          "id": "9ea167d3-99f3-4f43-9391-0a3080ce078f"
+        },
+        {
+          "initial_trx_code": "39RVODFK2B69RT1CY6YNUNKGYK7H28RDTIZOFDRVITPY11T2BRGXAS88HEUSHQ2ZJP7DYNE3SAEX43QYVVWN43OGLZS6D98RJX82OFC84FENPLTCOOWPUKFBKVBWAXNW",
+          "agenda": "Meeting",
+          "host_name": "Endru",
+          "host_organization_name": "Organization SPU",
+          "invitation_created_at": "2026-08-14T10:06:37.0789787",
+          "can_track_ble": true,
+          "can_track_cctv": true,
+          "can_parking": true,
+          "can_access": true,
+          "remarks": "Invitation",
+          "site_id": "e3facb54-eae1-48d5-9457-3ef7d3f7ba3b",
+          "visitor_type_id": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+          "visitor_type_name": "General Visitor",
+          "visitor_period_start": "2026-08-14T09:00:00",
+          "visitor_period_end": "2026-08-14T13:00:00",
+          "tz": "Asia/Bangkok",
+          "visitor_role": "Visitor",
+          "transaction_status": "Available",
+          "flow": "Invitation",
+          "list_visitor": [],
+          "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "invited_by_name": "Operator 1",
+          "id": "d22b8122-f3c2-4268-ab38-d5df13cd3f9f"
+        }
+      ]
+    };
+  }
+
+  Map<String, dynamic> _getMockTransactionVisitors() {
+    return {
+      "status": "success",
+      "status_code": 200,
+      "title": "success",
+      "msg": "Data retrieved successfully",
+      "collection": [
+        {
+          "transaction_visitor_id": "9ea167d3-99f3-4f43-9391-0a3080ce078f",
+          "agenda": "Meeting",
+          "initial_trx_code": "NXUI3ZX6OCM7FPBYC36LEE82H18BT9ZB4ZYS9V712B2ZAXLYHC4T3ZJ4GWHTD32CGYOREQUFJUZ2JVEEDD1EDL768P98UMVHDMK62ZC5RACS9XX7Y3DBZW61FSFCMAL9",
+          "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
+          "host_name": "Endru",
+          "host_organization_name": "Organization SPU",
+          "visitor_period_start": "2026-08-14T02:00:00",
+          "visitor_period_end": "2026-08-14T12:00:00",
+          "group_name": "Dion's visitor group",
+          "visitor_number": "1906100658",
+          "visitor_pin": "263388",
+          "visitor_pin4": "2633",
+          "visitor_code": "1906100658",
+          "invitation_code": "EOOPVS-DGC6SO",
+          "self_only": false,
+          "visitor_status": "Preregis",
+          "invitation_created_at": "2026-08-14T10:46:27.72007",
+          "remarks": "PraRegister",
+          "parking_slot": "",
+          "parking_area": "",
+          "visitor_id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43",
+          "visitor_name": "Dion",
+          "visitor_organization_name": "Organization PI",
+          "visitor_identity_id": "12312312",
+          "visitor_phone": "084123123123",
+          "visitor_email": "dion1215@gmail.com",
+          "can_track_ble": true,
+          "can_parking": true,
+          "can_access": true,
+          "tz": "Asia/Jakarta",
+          "is_group": true,
+          "visitor_type": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+          "visitor_type_name": "General Visitor",
+          "is_praregister_done": false,
+          "application_id": "074ddc10-9b66-4466-8195-7bf972914603",
+          "site_place_name": "Gedung SINERGI",
+          "visitor": {
+            "visitor_type": "00000000-0000-0000-0000-000000000000",
+            "name": "Dion",
+            "email": "dion1215@gmail.com",
+            "employee": {
+              "person_id": "",
+              "identity_id": "",
+              "type": "Permanent",
+              "name": "Dion",
+              "gender": "Male",
+              "other_id": "",
+              "id": "eb133466-990d-414b-8311-a0faa899cfe8"
+            },
+            "id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43"
+          },
+          "card": [
+            {
+              "card_number": "1906100658",
+              "card_barcode": "1906100658",
+              "card_mac": "",
+              "is_ble": false,
+              "trx_visitor_id": "014efaa0-76b0-454c-b585-0ebce7d77bd7",
+              "visitor_id": "b9b87c14-043a-4c16-9f92-295bd0bf0f43",
+              "last_position_track": "",
+              "is_swapcard": false,
+              "current_used": true,
+              "card_type": "Barcode",
+              "card_status": "Available",
+              "id": "d57d0c94-1b23-4285-937e-0ed3a1fa9233"
+            }
+          ],
+          "access": [],
+          "tracking_ble": [],
+          "visitor_role": "Visitor",
+          "trx_visitor_sites": [],
+          "approval_status": "Pending",
+          "is_host": false,
+          "visitor_access_system_status": "NotUsed",
+          "visitor_parking_system_status": "NotUsed",
+          "visitor_trackingble_system_status": "NotUsed",
+          "visitor_trackingcctv_system_status": "NotUsed",
+          "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "invited_by_name": "Operator 1",
+          "id": "014efaa0-76b0-454c-b585-0ebce7d77bd7"
+        },
+        {
+          "transaction_visitor_id": "9ea167d3-99f3-4f43-9391-0a3080ce078f",
+          "agenda": "Meeting",
+          "initial_trx_code": "NXUI3ZX6OCM7FPBYC36LEE82H18BT9ZB4ZYS9V712B2ZAXLYHC4T3ZJ4GWHTD32CGYOREQUFJUZ2JVEEDD1EDL768P98UMVHDMK62ZC5RACS9XX7Y3DBZW61FSFCMAL9",
+          "host": "f2b0c94e-312d-418b-bb6e-05709784e9c3",
+          "host_name": "Endru",
+          "host_organization_name": "Organization SPU",
+          "visitor_period_start": "2026-08-14T02:00:00",
+          "visitor_period_end": "2026-08-14T12:00:00",
+          "group_name": "Dion's visitor group",
+          "visitor_number": "1331928888",
+          "visitor_pin": "443552",
+          "visitor_pin4": "4435",
+          "visitor_code": "1331928888",
+          "visitor_card": "0019277182",
+          "visitor_face": "/faces/9a4ab2d1-76b5-43de-8c47-c62bee91209c.jpeg",
+          "visitor_ble_card": "0019277182",
+          "invitation_code": "EOOPVS-368GV8",
+          "self_only": false,
+          "visitor_status": "Preregis",
+          "invitation_created_at": "2026-08-14T10:46:27.7084453",
+          "vehicle_plate_number": "B 1231 AA",
+          "remarks": "PraRegister",
+          "parking_slot": "",
+          "parking_area": "",
+          "visitor_id": "c8a3ea3e-7ba4-4494-8314-c050e330a6a2",
+          "visitor_name": "Endru",
+          "visitor_organization_name": "Organization SPU",
+          "visitor_identity_id": "77182",
+          "visitor_phone": "08898765678",
+          "visitor_email": "reyjanumbs@gmail.com",
+          "visitor_gender": "Male",
+          "selfie_image": "/faces/9a4ab2d1-76b5-43de-8c47-c62bee91209c.jpeg",
+          "can_track_ble": true,
+          "can_parking": true,
+          "can_access": true,
+          "tz": "Asia/Jakarta",
+          "is_group": true,
+          "visitor_type": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+          "visitor_type_name": "General Visitor",
+          "is_praregister_done": false,
+          "application_id": "074ddc10-9b66-4466-8195-7bf972914603",
+          "site_place_name": "Gedung SINERGI",
+          "visitor": {
+            "visitor_type": "00000000-0000-0000-0000-000000000000",
+            "name": "Endru",
+            "email": "reyjanumbs@gmail.com",
+            "employee": {
+              "person_id": "",
+              "identity_id": "",
+              "type": "Permanent",
+              "name": "Endru",
+              "gender": "Male",
+              "other_id": "",
+              "id": "f2b0c94e-312d-418b-bb6e-05709784e9c3"
+            },
+            "id": "c8a3ea3e-7ba4-4494-8314-c050e330a6a2"
+          },
+          "card": [
+            {
+              "card_number": "0019277182",
+              "card_barcode": "1331928888",
+              "card_mac": "",
+              "is_ble": false,
+              "is_employee_used": true,
+              "trx_visitor_id": "93b68910-74a3-4a21-bc9f-3359e80332fc",
+              "visitor_id": "c8a3ea3e-7ba4-4494-8314-c050e330a6a2",
+              "last_position_track": "",
+              "is_swapcard": false,
+              "current_used": true,
+              "card_type": "RFID",
+              "card_status": "Available",
+              "id": "0c44c57b-9f1e-434d-8a95-e852fef845a4"
+            }
+          ],
+          "access": [],
+          "tracking_ble": [],
+          "visitor_role": "Visitor",
+          "trx_visitor_sites": [],
+          "approval_status": "Pending",
+          "is_host": true,
+          "visitor_access_system_status": "NotUsed",
+          "visitor_parking_system_status": "NotUsed",
+          "visitor_trackingble_system_status": "NotUsed",
+          "visitor_trackingcctv_system_status": "NotUsed",
+          "invited_by": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "invited_by_name": "Operator 1",
+          "id": "93b68910-74a3-4a21-bc9f-3359e80332fc"
+        }
+      ]
     };
   }
 }

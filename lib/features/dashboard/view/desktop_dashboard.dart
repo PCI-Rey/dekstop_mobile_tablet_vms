@@ -630,85 +630,87 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 Expanded(
                   child: Container(
                     height: 30,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.search_rounded,
-                          size: 15,
-                          color: _textMuted,
+                    child: Center(
+                      child: TextField(
+                        controller: _topSearchController,
+                        textAlignVertical: TextAlignVertical.center,
+                        textCapitalization: TextCapitalization.characters,
+                        inputFormatters: [
+                          UpperCaseTextFormatter(),
+                        ],
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          color: _textDark,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _topSearchController,
-                            textAlignVertical: TextAlignVertical.center,
-                            textCapitalization: TextCapitalization.characters,
-                            inputFormatters: [
-                              UpperCaseTextFormatter(),
-                            ],
-                            style: GoogleFonts.inter(
-                              fontSize: 11.5,
-                              color: _textDark,
-                              height: 1.2,
-                            ),
-                            decoration: InputDecoration(
-                              hintText:
-                                  'Search Visitor / Code (e.g. 15Y1H5-QR5FHL)',
-                              hintStyle: GoogleFonts.inter(
-                                fontSize: 11.5,
-                                color: _textMuted,
-                                height: 1.2,
-                              ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                              suffixIcon: _topSearchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(
-                                        Icons.clear_rounded,
-                                        size: 14,
-                                        color: _textMuted,
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () {
-                                        _topSearchController.clear();
-                                        controller.resetDashboardToInitialState();
-                                        setState(() {});
-                                      },
-                                    )
-                                  : null,
-                            ),
-                            onChanged: (val) => setState(() {}),
-                            onSubmitted: (val) async {
-                              final query = val.trim().toUpperCase();
-                              if (query.isNotEmpty) {
-                                final success = await controller
-                                    .searchInvitationCode(query);
-                                if (success) {
-                                  AppSnackbar.success(
-                                    title: 'Success',
-                                    message: 'Data retrieved successfully',
-                                  );
-                                } else {
-                                  AppSnackbar.error(
-                                    title: 'Search Failed',
-                                    message:
-                                        'No visitor data found for: $query',
-                                  );
-                                }
-                              }
-                            },
+                        decoration: InputDecoration(
+                          hintText:
+                              'Search Visitor / Code (e.g. 15Y1H5-QR5FHL)',
+                          hintStyle: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            color: _textMuted,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            size: 15,
+                            color: _textMuted,
+                          ),
+                          prefixIconConstraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 30,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.only(right: 8),
+                          suffixIcon: _topSearchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    Icons.clear_rounded,
+                                    size: 14,
+                                    color: _textMuted,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 26,
+                                    minHeight: 30,
+                                  ),
+                                  onPressed: () {
+                                    _topSearchController.clear();
+                                    controller.resetDashboardToInitialState();
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          suffixIconConstraints: const BoxConstraints(
+                            minWidth: 26,
+                            minHeight: 30,
                           ),
                         ),
-                      ],
+                        onChanged: (val) => setState(() {}),
+                        onSubmitted: (val) async {
+                          final query = val.trim().toUpperCase();
+                          if (query.isNotEmpty) {
+                            final success = await controller
+                                .searchInvitationCode(query);
+                            if (success) {
+                              AppSnackbar.success(
+                                title: 'Success',
+                                message: 'Data retrieved successfully',
+                              );
+                            } else {
+                              AppSnackbar.error(
+                                title: 'Search Failed',
+                                message:
+                                    'No visitor data found for: $query',
+                              );
+                            }
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -921,19 +923,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // 3. Visitor QR Code Card
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildLeftColumn() {
-    final visitor = controller.rxSelectedVisitor.value;
+    return Obx(() {
+      final visitor = controller.rxSelectedVisitor.value;
 
-    return Column(
-      children: [
-        // ── 1. Top Visitor Profile Card (Keyed for Tour Step 2) ───────────
-        Expanded(
-          flex: 10,
-          child: _buildCardContainer(
-            key: _keyVisitorProfile,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+      return Column(
+        children: [
+          // ── 1. Top Visitor Profile Card (Keyed for Tour Step 2) ───────────
+          Expanded(
+            flex: 10,
+            child: _buildCardContainer(
+              key: _keyVisitorProfile,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
                 // Visitor Photo with Rounded Frame & Face Detection Reticle
                 Expanded(
                   flex: 3,
@@ -967,9 +970,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 );
                               }
                               return Image.asset(
-                                photoUrl.isNotEmpty
+                                photoUrl.isNotEmpty && photoUrl != 'assets/images/ava_person1.png'
                                     ? photoUrl
-                                    : 'assets/images/ava_person1.png',
+                                    : 'assets/images/ava_person2.png',
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   color: const Color(0xFFE2E8F0),
@@ -1045,25 +1048,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF38B6FF),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      visitor['visitor_type_name'] ?? 'General Visitor',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
                                 ] else ...[
                                   Text(
                                     'Name',
@@ -1134,7 +1118,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             child: Column(
               children: [
                 Expanded(
-                  flex: 13,
+                  flex: 11,
                   child: _buildCardContainer(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -1175,7 +1159,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ),
                 const SizedBox(height: 5),
                 Expanded(
-                  flex: 7,
+                  flex: 9,
                   child: _buildCardContainer(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -1197,99 +1181,121 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // QR Code Icon / Box
-                              Expanded(
-                                flex: 5,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Builder(
-                                      builder: (context) {
-                                        final qrData = (visitor?['invitation_code'] != null &&
-                                                visitor!['invitation_code'].toString() != '-' &&
-                                                visitor['invitation_code'].toString().isNotEmpty)
-                                            ? visitor['invitation_code'].toString()
-                                            : (visitor?['qr_code_data'] != null &&
-                                                    visitor!['qr_code_data'].toString() != '-' &&
-                                                    visitor['qr_code_data'].toString().isNotEmpty
-                                                ? visitor['qr_code_data'].toString()
-                                                : (visitor?['visitor_code'] != null &&
-                                                        visitor!['visitor_code'].toString() != '-' &&
-                                                        visitor['visitor_code'].toString().isNotEmpty
-                                                    ? visitor['visitor_code'].toString()
-                                                    : null));
+                              // Left: Prominent QR Code container with Tap Modal
+                              Builder(
+                                builder: (context) {
+                                  final qrData = (visitor?['invitation_code'] != null &&
+                                          visitor!['invitation_code'].toString() != '-' &&
+                                          visitor['invitation_code'].toString().isNotEmpty)
+                                      ? visitor['invitation_code'].toString()
+                                      : (visitor?['qr_code_data'] != null &&
+                                              visitor!['qr_code_data'].toString() != '-' &&
+                                              visitor['qr_code_data'].toString().isNotEmpty
+                                          ? visitor['qr_code_data'].toString()
+                                          : (visitor?['visitor_code'] != null &&
+                                                  visitor!['visitor_code'].toString() != '-' &&
+                                                  visitor['visitor_code'].toString().isNotEmpty
+                                              ? visitor['visitor_code'].toString()
+                                              : null));
 
-                                        if (qrData != null && qrData.isNotEmpty) {
-                                          return SizedBox(
-                                            width: 60,
-                                            height: 60,
+                                  if (qrData != null && qrData.isNotEmpty) {
+                                    return Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () => _showVisitorQrModal(
+                                          context,
+                                          visitor,
+                                          qrData,
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Tooltip(
+                                          message: 'Click to enlarge QR Code',
+                                          child: Container(
+                                            width: 94,
+                                            height: 94,
+                                            padding: const EdgeInsets.all(5),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                                width: 1.2,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.04),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
                                             child: QrImageView(
                                               data: qrData,
                                               version: QrVersions.auto,
-                                              size: 60.0,
+                                              padding: EdgeInsets.zero,
+                                              size: 84.0,
                                             ),
-                                          );
-                                        }
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
 
-                                        return Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.filter_none_rounded,
-                                              size: 30,
-                                              color: Color(0xFF94A3B8),
-                                            ),
-                                            const SizedBox(height: 3),
-                                            Text(
-                                              'No QR/Card Available',
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w600,
-                                                color: const Color(0xFF1E293B),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 1),
-                                            Text(
-                                              'Scan a visitor to show QR code',
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.inter(
-                                                fontSize: 9.5,
-                                                fontWeight: FontWeight.w400,
-                                                color: const Color(0xFF94A3B8),
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
+                                  return Container(
+                                    width: 94,
+                                    height: 94,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1.2,
+                                      ),
                                     ),
-                                  ],
-                                ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.qr_code_2_rounded,
+                                          size: 34,
+                                          color: Color(0xFF94A3B8),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'No QR',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
 
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 16),
 
-                              // Invitation / Check In / Out Time (Scaled gracefully)
+                              // Right: Invitation / Check In / Out Time Fields
                               Expanded(
-                                flex: 5,
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   alignment: Alignment.centerLeft,
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       _buildQrDetailField(
                                         'Invitation Code',
                                         visitor?['invitation_code'] ?? '-',
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 3),
                                       _buildQrDetailField(
                                         'Check In Time',
                                         visitor?['check_in'] ?? '-',
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 3),
                                       _buildQrDetailField(
                                         'Check Out Time',
                                         visitor?['check_out'] ?? '-',
@@ -1311,9 +1317,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         ),
       ],
     );
-  }
+  });
+}
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _buildDetailRow(IconData icon, String label, String? value) {
+    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+        ? '-'
+        : value.trim();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0.6),
       child: Row(
@@ -1347,7 +1358,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           ),
           Expanded(
             child: Text(
-              value,
+              displayValue,
               maxLines: 2,
               softWrap: true,
               style: GoogleFonts.inter(
@@ -1364,220 +1375,296 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildVisitInformationTab(Map<String, dynamic>? visitor) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SizedBox(
-          height: constraints.maxHeight,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: constraints.maxWidth,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left Column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildMetadataField(
-                              Icons.qr_code_scanner_rounded,
-                              'Visitor Code',
-                              visitor?['visitor_code'] ?? visitor?['ticket_no'] ?? '-',
-                            ),
-                            _buildMetadataField(
-                              Icons.groups_outlined,
-                              'Group Name',
-                              visitor?['group_name'] ?? '-',
-                            ),
-                            _buildMetadataField(
-                              Icons.format_list_numbered_rounded,
-                              'Visitor Number',
-                              visitor?['visitor_number'] ??
-                                  visitor?['ticket_no'] ??
-                                  '-',
-                            ),
-                            _buildMetadataField(
-                              Icons.directions_car_outlined,
-                              'Vehicle Type',
-                              visitor?['vehicle_type'] ?? '-',
-                            ),
-                          ],
-                        ),
-                      ),
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left Column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildMetadataField(
+                      Icons.qr_code_scanner_rounded,
+                      'Visitor Code',
+                      visitor?['visitor_code'] ?? visitor?['ticket_no'] ?? '-',
+                    ),
+                    _buildMetadataField(
+                      Icons.groups_outlined,
+                      'Group Name',
+                      visitor?['group_name'] ?? '-',
+                    ),
+                    _buildMetadataField(
+                      Icons.format_list_numbered_rounded,
+                      'Visitor Number',
+                      visitor?['visitor_number'] ??
+                          visitor?['ticket_no'] ??
+                          '-',
+                    ),
+                    _buildMetadataField(
+                      Icons.directions_car_outlined,
+                      'Vehicle Type',
+                      visitor?['vehicle_type'] ?? '-',
+                    ),
+                  ],
+                ),
+              ),
 
-                      // Vertical divider in the middle
-                      Container(
-                        width: 1,
-                        height: 120,
-                        color: const Color(0xFFF1F5F9),
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
+              // Vertical divider in the middle
+              Container(
+                width: 1,
+                color: const Color(0xFFF1F5F9),
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              ),
 
-                      // Right Column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildMetadataField(
-                              Icons.badge_outlined,
-                              'Invited By',
-                              visitor?['invited_by_name'] ??
-                                  visitor?['host_name'] ??
-                                  '-',
-                            ),
-                            _buildMetadataField(
-                              Icons.person_outline_rounded,
-                              'Group',
-                              (visitor != null && visitor['is_group'] != null)
-                                  ? (visitor['is_group'] == true ? 'Yes' : 'No')
-                                  : '-',
-                            ),
-                            (visitor != null &&
-                                    (visitor['visitor_status'] != null ||
-                                        visitor['status'] != null))
-                                ? _buildStatusMetadataField(
-                                    Icons.assignment_outlined,
-                                    'Visitor Status',
-                                    visitor['visitor_status'] ??
-                                        visitor['status'] ??
-                                        '-',
-                                  )
-                                : _buildMetadataField(
-                                    Icons.assignment_outlined,
-                                    'Visitor Status',
-                                    '-',
-                                  ),
-                            _buildMetadataField(
-                              Icons.receipt_long_outlined,
-                              'Vehicle Plate No.',
-                              visitor?['vehicle_plate_number'] ??
-                                  visitor?['vehicle_plate'] ??
-                                  '-',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (visitor != null) ...[
-                    const SizedBox(height: 4),
-                    Align(
-                      alignment: Alignment.center,
-                      child: SizedBox(
-                        height: 26,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF004385),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 0,
-                            ),
+              // Right Column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildMetadataField(
+                      Icons.badge_outlined,
+                      'Invited By',
+                      visitor?['invited_by_name'] ??
+                          visitor?['host_name'] ??
+                          '-',
+                    ),
+                    _buildMetadataField(
+                      Icons.person_outline_rounded,
+                      'Group',
+                      (visitor != null && visitor['is_group'] != null)
+                          ? (visitor['is_group'] == true ? 'Yes' : 'No')
+                          : '-',
+                    ),
+                    (visitor != null &&
+                            (visitor['visitor_status'] != null ||
+                                visitor['status'] != null))
+                        ? _buildStatusMetadataField(
+                            Icons.assignment_outlined,
+                            'Visitor Status',
+                            visitor['visitor_status'] ??
+                                visitor['status'] ??
+                                '-',
+                          )
+                        : _buildMetadataField(
+                            Icons.assignment_outlined,
+                            'Visitor Status',
+                            '-',
                           ),
-                          onPressed: () => _handleAction('Fill Form'),
-                          child: Text(
-                            'Fill Form',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    _buildMetadataField(
+                      Icons.receipt_long_outlined,
+                      'Vehicle Plate No.',
+                      visitor?['vehicle_plate_number'] ??
+                          visitor?['vehicle_plate'] ??
+                          '-',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (visitor != null) ...[
+          const SizedBox(height: 4),
+          Builder(
+            builder: (context) {
+              final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '').toString().toLowerCase();
+
+              if (rawStatus.contains('checkin') || rawStatus == 'in') {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 26,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE50000),
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 0,
+                          ),
+                        ),
+                        onPressed: () => _handleAction('Check Out'),
+                        icon: const Icon(Icons.logout_rounded, size: 14, color: Colors.white),
+                        label: Text(
+                          'Check Out',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 26,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E293B),
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 0,
+                          ),
+                        ),
+                        onPressed: () => _handleAction('Block'),
+                        icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
+                        label: Text(
+                          'Block',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
                   ],
-                ],
-              ),
-            ),
+                );
+              } else if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
+                return Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    height: 26,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF004385),
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 0,
+                        ),
+                      ),
+                      onPressed: () => _handleAction('Unblock'),
+                      icon: const Icon(Icons.lock_open_rounded, size: 14, color: Colors.white),
+                      label: Text(
+                        'Unblock',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              } else {
+                return Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    height: 26,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF004385),
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 0,
+                        ),
+                      ),
+                      onPressed: () => _handleAction('Fill Form'),
+                      child: Text(
+                        'Fill Form',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+            },
           ),
-        );
-      },
+        ],
+      ],
     );
   }
 
   Widget _buildPurposeVisitTab(Map<String, dynamic>? visitor) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SizedBox(
-          height: constraints.maxHeight,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.topCenter,
-            child: SizedBox(
-              width: constraints.maxWidth,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Left Column
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildMetadataField(
-                          Icons.calendar_today_outlined,
-                          'Agenda',
-                          visitor?['agenda'] ?? visitor?['purpose'] ?? '-',
-                        ),
-                        _buildMetadataField(
-                          Icons.more_time_rounded,
-                          'Visit Period Start',
-                          visitor?['visitor_period_start'] ??
-                              visitor?['period_start'] ??
-                              '-',
-                        ),
-                        _buildMetadataField(
-                          Icons.location_on_outlined,
-                          'Site',
-                          visitor?['site_place_name'] ?? visitor?['site'] ?? '-',
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Vertical divider in the middle
-                  Container(
-                    width: 1,
-                    height: 100,
-                    color: const Color(0xFFF1F5F9),
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-
-                  // Right Column
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildMetadataField(
-                          Icons.person_pin_circle_outlined,
-                          'PIC Host',
-                          visitor?['host_name'] ?? '-',
-                        ),
-                        _buildMetadataField(
-                          Icons.event_available_outlined,
-                          'Visit Period End',
-                          visitor?['visitor_period_end'] ?? visitor?['period_end'] ?? '-',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Left Column
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMetadataField(
+                Icons.calendar_today_outlined,
+                'Agenda',
+                visitor?['agenda'] ?? visitor?['purpose'] ?? '-',
               ),
-            ),
+              _buildMetadataField(
+                Icons.more_time_rounded,
+                'Visit Period Start',
+                visitor?['visitor_period_start'] ??
+                    visitor?['period_start'] ??
+                    '-',
+              ),
+              _buildMetadataField(
+                Icons.location_on_outlined,
+                'Site',
+                visitor?['site_place_name'] ?? visitor?['site'] ?? '-',
+              ),
+            ],
           ),
-        );
-      },
+        ),
+
+        // Vertical divider in the middle
+        Container(
+          width: 1,
+          color: const Color(0xFFF1F5F9),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        ),
+
+        // Right Column
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMetadataField(
+                Icons.person_pin_circle_outlined,
+                'PIC Host',
+                visitor?['host_name'] ?? '-',
+              ),
+              _buildMetadataField(
+                Icons.event_available_outlined,
+                'Visit Period End',
+                visitor?['visitor_period_end'] ?? visitor?['period_end'] ?? '-',
+              ),
+              _buildMetadataField(
+                Icons.domain_rounded,
+                'Host Organization',
+                visitor?['host_organization_name'] ??
+                    visitor?['organization'] ??
+                    '-',
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1720,7 +1807,23 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildStatusMetadataField(IconData icon, String label, String value) {
+  Widget _buildStatusMetadataField(IconData icon, String label, String? value) {
+    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+        ? '-'
+        : value.trim();
+
+    Color badgeColor;
+    final lower = displayValue.toLowerCase().replaceAll(' ', '').replaceAll('-', '').replaceAll('_', '');
+    if (lower.contains('checkin') || lower == 'in') {
+      badgeColor = Colors.green; // Sesuai warna popup notif success
+    } else if (lower.contains('checkout') || lower == 'out') {
+      badgeColor = Colors.red; // Sesuai warna popup notif gagal/error
+    } else if (lower.contains('block') || lower.contains('blacklist')) {
+      badgeColor = const Color(0xFF1E293B); // Hitam
+    } else {
+      badgeColor = const Color(0xFF94A3B8); // Abu-abu (Praregis / Default)
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1745,11 +1848,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF94A3B8),
+                  color: badgeColor,
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
-                  value,
+                  displayValue,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
@@ -1804,7 +1907,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildMetadataField(IconData icon, String label, String value) {
+  Widget _buildMetadataField(IconData icon, String label, String? value) {
+    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+        ? '-'
+        : value.trim();
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1827,7 +1934,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
               const SizedBox(height: 1),
               Text(
-                value,
+                displayValue,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
@@ -1843,7 +1950,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildQrDetailField(String label, String value) {
+  Widget _buildQrDetailField(String label, String? value) {
+    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+        ? '-'
+        : value.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1851,23 +1962,162 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 12.5,
+            fontSize: 11.5,
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1E293B),
           ),
         ),
-        const SizedBox(height: 1.5),
         Text(
-          value,
+          displayValue,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.inter(
-            fontSize: 11.5,
+            fontSize: 11,
             fontWeight: FontWeight.w400,
             color: const Color(0xFF64748B),
           ),
         ),
       ],
+    );
+  }
+
+  void _showVisitorQrModal(
+    BuildContext context,
+    Map<String, dynamic>? visitor,
+    String qrData,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) {
+        final invitationCode = (visitor?['invitation_code'] ?? qrData).toString();
+        final visitorName = (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor').toString();
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Container(
+            width: 380,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header with Centered Title and 'X' close button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 32),
+                      Expanded(
+                        child: Text(
+                          'Scan Visitor QR Code',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          size: 22,
+                          color: Color(0xFF64748B),
+                        ),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+
+                // Body content: Large QR Code and details
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 230,
+                        height: 230,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: QrImageView(
+                          data: qrData,
+                          version: QrVersions.auto,
+                          padding: EdgeInsets.zero,
+                          size: 206.0,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Text(
+                        invitationCode,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF003082),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        visitorName,
+                        style: GoogleFonts.inter(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Point scanner at this QR code to scan',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -2110,48 +2360,43 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     Expanded(
                       child: Container(
                         height: 36,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.search_rounded,
-                              size: 17,
-                              color: Color(0xFF94A3B8),
+                        child: Center(
+                          child: TextField(
+                            controller: _visitorSearchController,
+                            textAlignVertical: TextAlignVertical.center,
+                            textCapitalization: TextCapitalization.characters,
+                            inputFormatters: [
+                              UpperCaseTextFormatter(),
+                            ],
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              color: _textDark,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _visitorSearchController,
-                                textAlignVertical: TextAlignVertical.center,
-                                textCapitalization: TextCapitalization.characters,
-                                inputFormatters: [
-                                  UpperCaseTextFormatter(),
-                                ],
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.5,
-                                  color: _textDark,
-                                  height: 1.2,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: 'Search Visitor',
-                                  hintStyle: GoogleFonts.inter(
-                                    fontSize: 12.5,
-                                    color: const Color(0xFF94A3B8),
-                                    height: 1.2,
-                                  ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
+                            decoration: InputDecoration(
+                              hintText: 'Search Visitor',
+                              hintStyle: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                color: const Color(0xFF94A3B8),
                               ),
+                              prefixIcon: const Icon(
+                                Icons.search_rounded,
+                                size: 17,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              prefixIconConstraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.only(right: 10),
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -2262,6 +2507,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     final list = activeTab == 0
                         ? controller.rxLiveVisitors
                         : controller.rxRelatedVisitors;
+                    final selectedVisitor = controller.rxSelectedVisitor.value;
+                    final selectedId = (selectedVisitor?['id'] ?? selectedVisitor?['transaction_visitor_id'] ?? '').toString();
 
                     if (list.isEmpty) {
                       return Center(
@@ -2270,167 +2517,155 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               ? 'No live visitors available'
                               : 'No related visitors available',
                           style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: const Color(0xFF94A3B8),
-                            fontWeight: FontWeight.w500,
-                          ),
+                              fontSize: 13,
+                              color: const Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w500),
                         ),
                       );
                     }
 
-                    return ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 2,
-                        horizontal: 2,
-                      ),
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        final item = list[index];
-                        final isSelected =
-                            controller.rxSelectedVisitor.value?['id'] ==
-                            item['id'];
-                        final faceImg =
-                            (item['faceimage'] ?? item['host_faceimage'] ?? '')
-                                .toString();
-                        final isHost = item['occupancy'] == 'Host';
-
-                        return GestureDetector(
-                          onTap: () {
-                            controller.rxSelectedVisitor.value = item;
-                          },
-                          child: Container(
-                            width: 110,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFFEBF3FC)
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF003082)
-                                    : const Color(0xFFE2E8F0),
-                                width: isSelected ? 1.5 : 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 3,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                return SingleChildScrollView(
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      minHeight: constraints.maxHeight,
-                                    ),
-                                    child: IntrinsicHeight(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceEvenly,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          // Avatar with circle frame
-                                          Container(
-                                            width: 38,
-                                            height: 38,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF78909C),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            clipBehavior: Clip.antiAlias,
-                                            child: faceImg.isNotEmpty
-                                                ? Image.network(
-                                                    AppConstants.getCdnImageUrl(
-                                                      faceImg,
-                                                    ),
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (_, __, ___) =>
-                                                        const Center(
-                                                          child: Icon(
-                                                            Icons.person,
-                                                            size: 24,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                  )
-                                                : Center(
-                                                    child: Icon(
-                                                      isHost
-                                                          ? Icons.person
-                                                          : Icons.account_circle,
-                                                      size: 28,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            item['name'] ?? 'Visitor',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: _textDark,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          Text(
-                                            item['company'] ??
-                                                item['organization'] ??
-                                                '-',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w500,
-                                              color: _textMuted,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          // Checkbox Indicator
-                                          SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: Checkbox(
-                                              value: isSelected,
-                                              activeColor:
-                                                  const Color(0xFF003082),
-                                              materialTapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(3),
-                                              ),
-                                              onChanged: (_) {
-                                                controller.rxSelectedVisitor
-                                                    .value = item;
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                        height: 142,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 4,
+                            horizontal: 2,
                           ),
-                        );
-                      },
+                          itemCount: list.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 14),
+                          itemBuilder: (context, index) {
+                            final item = list[index];
+                            final itemId = (item['id'] ?? item['transaction_visitor_id'] ?? '').toString();
+                            final isSelected = selectedId.isNotEmpty && selectedId == itemId;
+                            final faceImg =
+                                (item['faceimage'] ?? item['photo'] ?? item['avatar'] ?? item['host_faceimage'] ?? '')
+                                    .toString();
+
+                            return GestureDetector(
+                              onTap: () {
+                                controller.rxSelectedVisitor.value = item;
+                              },
+                              child: Container(
+                                width: 105,
+                                height: 138,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFF003082)
+                                        : const Color(0xFFE2E8F0),
+                                    width: isSelected ? 1.5 : 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 3,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // Avatar with circle frame (clean, without side badge)
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF758A9E),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: (faceImg.isNotEmpty &&
+                                              !faceImg.startsWith('assets/'))
+                                          ? Image.network(
+                                              AppConstants.getCdnImageUrl(faceImg),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Center(
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 30,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            )
+                                          : const Center(
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 30,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item['name'] ?? 'Visitor',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF1E293B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    Text(
+                                      item['organization'] ??
+                                          item['company'] ??
+                                          '-',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    // Checkbox Indicator (Box with solid blue fill & white checkmark when selected)
+                                    Container(
+                                      width: 17,
+                                      height: 17,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFF003082)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? const Color(0xFF003082)
+                                              : const Color(0xFFCBD5E1),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: isSelected
+                                          ? const Center(
+                                              child: Icon(
+                                                Icons.check_rounded,
+                                                size: 13,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     );
                   }),
                 ),
@@ -2693,21 +2928,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // 4. Alerts Card
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildRightColumn() {
-    final visitor = controller.rxSelectedVisitor.value;
-    final host = controller.rxPrimaryHost.value ??
-        (visitor?['host_name'] != null ? visitor : null);
+    return Obx(() {
+      final visitor = controller.rxSelectedVisitor.value;
+      final host = controller.rxPrimaryHost.value ??
+          (visitor?['host_name'] != null ? visitor : null);
 
-    return Column(
-      children: [
-        // ── 1. Host Information Card (Keyed for Tour Step 7) ──────────────
-        Expanded(
-          flex: 9,
-          child: _buildCardContainer(
-            key: _keyHostInfo,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      return Column(
+        children: [
+          // ── 1. Host Information Card (Keyed for Tour Step 7) ──────────────
+          Expanded(
+            flex: 9,
+            child: _buildCardContainer(
+              key: _keyHostInfo,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Host Information',
@@ -3108,7 +3344,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         ),
       ],
     );
-  }
+  });
+}
 
   Widget _buildHostActionButton({
     required String label,
@@ -3220,32 +3457,578 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Quick Actions Handlers & Scan QR Dialog (Matching Screenshots)
+  // Quick Actions Handlers & Modal Dialogs (Matching Screenshots)
   // ─────────────────────────────────────────────────────────────────────────
   void _handleAction(String actionName) {
+    final visitor = controller.rxSelectedVisitor.value;
+    final rawStatus = (visitor?['visitor_status'] ?? visitor?['status'] ?? '').toString().toLowerCase();
+
     if (actionName == 'Scan QR') {
       _showScanQrDialog();
       return;
     }
     if (actionName == 'Check In') {
-      controller.executeAction('check_in');
+      if (visitor == null) {
+        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      if (rawStatus.contains('checkin') || rawStatus == 'in') {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Already Checked In',
+          message: 'Visitor ${visitor['name'] ?? ''} has already completed check in.',
+        );
+        return;
+      }
+      if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Action Denied',
+          message: 'Cannot check in a blocked visitor. Please unblock first.',
+        );
+        return;
+      }
+      _showConfirmationActionDialog(context, action: 'Checkin', question: 'Do you want to check in?');
       return;
     }
     if (actionName == 'Check Out') {
-      controller.executeAction('check_out');
+      if (visitor == null) {
+        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      if (!rawStatus.contains('checkin') && !rawStatus.contains('in')) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Check In Required',
+          message: 'Please check in the visitor first before checking out.',
+        );
+        return;
+      }
+      if (rawStatus.contains('checkout') || rawStatus == 'out') {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Already Checked Out',
+          message: 'Visitor ${visitor['name'] ?? ''} has already checked out.',
+        );
+        return;
+      }
+      _showConfirmationActionDialog(context, action: 'Checkout', question: 'Do you want to check out?');
       return;
     }
-    if (actionName == 'Blacklist') {
-      controller.executeAction('blacklist');
+    if (actionName == 'Blacklist' || actionName == 'Block') {
+      if (visitor == null) {
+        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      if (rawStatus.contains('block') || rawStatus.contains('blacklist')) {
+        AppSnackbar.warning(title: 'Warning', message: 'Visitor is already blocked.');
+        return;
+      }
+      _showReasonActionDialog(context, action: 'Block');
       return;
     }
-    if (actionName == 'Whitelist') {
-      controller.executeAction('whitelist');
+    if (actionName == 'Whitelist' || actionName == 'Unblock') {
+      if (visitor == null) {
+        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      _showReasonActionDialog(context, action: 'Unblock');
+      return;
+    }
+    if (actionName == 'Fill Form') {
+      AppSnackbar.info(title: 'Fill Form', message: 'Opening visitor form...');
       return;
     }
     AppSnackbar.info(
       title: actionName,
       message: 'Processing $actionName for operator terminal...',
+    );
+  }
+
+  void _showConfirmationActionDialog(
+    BuildContext context, {
+    required String action,
+    required String question,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            width: 320,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top right red 'X' button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 8),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 22,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ),
+
+                // Circle Icon with green border
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF86EFAC),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 38,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Question Text
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    question,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // Action Buttons (Cancel / Yes)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5A6A80),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                            controller.performOperatorInvitationAction(action: action);
+                          },
+                          child: Text(
+                            'Yes',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showReasonActionDialog(
+    BuildContext context, {
+    required String action,
+  }) {
+    final reasonController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final isBlock = action.toLowerCase() == 'block' || action.toLowerCase() == 'blacklist';
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            width: 360,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top right red 'X' button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 8),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 22,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ),
+
+                // Icon in circle with amber/orange border
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFED7AA),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.priority_high_rounded,
+                      size: 38,
+                      color: Color(0xFFF59E0B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Title
+                Text(
+                  isBlock ? 'Block Visitor' : 'Unblock Visitor',
+                  style: GoogleFonts.inter(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Subtitle
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    isBlock
+                        ? 'Please provide a reason for blocking this visitor:'
+                        : 'Please provide a reason for unblocking this visitor:',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Reason TextField
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TextField(
+                    controller: reasonController,
+                    autofocus: true,
+                    style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B)),
+                    decoration: InputDecoration(
+                      hintText: 'Enter reason...',
+                      hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Action Buttons (Cancel / Yes)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5A6A80),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      SizedBox(
+                        width: 88,
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF16A34A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () {
+                            final reasonText = reasonController.text.trim();
+                            if (reasonText.isEmpty) {
+                              AppSnackbar.warning(
+                                title: 'Reason Required',
+                                message: 'Please provide a reason to continue.',
+                              );
+                              return;
+                            }
+                            Navigator.of(dialogContext).pop();
+                            controller.performOperatorInvitationAction(
+                              action: isBlock ? 'Block' : 'Unblock',
+                              reason: reasonText,
+                            );
+                          },
+                          child: Text(
+                            'Yes',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showWarningNoticeDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            width: 330,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Top right red 'X' button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 8),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 22,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ),
+
+                // Icon in circle with amber/orange border
+                Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFED7AA),
+                      width: 2.5,
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.priority_high_rounded,
+                      size: 38,
+                      color: Color(0xFFF59E0B),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Title
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Message Body
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // OK Button
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: SizedBox(
+                    width: 96,
+                    height: 34,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF16A34A),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(
+                        'OK',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
