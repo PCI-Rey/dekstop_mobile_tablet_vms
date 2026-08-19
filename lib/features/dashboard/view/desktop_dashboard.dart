@@ -4373,7 +4373,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
     if (actionName == 'Access Issuance') {
       if (visitor == null) {
-        _showScanQrDialog();
+        _showScanQrDialog(
+          onVisitorLoaded: (loadedVisitor) {
+            _showAccessIssuanceDialog(context, loadedVisitor);
+          },
+        );
         return;
       }
       _showAccessIssuanceDialog(context, visitor);
@@ -6879,7 +6883,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  void _showScanQrDialog() {
+  void _showScanQrDialog({
+    void Function(Map<String, dynamic> loadedVisitor)? onVisitorLoaded,
+  }) {
     int tabMode = 0; // 0: Manual, 1: Scan Camera
     final searchInputController = TextEditingController();
     bool isSearching = false;
@@ -7075,6 +7081,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           setModalState(() => isSearching = false);
                           if (success) {
                             Get.back();
+                            final loaded = controller.rxSelectedVisitor.value;
+                            if (loaded != null && onVisitorLoaded != null) {
+                              onVisitorLoaded(loaded);
+                            }
                             AppSnackbar.success(
                               title: 'Success',
                               message: 'Data retrieved successfully',
@@ -7111,6 +7121,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               setModalState(() => isSearching = false);
                               if (success) {
                                 Get.back();
+                                final loaded = controller.rxSelectedVisitor.value;
+                                if (loaded != null && onVisitorLoaded != null) {
+                                  onVisitorLoaded(loaded);
+                                }
                                 AppSnackbar.success(
                                   title: 'Success',
                                   message: 'Data retrieved successfully',
@@ -7187,6 +7201,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 setModalState(() => isSearching = false);
                                 if (success) {
                                   Get.back();
+                                  final loaded = controller.rxSelectedVisitor.value;
+                                  if (loaded != null && onVisitorLoaded != null) {
+                                    onVisitorLoaded(loaded);
+                                  }
                                   AppSnackbar.success(
                                     title: 'Success',
                                     message: 'Data retrieved successfully',
