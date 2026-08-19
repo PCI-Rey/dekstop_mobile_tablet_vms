@@ -265,7 +265,7 @@ class DashboardRepository {
     final hasSpecificType = !allVisitorType && visitorTypeId.isNotEmpty && visitorTypeId.toLowerCase() != 'all';
     final queryParams = <String, dynamic>{
       'today': 'true',
-      'visitor-type': visitorTypeId,
+      if (hasSpecificType) 'visitor-type': visitorTypeId,
       'all-visitor-type': hasSpecificType ? 'false' : 'true',
       'start': start,
       'length': length,
@@ -340,4 +340,85 @@ class DashboardRepository {
 
     return putDirect;
   }
+
+  Future<ApiResult<Map<String, dynamic>>> blacklistVisitor({
+    required String visitorId,
+    required String reason,
+    String action = 'blacklist',
+  }) async {
+    final body = {
+      'visitor_id': visitorId.trim(),
+      'action': action,
+      'reason': reason.trim(),
+    };
+
+    // Primary endpoint: POST /api/operator-invitation/blacklist
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/blacklist',
+      data: body,
+    );
+  }
+
+  // --- Registered Sites (/api/operator-invitation/registered-site) ---
+  Future<ApiResult<Map<String, dynamic>>> fetchRegisteredSites() async {
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/registered-site',
+    );
+  }
+
+  // --- Return Access Card (/api/operator-invitation/return-access-card) ---
+  Future<ApiResult<Map<String, dynamic>>> returnAccessCard({
+    required String trxVisitorId,
+    required String cardNumber,
+    required String registeredSiteId,
+  }) async {
+    final body = {
+      'trx_visitor_id': trxVisitorId.trim(),
+      'card_number': cardNumber.trim(),
+      'registered_site_id': registeredSiteId.trim(),
+    };
+
+    return await _dioClient.put<Map<String, dynamic>>(
+      '/api/operator-invitation/return-access-card',
+      data: body,
+    );
+  }
+
+  // --- Available Cards (/api/operator-invitation/available-cards) ---
+  Future<ApiResult<Map<String, dynamic>>> fetchAvailableCards() async {
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/available-cards',
+    );
+  }
+
+  // --- Grant Access Card (/api/operator-invitation/grant-access-card) ---
+  Future<ApiResult<Map<String, dynamic>>> grantAccessCard({
+    required String cardNumber,
+    required String trxVisitorId,
+    required String description,
+    required String swapCardFromCard,
+    required String swapCardFromCardId,
+    required String swapCardFromSiteId,
+    required bool isSwapCard,
+    required String swapType,
+    required String registeredSiteId,
+  }) async {
+    final body = {
+      'card_number': cardNumber.trim(),
+      'trx_visitor_id': trxVisitorId.trim(),
+      'description': description.trim(),
+      'swap_card_from_card': swapCardFromCard.trim(),
+      'swap_card_from_card_id': swapCardFromCardId.trim(),
+      'swap_card_from_site_id': swapCardFromSiteId.trim(),
+      'is_swapcard': isSwapCard,
+      'swap_type': swapType.trim(),
+      'registered_site_id': registeredSiteId.trim(),
+    };
+
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/grant-access-card',
+      data: body,
+    );
+  }
 }
+

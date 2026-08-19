@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1380,6 +1381,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildVisitInformationTab(Map<String, dynamic>? visitor) {
+    final bool isHost = visitor?['is_host'] == true || visitor?['raw']?['is_host'] == true;
+
     return Column(
       children: [
         Expanded(
@@ -1409,11 +1412,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           visitor?['ticket_no'] ??
                           '-',
                     ),
-                    _buildMetadataField(
-                      Icons.commute_outlined,
-                      'Vehicle Type',
-                      visitor?['vehicle_type'] ?? '-',
-                    ),
+                    if (!isHost)
+                      _buildMetadataField(
+                        Icons.commute_outlined,
+                        'Vehicle Type',
+                        visitor?['vehicle_type'] ?? '-',
+                      ),
                   ],
                 ),
               ),
@@ -1460,13 +1464,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             'Visitor Status',
                             '-',
                           ),
-                    _buildMetadataField(
-                      Icons.receipt_long_outlined,
-                      'Vehicle Plate No.',
-                      visitor?['vehicle_plate_number'] ??
-                          visitor?['vehicle_plate'] ??
-                          '-',
-                    ),
+                    if (!isHost)
+                      _buildMetadataField(
+                        Icons.receipt_long_outlined,
+                        'Vehicle Plate No.',
+                        visitor?['vehicle_plate_number'] ??
+                            visitor?['vehicle_plate'] ??
+                            '-',
+                      ),
                   ],
                 ),
               ),
@@ -1482,39 +1487,38 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   rawStatus == 'block' ||
                   rawStatus == 'blacklist';
 
-              // 1. If visitor is blocked (is_block == true): show ONLY the single Unblock button
+              // 1. If visitor is blocked / blacklisted (is_block == true): show Blacklisted indicator badge
               if (isBlocked) {
                 return Align(
                   alignment: Alignment.center,
-                  child: SizedBox(
+                  child: Container(
                     height: 26,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004385),
-                        foregroundColor: Colors.white,
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.block_rounded, size: 13, color: Color(0xFFDC2626)),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Blacklisted',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFDC2626),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 0,
-                        ),
-                      ),
-                      onPressed: () => _handleAction('Unblock'),
-                      icon: const Icon(Icons.lock_open_rounded, size: 14, color: Colors.white),
-                      label: Text(
-                        'Unblock',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
                 );
               }
-              // 2. If is_block == false and visitor is Checkin: show BOTH Check Out + Block buttons
+              // 2. If is_block == false and visitor is Checkin: show BOTH Check Out + Blacklist buttons
               else if (rawStatus.contains('checkin') || rawStatus == 'in') {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1561,10 +1565,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             vertical: 0,
                           ),
                         ),
-                        onPressed: () => _handleAction('Block'),
+                        onPressed: () => _handleAction('Blacklist'),
                         icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
                         label: Text(
-                          'Block',
+                          'Blacklist',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -1575,7 +1579,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 );
               }
-              // 3. If visitor is Available or Waiting (needs manual check in after approval): show Check In + Block buttons
+              // 3. If visitor is Available or Waiting: show Check In + Blacklist buttons
               else if (rawStatus.contains('available') || rawStatus.contains('waiting')) {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1622,10 +1626,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             vertical: 0,
                           ),
                         ),
-                        onPressed: () => _handleAction('Block'),
+                        onPressed: () => _handleAction('Blacklist'),
                         icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
                         label: Text(
-                          'Block',
+                          'Blacklist',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -1636,7 +1640,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 );
               }
-              // 4. If visitor is Checkout: show ONLY the single Block button
+              // 4. If visitor is Checkout: show ONLY the Blacklist button
               else if (rawStatus.contains('checkout') || rawStatus == 'out') {
                 return Align(
                   alignment: Alignment.center,
@@ -1655,10 +1659,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           vertical: 0,
                         ),
                       ),
-                      onPressed: () => _handleAction('Block'),
+                      onPressed: () => _handleAction('Blacklist'),
                       icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
                       label: Text(
-                        'Block',
+                        'Blacklist',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1668,35 +1672,64 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ),
                 );
               }
-              // 5. If visitor is Preregis / Praregis or default: show ONLY Fill Form button
+              // 5. If visitor is Preregis / Praregis or default: show BOTH Fill Form + Blacklist buttons
               else {
-                return Align(
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    height: 26,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF004385),
-                        foregroundColor: Colors.white,
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 26,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF004385),
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 0,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 22,
-                          vertical: 0,
-                        ),
-                      ),
-                      onPressed: () => _handleAction('Fill Form'),
-                      child: Text(
-                        'Fill Form',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                        onPressed: () => _handleAction('Fill Form'),
+                        child: Text(
+                          'Fill Form',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 26,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E293B),
+                          foregroundColor: Colors.white,
+                          elevation: 1,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 0,
+                          ),
+                        ),
+                        onPressed: () => _handleAction('Blacklist'),
+                        icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
+                        label: Text(
+                          'Blacklist',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               }
             },
@@ -1786,130 +1819,194 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: cardsList.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
-      itemBuilder: (context, index) {
-        final card = Map<String, dynamic>.from(cardsList[index] as Map);
-        final cardNum = (card['card_number'] ?? card['card_barcode'] ?? '-')
-            .toString();
-        final cardType = (card['card_type'] ?? 'Barcode').toString();
-        final cardStatus = (card['card_status'] ?? 'Available').toString();
-        final isCurrent = card['current_used'] == true || index == 0;
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        dragDevices: {
+          PointerDeviceKind.touch,
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.trackpad,
+        },
+      ),
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        itemCount: cardsList.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 6),
+        itemBuilder: (context, index) {
+          final card = Map<String, dynamic>.from(cardsList[index] as Map);
+          final cardNum = (card['card_number'] ?? card['card_barcode'] ?? '-')
+              .toString();
+          final cardType = (card['card_type'] ?? 'Barcode').toString();
+          final cardStatus = (card['card_status'] ?? 'Available').toString();
+          final isCurrent = card['current_used'] == true;
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF00ACC1), width: 1.2),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.qr_code_scanner_rounded,
-                size: 22,
-                color: Color(0xFF004385),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          cardNum,
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF00ACC1), width: 1.2),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  size: 22,
+                  color: Color(0xFF004385),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              cardNum,
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        if (isCurrent)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00ACC1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.check,
-                                  size: 10,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  'Current Card',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                          const SizedBox(width: 6),
+                          if (cardNum.isNotEmpty && cardNum != '-')
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: cardNum));
+                                  AppSnackbar.success(
+                                    title: 'Card Copied',
+                                    message: 'Card number $cardNum copied to clipboard.',
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(4),
+                                child: Tooltip(
+                                  message: 'Copy card number',
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF004385).withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.copy_rounded,
+                                          size: 11,
+                                          color: Color(0xFF004385),
+                                        ),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          'Copy',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF004385),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                      ],
+                          const SizedBox(width: 6),
+                          if (isCurrent)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00ACC1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.check,
+                                    size: 10,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Current Card',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        cardType,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Status',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      cardType,
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        color: const Color(0xFF64748B),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        cardStatus,
+                        style: GoogleFonts.inter(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Status',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      cardStatus,
-                      style: GoogleFonts.inter(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -3382,33 +3479,46 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                         ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      item['name'] ?? 'Visitor',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                Builder(
+                  builder: (context) {
+                    final visitorName = (item['name'] ?? 'Visitor').toString();
+                    final isLong = visitorName.length > 12;
+                    final fontSize = isLong ? 10.0 : 11.0;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            visitorName,
+                            style: GoogleFonts.inter(
+                              fontSize: fontSize,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item['organization'] ?? item['company'] ?? '-',
+                            style: GoogleFonts.inter(
+                              fontSize: 8.5,
+                              height: 1.1,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF64748B),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item['organization'] ?? item['company'] ?? '-',
-                      style: GoogleFonts.inter(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF64748B),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                    );
+                  },
                 ),
                 // Checkbox Indicator
                 Container(
@@ -4219,28 +4329,31 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       if (isBlocked) {
         _showWarningNoticeDialog(
           context,
-          title: 'Already Blocked',
-          message: 'Visitor ${visitor['name'] ?? ''} is already blocked.',
+          title: 'Already Blacklisted',
+          message: 'Visitor ${visitor['name'] ?? ''} is already blacklisted.',
         );
         return;
       }
-      _showReasonActionDialog(context, action: 'Block');
+      _showReasonActionDialog(context, action: 'Blacklist');
       return;
     }
-    if (actionName == 'Whitelist' || actionName == 'Unblock') {
+    if (actionName == 'Card Return' || actionName == 'Return Card') {
       if (visitor == null) {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
         return;
       }
-      if (!isBlocked) {
-        _showWarningNoticeDialog(
-          context,
-          title: 'Not Blocked',
-          message: 'Visitor ${visitor['name'] ?? ''} is not currently blocked.',
-        );
-        return;
-      }
-      _showReasonActionDialog(context, action: 'Unblock');
+      _showReturnCardDialog(context, visitor);
+      return;
+    }
+    if (actionName == 'Card Issuance' || actionName == 'Choose Card') {
+      _showChooseCardDialog(context);
+      return;
+    }
+    if (actionName == 'Whitelist' || actionName == 'Unblock') {
+      AppSnackbar.info(
+        title: 'Whitelist Notice',
+        message: 'Unblacklist / Whitelist feature is not available.',
+      );
       return;
     }
     if (actionName == 'Fill Form') {
@@ -4250,6 +4363,1592 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     AppSnackbar.info(
       title: actionName,
       message: 'Processing $actionName for operator terminal...',
+    );
+  }
+
+  void _showChooseCardDialog(BuildContext context) {
+    controller.fetchAvailableCards();
+    final visitor = controller.rxSelectedVisitor.value;
+    final visitorName = (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor').toString();
+
+    // Find current card from active visitor or related visitors
+    Map<String, dynamic>? currentCard;
+    final visitorCards = (visitor?['cards'] as List?) ?? (visitor?['card'] as List?) ?? [];
+    if (visitorCards.isNotEmpty) {
+      currentCard = visitorCards.firstWhereOrNull(
+        (c) => c['current_used'] == true,
+      ) ?? Map<String, dynamic>.from(visitorCards.first as Map);
+    }
+    if (currentCard == null && controller.rxAllRelatedVisitors.isNotEmpty) {
+      for (final rel in controller.rxAllRelatedVisitors) {
+        final relCards = (rel['cards'] as List?) ?? (rel['card'] as List?) ?? [];
+        final found = relCards.firstWhereOrNull((c) => c['current_used'] == true);
+        if (found != null) {
+          currentCard = Map<String, dynamic>.from(found as Map);
+          break;
+        }
+      }
+    }
+
+    final searchController = TextEditingController();
+    final cardScrollController = ScrollController();
+    String searchQuery = '';
+    String? selectedCardId;
+    bool isSelectAll = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Container(
+                width: 960,
+                height: MediaQuery.of(context).size.height * 0.88,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header (Title + Close Button)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Choose Card',
+                            style: GoogleFonts.inter(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                tooltip: 'Refresh cards',
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 20,
+                                  color: Color(0xFF003082),
+                                ),
+                                onPressed: () async {
+                                  await controller.fetchAvailableCards();
+                                  AppSnackbar.success(
+                                    title: 'Cards Refreshed',
+                                    message: 'Available card list is up to date.',
+                                  );
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                icon: const Icon(
+                                  Icons.close_rounded,
+                                  size: 20,
+                                  color: Color(0xFF64748B),
+                                ),
+                                onPressed: () => Navigator.of(dialogContext).pop(),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+
+                    // Search and Select All row
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Search Box (Numeric only, with perfectly aligned icon & text)
+                          Container(
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Center(
+                              child: TextField(
+                                controller: searchController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: const Color(0xFF1E293B),
+                                ),
+                                textAlignVertical: TextAlignVertical.center,
+                                onChanged: (val) {
+                                  setDialogState(() {
+                                    searchQuery = val.trim();
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'Search card number (e.g. 133, 3232)...',
+                                  hintStyle: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.search_rounded,
+                                    size: 18,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(
+                                    minWidth: 38,
+                                    minHeight: 38,
+                                  ),
+                                  suffixIcon: searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(
+                                            Icons.cancel_rounded,
+                                            size: 16,
+                                            color: Color(0xFF94A3B8),
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 38),
+                                          onPressed: () {
+                                            setDialogState(() {
+                                              searchController.clear();
+                                              searchQuery = '';
+                                            });
+                                          },
+                                        )
+                                      : null,
+                                  suffixIconConstraints: const BoxConstraints(
+                                    minWidth: 32,
+                                    minHeight: 38,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // Select All Checkbox Row
+                          InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                isSelectAll = !isSelectAll;
+                                if (isSelectAll) {
+                                  // Pick 1 random card from the UNUSED available cards list
+                                  final allCards = controller.rxAvailableCards;
+                                  final filteredCards = allCards.where((c) {
+                                    if (searchQuery.isEmpty) return true;
+                                    final numStr = (c['card_number'] ?? '').toString().replaceAll(' ', '');
+                                    final barcodeStr = (c['card_barcode'] ?? '').toString().replaceAll(' ', '');
+                                    final macStr = (c['card_mac'] ?? '').toString().replaceAll(' ', '');
+                                    final remarksStr = (c['remarks'] ?? '').toString().replaceAll(' ', '');
+                                    return numStr.contains(searchQuery) ||
+                                        barcodeStr.contains(searchQuery) ||
+                                        macStr.contains(searchQuery) ||
+                                        remarksStr.contains(searchQuery);
+                                  }).toList();
+
+                                  final unusedCards = filteredCards.where((c) => c['is_used'] != true).toList();
+                                  if (unusedCards.isNotEmpty) {
+                                    final randomIndex = Random().nextInt(unusedCards.length);
+                                    final picked = unusedCards[randomIndex];
+                                    selectedCardId = (picked['id'] ?? picked['card_number'] ?? '').toString();
+
+                                    // Smoothly scroll/drag down directly to the randomly selected card
+                                    final pickedIndex = filteredCards.indexOf(picked);
+                                    if (pickedIndex != -1) {
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        if (cardScrollController.hasClients) {
+                                          final rowIndex = pickedIndex ~/ 4;
+                                          const rowHeight = 220.0;
+                                          final baseOffset = currentCard != null ? 240.0 : 0.0;
+                                          final targetOffset = (baseOffset + (rowIndex * rowHeight) - 20.0).clamp(
+                                            0.0,
+                                            cardScrollController.position.maxScrollExtent,
+                                          );
+                                          cardScrollController.animateTo(
+                                            targetOffset,
+                                            duration: const Duration(milliseconds: 450),
+                                            curve: Curves.easeInOutCubic,
+                                          );
+                                        }
+                                      });
+                                    }
+                                  } else {
+                                    selectedCardId = null;
+                                    isSelectAll = false;
+                                    AppSnackbar.info(
+                                      title: 'Notice',
+                                      message: 'No available unused cards to choose.',
+                                    );
+                                  }
+                                } else {
+                                  selectedCardId = null;
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (cardScrollController.hasClients) {
+                                      cardScrollController.animateTo(
+                                        0.0,
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    }
+                                  });
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 17,
+                                    height: 17,
+                                    decoration: BoxDecoration(
+                                      color: isSelectAll ? const Color(0xFF003082) : Colors.white,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: isSelectAll
+                                            ? const Color(0xFF003082)
+                                            : const Color(0xFF94A3B8),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: isSelectAll
+                                        ? const Center(
+                                            child: Icon(
+                                              Icons.check_rounded,
+                                              size: 13,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Select All',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Content Scroll Area
+                    Expanded(
+                      child: Obx(() {
+                        if (controller.rxIsAvailableCardsLoading.value && controller.rxAvailableCards.isEmpty) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF003082),
+                            ),
+                          );
+                        }
+
+                        final allCards = controller.rxAvailableCards;
+                        final filteredCards = allCards.where((c) {
+                          if (searchQuery.isEmpty) return true;
+                          final numStr = (c['card_number'] ?? '').toString().replaceAll(' ', '');
+                          final barcodeStr = (c['card_barcode'] ?? '').toString().replaceAll(' ', '');
+                          final macStr = (c['card_mac'] ?? '').toString().replaceAll(' ', '');
+                          final remarksStr = (c['remarks'] ?? '').toString().replaceAll(' ', '');
+                          return numStr.contains(searchQuery) ||
+                              barcodeStr.contains(searchQuery) ||
+                              macStr.contains(searchQuery) ||
+                              remarksStr.contains(searchQuery);
+                        }).toList();
+
+                        return ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            dragDevices: {
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.mouse,
+                              PointerDeviceKind.stylus,
+                              PointerDeviceKind.trackpad,
+                            },
+                          ),
+                          child: SingleChildScrollView(
+                            controller: cardScrollController,
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ── 1. Current Card Section ─────────────────────────────
+                                if (currentCard != null) ...[
+                                  Text(
+                                    'Current Card – $visitorName',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFFFFA000),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  _buildCurrentCardWidget(
+                                    currentCard: currentCard,
+                                    visitorName: visitorName,
+                                    isSelected: selectedCardId == (currentCard['id'] ?? currentCard['card_number']).toString(),
+                                    onTap: () {
+                                      setDialogState(() {
+                                        final currentId = (currentCard!['id'] ?? currentCard['card_number']).toString();
+                                        if (selectedCardId == currentId) {
+                                          selectedCardId = null;
+                                          isSelectAll = false;
+                                        } else {
+                                          selectedCardId = currentId;
+                                          isSelectAll = false;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                                  const SizedBox(height: 16),
+                                ],
+
+                                // ── 2. All Available Cards Grid ─────────────────────────
+                                if (filteredCards.isEmpty)
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 40),
+                                      child: Text(
+                                        searchQuery.isNotEmpty
+                                            ? 'No card found matching "$searchQuery"'
+                                            : 'No available cards',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          color: const Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      return GridView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: filteredCards.length,
+                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 4,
+                                          crossAxisSpacing: 14,
+                                          mainAxisSpacing: 14,
+                                          childAspectRatio: 0.95,
+                                        ),
+                                        itemBuilder: (context, index) {
+                                          final card = filteredCards[index];
+                                          final cardId = (card['id'] ?? card['card_number'] ?? 'card_$index').toString();
+                                          final isSelected = selectedCardId == cardId;
+
+                                          return _buildAvailableCardItem(
+                                            card: card,
+                                            isSelected: isSelected,
+                                            onTap: () {
+                                              if (card['is_used'] == true) return;
+                                              setDialogState(() {
+                                                if (selectedCardId == cardId) {
+                                                  selectedCardId = null;
+                                                  isSelectAll = false;
+                                                } else {
+                                                  selectedCardId = cardId;
+                                                  isSelectAll = false;
+                                                }
+                                              });
+                                            },
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+
+                    // Cards chosen counter text
+                    Obx(() {
+                      final totalCards = controller.rxAvailableCards.length;
+                      final chosenCount = selectedCardId != null ? 1 : 0;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: Text(
+                          'Cards chosen: $chosenCount / $totalCards  Maximum cards allowed: 1',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
+                      );
+                    }),
+
+                    // Bottom Buttons Bar (Swipe & Give)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Row(
+                        children: [
+                          // Swipe Button (Yellow/Amber)
+                          Expanded(
+                            child: SizedBox(
+                              height: 44,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFFA000),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  if (selectedCardId == null) {
+                                    AppSnackbar.warning(
+                                      title: 'Card Required',
+                                      message: 'Please choose a card first.',
+                                    );
+                                    return;
+                                  }
+
+                                  final allCards = controller.rxAvailableCards;
+                                  final pickedCard = allCards.firstWhereOrNull(
+                                    (c) => (c['id'] ?? c['card_number']).toString() == selectedCardId,
+                                  );
+
+                                  final cardNum = (pickedCard?['card_number'] ??
+                                          pickedCard?['card_barcode'] ??
+                                          pickedCard?['card_mac'] ??
+                                          selectedCardId)
+                                      .toString()
+                                      .trim();
+
+                                  await _showSwipeCardModal(
+                                    context: context,
+                                    parentDialogContext: dialogContext,
+                                    newCardNumber: cardNum,
+                                    selectedCard: pickedCard,
+                                  );
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.credit_card_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Swipe',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Give Button (Brand Blue)
+                          Expanded(
+                            child: SizedBox(
+                              height: 44,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF004385),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  if (selectedCardId == null) {
+                                    AppSnackbar.warning(
+                                      title: 'Card Required',
+                                      message: 'Please choose a card first.',
+                                    );
+                                    return;
+                                  }
+
+                                  final allCards = controller.rxAvailableCards;
+                                  final pickedCard = allCards.firstWhereOrNull(
+                                    (c) => (c['id'] ?? c['card_number']).toString() == selectedCardId,
+                                  );
+
+                                  final cardNum = (pickedCard?['card_number'] ??
+                                          pickedCard?['card_barcode'] ??
+                                          pickedCard?['card_mac'] ??
+                                          selectedCardId)
+                                      .toString()
+                                      .trim();
+
+                                  final success = await controller.grantAccessCard(
+                                    cardNumber: cardNum,
+                                    selectedCard: pickedCard,
+                                  );
+
+                                  if (success && dialogContext.mounted) {
+                                    Navigator.of(dialogContext).pop();
+                                  }
+                                },
+                                child: Obx(() {
+                                  final isLoading = controller.rxIsActionLoading.value;
+                                  if (isLoading) {
+                                    return const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.2,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  }
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.style_outlined,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Give',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showSwipeCardModal({
+    required BuildContext context,
+    required BuildContext parentDialogContext,
+    required String newCardNumber,
+    Map<String, dynamic>? selectedCard,
+  }) async {
+    final visitor = controller.rxSelectedVisitor.value;
+    final visitorName = (visitor?['visitor_name'] ??
+            visitor?['name'] ??
+            'Visitor')
+        .toString();
+
+    // Visitor Index (e.g. 1/1 or relative to related visitors)
+    final related = controller.rxRelatedVisitors;
+    int visitorIndex = 0;
+    int totalVisitors = related.isNotEmpty ? related.length : 1;
+    if (related.isNotEmpty && visitor != null) {
+      final vId = (visitor['id'] ?? visitor['transaction_visitor_id'] ?? '').toString();
+      final idx = related.indexWhere((r) => (r['id'] ?? r['transaction_visitor_id'] ?? '').toString() == vId);
+      if (idx != -1) visitorIndex = idx;
+    }
+
+    // Resolve current card number from visitor
+    String defaultCardNum = '';
+    final visitorCards = (visitor?['card'] as List?) ?? (visitor?['cards'] as List?) ?? [];
+    if (visitorCards.isNotEmpty) {
+      final activeCard = visitorCards.firstWhereOrNull((c) => c['current_used'] == true) ??
+          Map<String, dynamic>.from(visitorCards.first as Map);
+      defaultCardNum = (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '').toString().trim();
+    }
+    if (defaultCardNum.isEmpty) {
+      defaultCardNum = (visitor?['visitor_card'] ??
+              visitor?['visitor_code'] ??
+              visitor?['visitor_ble_card'] ??
+              visitor?['identity_id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    final identityId = (visitor?['identity_id'] ??
+            visitor?['id_number'] ??
+            visitor?['visitor_identity_id'] ??
+            '')
+        .toString()
+        .trim();
+
+    final bool isTypeLocked = visitorCards.isNotEmpty &&
+        visitorCards.any((c) =>
+            (c['current_used'] == true) ||
+            (c['is_swapcard'] == true) ||
+            ((c['card_number'] ?? c['card_barcode'] ?? '').toString().trim().isNotEmpty));
+
+    final inputController = TextEditingController(text: defaultCardNum);
+    String selectedType = 'Card Access';
+    final typeOptions = [
+      'NIK',
+      'KTP',
+      'Passport',
+      'Driver License',
+      'Card Access',
+      'Face ID',
+      'NDA',
+      'Other',
+    ];
+
+    String mapSwapTypeToApi(String displayType) {
+      switch (displayType) {
+        case 'NIK':
+          return 'NIK';
+        case 'KTP':
+          return 'KTP';
+        case 'Driver License':
+          return 'DriverLicense';
+        case 'Passport':
+          return 'Passport';
+        case 'Card Access':
+          return 'CardAccess';
+        case 'Face ID':
+          return 'Face';
+        case 'NDA':
+          return 'NDA';
+        case 'Other':
+        default:
+          return 'Other';
+      }
+    }
+
+    String getFieldLabel(String type) {
+      switch (type) {
+        case 'KTP':
+          return 'No KTP';
+        case 'NIK':
+          return 'NIK';
+        case 'Passport':
+          return 'Passport';
+        case 'Driver License':
+          return 'Driver License';
+        case 'Card Access':
+          return 'Card Access';
+        case 'Face ID':
+          return 'Face ID';
+        case 'NDA':
+          return 'NDA';
+        case 'Other':
+        default:
+          return 'Other';
+      }
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (swipeDialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Container(
+                width: 440,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header (Swipe Card + Close Button)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Swipe Card',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => Navigator.of(swipeDialogContext).pop(),
+                            borderRadius: BorderRadius.circular(6),
+                            child: const Padding(
+                              padding: EdgeInsets.all(4),
+                              child: Icon(
+                                Icons.close_rounded,
+                                size: 20,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                    // Content Body
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Visitor count & name
+                          Text(
+                            'Visitor ${visitorIndex + 1} / $totalVisitors',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            visitorName,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Manual Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF005696),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Manual',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Type Label
+                          Text(
+                            'Type',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // Type Dropdown Box (Locked if already has a card, or selectable PopupMenuButton on first swap)
+                          isTypeLocked
+                              ? Container(
+                                  height: 42,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: const Color(0xFFCBD5E1),
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Card Access',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13.5,
+                                          color: const Color(0xFF94A3B8),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Theme(
+                                  data: Theme.of(context).copyWith(
+                                    cardColor: Colors.white,
+                                    popupMenuTheme: PopupMenuThemeData(
+                                      color: Colors.white,
+                                      surfaceTintColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                      ),
+                                      elevation: 6,
+                                    ),
+                                  ),
+                                  child: PopupMenuButton<String>(
+                                    offset: const Offset(0, 46),
+                                    color: Colors.white,
+                                    surfaceTintColor: Colors.white,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 400,
+                                      maxWidth: 400,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    ),
+                                    elevation: 6,
+                                    onSelected: (newVal) {
+                                      setModalState(() {
+                                        selectedType = newVal;
+                                        if ((newVal == 'NIK' || newVal == 'KTP') && identityId.isNotEmpty) {
+                                          inputController.text = identityId;
+                                        } else if (newVal == 'Card Access' && defaultCardNum.isNotEmpty) {
+                                          inputController.text = defaultCardNum;
+                                        }
+                                      });
+                                    },
+                                    itemBuilder: (context) {
+                                      return typeOptions.map((type) {
+                                        final isItemPicked = type == selectedType;
+                                        return PopupMenuItem<String>(
+                                          value: type,
+                                          height: 38,
+                                          padding: EdgeInsets.zero,
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: isItemPicked ? const Color(0xFFCFE2FF) : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              type,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13.5,
+                                                color: const Color(0xFF1E293B),
+                                                fontWeight: isItemPicked ? FontWeight.w600 : FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList();
+                                    },
+                                    child: Container(
+                                      height: 42,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: const Color(0xFF005696),
+                                          width: 1.4,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            selectedType,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13.5,
+                                              color: const Color(0xFF1E293B),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                          const SizedBox(height: 16),
+
+                          // Dynamic Field Label
+                          Text(
+                            getFieldLabel(selectedType),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // Dynamic Value Input Field
+                          Container(
+                            height: 42,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Center(
+                              child: TextField(
+                                controller: inputController,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.5,
+                                  color: const Color(0xFF1E293B),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlignVertical: TextAlignVertical.center,
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+
+                          // Swipe Action Button (Full Width Blue)
+                          SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF005696),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final customSwapFrom = inputController.text.trim();
+                                final apiSwapType = mapSwapTypeToApi(selectedType);
+                                final success = await controller.grantAccessCard(
+                                  cardNumber: newCardNumber,
+                                  selectedCard: selectedCard,
+                                  isSwapCard: true,
+                                  swapType: apiSwapType,
+                                  customSwapCardFrom: customSwapFrom,
+                                );
+
+                                if (success) {
+                                  if (swipeDialogContext.mounted) {
+                                    Navigator.of(swipeDialogContext).pop();
+                                  }
+                                  if (parentDialogContext.mounted) {
+                                    Navigator.of(parentDialogContext).pop();
+                                  }
+                                }
+                              },
+                              child: Obx(() {
+                                final isLoading = controller.rxIsActionLoading.value;
+                                if (isLoading) {
+                                  return const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                }
+                                return Text(
+                                  'Swipe',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrentCardWidget({
+    required Map<String, dynamic> currentCard,
+    required String visitorName,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final cardNum = (currentCard['card_number'] ?? currentCard['card_barcode'] ?? '-').toString();
+    final cardType = (currentCard['card_type'] ?? currentCard['type'] ?? 'BLE').toString();
+    final cardMac = (currentCard['card_mac'] ?? currentCard['card_barcode'] ?? cardNum).toString();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 180,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF9EE),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFFFA000),
+              width: 1.6,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Large number
+              Text(
+                cardNum,
+                style: GoogleFonts.inter(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1E293B),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 10),
+              // Card number row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Card',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        cardNum,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      if (cardNum.isNotEmpty && cardNum != '-') ...[
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: cardNum));
+                            AppSnackbar.success(
+                              title: 'Card Copied',
+                              message: 'Card number $cardNum copied to clipboard.',
+                            );
+                          },
+                          child: const Icon(
+                            Icons.copy_rounded,
+                            size: 12,
+                            color: Color(0xFF004385),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // BLE / Type row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    cardType,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    cardMac,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Visitor Name
+              Text(
+                visitorName,
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                '(Current Card)',
+                style: GoogleFonts.inter(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFFFA000),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Checkbox indicator
+              Container(
+                width: 17,
+                height: 17,
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF003082) : Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF003082) : const Color(0xFF94A3B8),
+                    width: 1.5,
+                  ),
+                ),
+                child: isSelected
+                    ? const Center(
+                        child: Icon(
+                          Icons.check_rounded,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvailableCardItem({
+    required Map<String, dynamic> card,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final remarks = (card['remarks'] ?? '').toString().trim();
+    final name = (card['name'] ?? '').toString().trim();
+    final cardNum = (card['card_number'] ?? '-').toString().trim();
+    final cardType = (card['type'] ?? 'BLE').toString().trim();
+    final cardMac = (card['card_mac'] ?? card['card_barcode'] ?? '-').toString().trim();
+    final isUsed = card['is_used'] == true;
+
+    // Display title
+    String displayTitle = remarks.isNotEmpty
+        ? remarks
+        : (name.isNotEmpty ? name : (cardNum != '-' ? 'CARD $cardNum' : 'Card'));
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isUsed ? null : onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isUsed
+                ? const Color(0xFFF1F5F9)
+                : (isSelected ? const Color(0xFFF0F7FF) : Colors.white),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isUsed
+                  ? const Color(0xFFCBD5E1)
+                  : (isSelected ? const Color(0xFF003082) : const Color(0xFFE2E8F0)),
+              width: isSelected ? 1.8 : 1.2,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Top row: Used badge (if is_used == true)
+              Align(
+                alignment: Alignment.topLeft,
+                child: isUsed
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF94A3B8),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Used',
+                          style: GoogleFonts.inter(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                    : const SizedBox(height: 16),
+              ),
+
+              // Center Large Title
+              Text(
+                displayTitle,
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF334155),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+
+              // Card details (Card / BLE or Type)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Card',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        Text(
+                          cardNum.isNotEmpty ? cardNum : '-',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          cardType,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        Text(
+                          cardMac.isNotEmpty ? cardMac : '-',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Bottom card name
+              Text(
+                name,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              // Bottom Checkbox
+              Container(
+                width: 17,
+                height: 17,
+                decoration: BoxDecoration(
+                  color: isUsed
+                      ? const Color(0xFFE2E8F0)
+                      : (isSelected ? const Color(0xFF003082) : Colors.white),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: isUsed
+                        ? const Color(0xFFCBD5E1)
+                        : (isSelected ? const Color(0xFF003082) : const Color(0xFF94A3B8)),
+                    width: 1.5,
+                  ),
+                ),
+                child: isSelected && !isUsed
+                    ? const Center(
+                        child: Icon(
+                          Icons.check_rounded,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReturnCardDialog(
+    BuildContext context,
+    Map<String, dynamic>? visitor,
+  ) {
+    final cardNumberController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            width: 400,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header (Title + Close button)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Return Card',
+                        style: GoogleFonts.inter(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                      ),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: Color(0xFF64748B),
+                        ),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+
+                // Body: Card Number field
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Card Number',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: cardNumberController,
+                        autofocus: true,
+                        style: GoogleFonts.inter(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Enter card number...',
+                          hintStyle: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+
+                // Bottom Action Buttons (Cancel / Submit)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SizedBox(
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            foregroundColor: const Color(0xFF004385),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF004385),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        height: 34,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF004385),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                          ),
+                          onPressed: () {
+                            final cardNum = cardNumberController.text.trim();
+                            if (cardNum.isEmpty) {
+                              AppSnackbar.warning(
+                                title: 'Card Number Required',
+                                message: 'Please enter card number to return.',
+                              );
+                              return;
+                            }
+                            Navigator.of(dialogContext).pop();
+                            controller.returnAccessCard(cardNumber: cardNum);
+                          },
+                          child: Text(
+                            'Submit',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -4478,7 +6177,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                 // Title
                 Text(
-                  isBlock ? 'Block Visitor' : 'Unblock Visitor',
+                  isBlock ? 'Blacklist Visitor' : 'Action Reason',
                   style: GoogleFonts.inter(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w700,
@@ -4492,8 +6191,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
                     isBlock
-                        ? 'Please provide a reason for blocking this visitor:'
-                        : 'Please provide a reason for unblocking this visitor:',
+                        ? 'Please provide a reason for blacklisting this visitor:'
+                        : 'Please provide a reason for this action:',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 13,
@@ -4585,10 +6284,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               return;
                             }
                             Navigator.of(dialogContext).pop();
-                            controller.performOperatorInvitationAction(
-                              action: isBlock ? 'Block' : 'Unblock',
-                              reason: reasonText,
-                            );
+                            if (isBlock) {
+                              controller.blacklistVisitor(reason: reasonText);
+                            } else {
+                              controller.performOperatorInvitationAction(
+                                action: action,
+                                reason: reasonText,
+                              );
+                            }
                           },
                           child: Text(
                             'Yes',
@@ -5555,8 +7258,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                         ),
                       ),
-                      // Options: SPU, Gedung SINERGI, Resident
-                      ...['SPU', 'Gedung SINERGI', 'Resident'].map((site) {
+                      // Options: SPU, Gedung SINERGI, Resident (from API)
+                      ...((controller.rxRegisteredSites.isNotEmpty)
+                              ? controller.rxRegisteredSites
+                                  .map((s) => (s['name'] ?? '').toString())
+                                  .where((name) => name.isNotEmpty)
+                                  .toList()
+                              : ['SPU', 'Gedung SINERGI', 'Resident'])
+                          .map((site) {
                         final isSelected = _selectedSite == site;
                         return Material(
                           color: Colors.transparent,
@@ -5565,6 +7274,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               setState(() {
                                 _selectedSite = site;
                               });
+                              controller.rxSelectedSiteName.value = site;
+                              final match = controller.rxRegisteredSites.firstWhereOrNull(
+                                (s) => (s['name'] ?? '').toString().toLowerCase() == site.toLowerCase(),
+                              );
+                              if (match != null) {
+                                controller.rxSelectedSiteId.value = (match['id'] ?? '').toString();
+                              }
                               _closeSiteMenu();
                             },
                             hoverColor: const Color(0xFFF1F5F9),
@@ -5643,18 +7359,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
       final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
 
-      if (isBlocked) {
-        actions.add('Unblock');
-      } else if (rawStatus.contains('checkin') || rawStatus == 'in') {
+      if (!isBlocked) {
+        actions.add('Blacklist');
+      }
+      if (rawStatus.contains('checkin') || rawStatus == 'in') {
         actions.add('Check Out');
-        actions.add('Block');
       } else if (rawStatus.contains('available') || rawStatus.contains('waiting')) {
         actions.add('Check In');
-        actions.add('Block');
-      } else if (rawStatus.contains('checkout') || rawStatus == 'out') {
-        actions.add('Block');
-      } else {
-        // Praregis / Preregis / default
+      } else if (!rawStatus.contains('checkout') && rawStatus != 'out' && !isBlocked) {
         actions.add('Fill Form');
       }
     }
@@ -5704,9 +7416,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         validVisitors.add(v);
       } else if ((action == 'Check Out' || action == 'Checkout') && !isBlocked && (rawStatus.contains('checkin') || rawStatus == 'in')) {
         validVisitors.add(v);
-      } else if (action == 'Block' && !isBlocked) {
-        validVisitors.add(v);
-      } else if (action == 'Unblock' && isBlocked) {
+      } else if ((action == 'Blacklist' || action == 'Block') && !isBlocked) {
         validVisitors.add(v);
       }
     }
@@ -5719,8 +7429,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       return;
     }
 
-    if (action == 'Block' || action == 'Unblock') {
-      _showMultipleReasonActionDialog(context, action: action, validVisitors: validVisitors);
+    if (action == 'Blacklist' || action == 'Block') {
+      _showMultipleReasonActionDialog(context, action: 'Blacklist', validVisitors: validVisitors);
     } else {
       _showMultipleConfirmationActionDialog(context, action: action, validVisitors: validVisitors);
     }
@@ -5943,7 +7653,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  isBlock ? 'Multiple Block Action' : 'Multiple Unblock Action',
+                  isBlock ? 'Multiple Blacklist Action' : 'Multiple Action',
                   style: GoogleFonts.inter(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w700,
@@ -6079,10 +7789,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       case 'check out':
       case 'checkout':
         return Icons.logout_rounded;
+      case 'blacklist':
       case 'block':
         return Icons.block_rounded;
-      case 'unblock':
-        return Icons.lock_open_rounded;
       case 'fill form':
       default:
         return Icons.edit_note_rounded;
@@ -6097,10 +7806,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       case 'check out':
       case 'checkout':
         return const Color(0xFFEF4444);
+      case 'blacklist':
       case 'block':
-        return const Color(0xFF475569);
-      case 'unblock':
-        return const Color(0xFF004385);
+        return const Color(0xFF212121);
       case 'fill form':
       default:
         return const Color(0xFF004385);
@@ -6681,227 +8389,239 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     final length = controller.rxUpcomingVisitorsLength.value;
                     final startIndex = (page - 1) * length;
 
-                    return ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 6),
-                      itemBuilder: (context, index) {
-                        final item = list[index];
-                        final no = startIndex + index + 1;
-                        final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '-').toString();
-                        final host = (item['host_name'] ?? item['host'] ?? '-').toString();
-                        final invCode = (item['invitation_code'] ?? item['visitor_code'] ?? item['initial_trx_code'] ?? '-').toString();
-                        final org = (item['visitor_organization_name'] ?? item['organization'] ?? '').toString();
-                        final agenda = (item['agenda'] ?? item['purpose'] ?? item['remarks'] ?? 'Meeting').toString();
-                        final periodStart = _formatUpcomingDate(item['visitor_period_start']?.toString());
-                        final periodEnd = _formatUpcomingDate(item['visitor_period_end']?.toString());
-                        final rawStatus = (item['visitor_status'] ?? item['status'] ?? '-').toString();
-                        final plate = (item['vehicle_plate_number'] ?? item['plate_number'] ?? '').toString();
-                        final rawSelfie = (item['selfie_image'] ?? item['visitor_face'] ?? item['faceimage'] ?? item['photo'] ?? '').toString().trim();
-                        final cdnUrl = AppConstants.getCdnImageUrl(rawSelfie);
-                        final hasSelfie = rawSelfie.isNotEmpty && rawSelfie != '-' && rawSelfie != 'null' && cdnUrl.isNotEmpty;
+                    return ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.stylus,
+                          PointerDeviceKind.trackpad,
+                        },
+                      ),
+                      child: ListView.separated(
+                        physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 6),
+                        itemBuilder: (context, index) {
+                          final item = list[index];
+                          final no = startIndex + index + 1;
+                          final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '-').toString();
+                          final host = (item['host_name'] ?? item['host'] ?? '-').toString();
+                          final invCode = (item['invitation_code'] ?? item['visitor_code'] ?? item['initial_trx_code'] ?? '-').toString();
+                          final org = (item['visitor_organization_name'] ?? item['organization'] ?? '').toString();
+                          final agenda = (item['agenda'] ?? item['purpose'] ?? item['remarks'] ?? 'Meeting').toString();
+                          final periodStart = _formatUpcomingDate(item['visitor_period_start']?.toString());
+                          final periodEnd = _formatUpcomingDate(item['visitor_period_end']?.toString());
+                          final rawStatus = (item['visitor_status'] ?? item['status'] ?? '-').toString();
+                          final plate = (item['vehicle_plate_number'] ?? item['plate_number'] ?? '').toString();
+                          final rawSelfie = (item['selfie_image'] ?? item['visitor_face'] ?? item['faceimage'] ?? item['photo'] ?? '').toString().trim();
+                          final cdnUrl = AppConstants.getCdnImageUrl(rawSelfie);
+                          final hasSelfie = rawSelfie.isNotEmpty && rawSelfie != '-' && rawSelfie != 'null' && cdnUrl.isNotEmpty;
 
-                        final isCheckin = rawStatus.toLowerCase().contains('checkin') || rawStatus.toLowerCase() == 'in';
-                        final isCheckout = rawStatus.toLowerCase().contains('checkout') || rawStatus.toLowerCase() == 'out';
-                        final isBlocked = rawStatus.toLowerCase().contains('block') || rawStatus.toLowerCase().contains('black');
+                          final isCheckin = rawStatus.toLowerCase().contains('checkin') || rawStatus.toLowerCase() == 'in';
+                          final isCheckout = rawStatus.toLowerCase().contains('checkout') || rawStatus.toLowerCase() == 'out';
+                          final isBlocked = rawStatus.toLowerCase().contains('block') || rawStatus.toLowerCase().contains('black');
 
-                        Color statusBg = const Color(0xFFEFF6FF);
-                        Color statusColor = const Color(0xFF003082);
-                        Color statusBorder = const Color(0xFFBFDBFE);
+                          Color statusBg = const Color(0xFFEFF6FF);
+                          Color statusColor = const Color(0xFF003082);
+                          Color statusBorder = const Color(0xFFBFDBFE);
 
-                        if (isCheckin) {
-                          statusBg = const Color(0xFFDCFCE7);
-                          statusColor = const Color(0xFF10B981);
-                          statusBorder = const Color(0xFF86EFAC);
-                        } else if (isCheckout) {
-                          statusBg = const Color(0xFFFEE2E2);
-                          statusColor = const Color(0xFFEF4444);
-                          statusBorder = const Color(0xFFFCA5A5);
-                        } else if (isBlocked) {
-                          statusBg = const Color(0xFFFEF2F2);
-                          statusColor = const Color(0xFF991B1B);
-                          statusBorder = const Color(0xFFFECACA);
-                        }
+                          if (isCheckin) {
+                            statusBg = const Color(0xFFDCFCE7);
+                            statusColor = const Color(0xFF10B981);
+                            statusBorder = const Color(0xFF86EFAC);
+                          } else if (isCheckout) {
+                            statusBg = const Color(0xFFFEE2E2);
+                            statusColor = const Color(0xFFEF4444);
+                            statusBorder = const Color(0xFFFCA5A5);
+                          } else if (isBlocked) {
+                            statusBg = const Color(0xFFFEF2F2);
+                            statusColor = const Color(0xFF991B1B);
+                            statusBorder = const Color(0xFFFECACA);
+                          }
 
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: index % 2 == 0 ? Colors.white : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFF1F5F9)),
-                          ),
-                          child: Row(
-                            children: [
-                              // 1. No
-                              SizedBox(
-                                width: 32,
-                                child: Text(
-                                  no.toString().padLeft(2, '0'),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF64748B),
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: index % 2 == 0 ? Colors.white : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                            ),
+                            child: Row(
+                              children: [
+                                // 1. No
+                                SizedBox(
+                                  width: 32,
+                                  child: Text(
+                                    no.toString().padLeft(2, '0'),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF64748B),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
+                                const SizedBox(width: 8),
 
-                              // 2. Visitor Details (Tappable Avatar Image + Name + Org)
-                              Expanded(
-                                flex: 6,
-                                child: Row(
-                                  children: [
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(20),
-                                        onTap: () {
-                                          _showVisitorImageModal(
-                                            context,
-                                            visitorName: name,
-                                            imageUrl: cdnUrl,
-                                            hasImage: hasSelfie,
-                                          );
-                                        },
-                                        child: Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEFF6FF),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
-                                          ),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: hasSelfie
-                                              ? Image.network(
-                                                  cdnUrl,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) => const Center(
+                                // 2. Visitor Details (Tappable Avatar Image + Name + Org)
+                                Expanded(
+                                  flex: 6,
+                                  child: Row(
+                                    children: [
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(20),
+                                          onTap: () {
+                                            _showVisitorImageModal(
+                                              context,
+                                              visitorName: name,
+                                              imageUrl: cdnUrl,
+                                              hasImage: hasSelfie,
+                                            );
+                                          },
+                                          child: Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: hasSelfie
+                                                ? Image.network(
+                                                    cdnUrl,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (_, __, ___) => const Center(
+                                                      child: Icon(
+                                                        Icons.person,
+                                                        size: 20,
+                                                        color: Color(0xFF003082),
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Center(
                                                     child: Icon(
                                                       Icons.person,
                                                       size: 20,
                                                       color: Color(0xFF003082),
                                                     ),
                                                   ),
-                                                )
-                                              : const Center(
-                                                  child: Icon(
-                                                    Icons.person,
-                                                    size: 20,
-                                                    color: Color(0xFF003082),
-                                                  ),
-                                                ),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            name,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF1E293B),
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          if (org.isNotEmpty && org != '-')
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
                                             Text(
-                                              org,
+                                              name,
                                               style: GoogleFonts.inter(
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF64748B),
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF1E293B),
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // 3. Host
-                              Expanded(
-                                flex: 4,
-                                child: Text(
-                                  host,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF334155),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // 4. Invitation Code
-                              Expanded(
-                                flex: 4,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Flexible(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEFF6FF),
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: const Color(0xFFBFDBFE)),
-                                          ),
-                                          child: Text(
-                                            invCode,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF003082),
-                                              letterSpacing: 0.3,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ),
-                                      if (invCode.isNotEmpty && invCode != '-') ...[
-                                        const SizedBox(width: 4),
-                                        Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            borderRadius: BorderRadius.circular(4),
-                                            onTap: () {
-                                              Clipboard.setData(ClipboardData(text: invCode));
-                                              AppSnackbar.success(
-                                                title: 'Copied',
-                                                message: 'Invitation code copied to clipboard',
-                                              );
-                                            },
-                                            child: const Padding(
-                                              padding: EdgeInsets.all(3.0),
-                                              child: Icon(
-                                                Icons.copy_rounded,
-                                                size: 13.5,
-                                                color: Color(0xFF003082),
+                                            if (org.isNotEmpty && org != '-')
+                                              Text(
+                                                org,
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: const Color(0xFF64748B),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                            ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+
+                                // 3. Host
+                                Expanded(
+                                  flex: 4,
+                                  child: Text(
+                                    host,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF334155),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+
+                                // 4. Invitation Code
+                                Expanded(
+                                  flex: 4,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                                            ),
+                                            child: Text(
+                                              invCode,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF003082),
+                                                letterSpacing: 0.3,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                        if (invCode.isNotEmpty && invCode != '-') ...[
+                                          const SizedBox(width: 4),
+                                          Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              borderRadius: BorderRadius.circular(4),
+                                              onTap: () {
+                                                Clipboard.setData(ClipboardData(text: invCode));
+                                                AppSnackbar.success(
+                                                  title: 'Copied',
+                                                  message: 'Invitation code copied to clipboard',
+                                                );
+                                              },
+                                              child: const Padding(
+                                                padding: EdgeInsets.all(3.0),
+                                                child: Icon(
+                                                  Icons.copy_rounded,
+                                                  size: 13.5,
+                                                  color: Color(0xFF003082),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               const SizedBox(width: 8),
 
                               // 5. Agenda & Schedule
@@ -6981,9 +8701,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                         );
                       },
-                    );
-                  }),
-                ),
+                    ),
+                  );
+                }),
+              ),
 
                 // ── Dialog Bottom Pagination Footer ────────────────────────
                 Container(

@@ -197,9 +197,13 @@ class RelatedVisitorsView extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       Text(
                                         name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: name.length > 14 ? 11.5 : 13,
+                                          height: 1.15,
+                                        ),
                                         textAlign: TextAlign.center,
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 2),

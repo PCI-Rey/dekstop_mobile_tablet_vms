@@ -16,13 +16,19 @@ class DashboardController extends GetxController {
     rxIsActionLoading.value = true;
 
     try {
-      // 1. Refresh Live Occupancy
+      // 1. Refresh Registered Sites
+      await fetchRegisteredSites();
+
+      // 2. Refresh Available Cards
+      await fetchAvailableCards();
+
+      // 3. Refresh Live Occupancy
       await fetchUpcomingPurpose(filter: 'Today');
 
-      // 2. Refresh Live Visitors Feed
+      // 4. Refresh Live Visitors Feed
       await fetchLiveVisitors();
 
-      // 3. Refresh Active Selected Visitor / Related Visitors if active
+      // 5. Refresh Active Selected Visitor / Related Visitors if active
       final currentVisitor = rxSelectedVisitor.value;
       final invCode = (currentVisitor?['invitation_code'] ?? '').toString().trim();
       final currentId = (_activeSearchVisitorId != null && _activeSearchVisitorId!.isNotEmpty)
@@ -135,6 +141,16 @@ class DashboardController extends GetxController {
   final rxAllRelatedVisitors =
       <Map<String, dynamic>>[]; // original copy for search
   final rxTimeline = <Map<String, dynamic>>[].obs;
+  final rxBlacklistedVisitorIds = <String>{}.obs;
+
+  // Registered Sites & Site Selection
+  final rxRegisteredSites = <Map<String, dynamic>>[].obs;
+  final rxSelectedSiteName = 'SPU'.obs;
+  final rxSelectedSiteId = ''.obs;
+
+  // Available Cards
+  final rxAvailableCards = <Map<String, dynamic>>[].obs;
+  final rxIsAvailableCardsLoading = false.obs;
 
   // UI Interactive States
   final rxSearchQuery = ''.obs;
@@ -162,40 +178,33 @@ class DashboardController extends GetxController {
       'enabled': true,
     },
     {'icon': 'login', 'label': 'Check In', 'color': 'green', 'enabled': true},
-    {'icon': 'logout', 'label': 'Check Out', 'color': 'red', 'enabled': true},
+    {
+      'icon': 'logout',
+      'label': 'Check Out',
+      'color': 'red',
+      'enabled': true,
+    },
     {
       'icon': 'credit_card',
-      'label': 'Swipe Card',
+      'label': 'Card Issuance',
       'color': 'purple',
       'enabled': true,
     },
     {
-      'icon': 'key',
-      'label': 'Access Control',
-      'color': 'orange',
-      'enabled': true,
-    },
-    {
-      'icon': 'local_parking',
-      'label': 'Parking',
+      'icon': 'keyboard_return',
+      'label': 'Card Return',
       'color': 'teal',
       'enabled': true,
     },
     {
-      'icon': 'door_sliding_outlined',
-      'label': 'Open Door',
-      'color': 'deepOrange',
+      'icon': 'access_time',
+      'label': 'Extend',
+      'color': 'orange',
       'enabled': true,
     },
     {
-      'icon': 'update',
-      'label': 'Extend Visit',
-      'color': 'amber',
-      'enabled': true,
-    },
-    {
-      'icon': 'restore',
-      'label': 'Arrival Log',
+      'icon': 'call_received',
+      'label': 'Arrival',
       'color': 'greenAccent',
       'enabled': true,
     },
@@ -232,7 +241,10 @@ class DashboardController extends GetxController {
 
     // Initial empty state
     resetDashboardToInitialState();
+    fetchRegisteredSites();
     fetchUpcomingPurpose(filter: 'Today');
+    fetchLiveVisitors();
+    fetchAvailableCards();
   }
 
   Future<void> fetchUpcomingPurpose({String filter = 'Today'}) async {
@@ -260,7 +272,7 @@ class DashboardController extends GetxController {
           rxOccupancy.assignAll(newMap);
         }
 
-        // Fetch Live Visitors for the first purpose category
+        // Fetch Live Visitors for the first purpose category if active
         if (parsed.isNotEmpty) {
           final firstId = (parsed.first['id'] ?? '').toString();
           if (firstId.isNotEmpty) {
@@ -279,10 +291,9 @@ class DashboardController extends GetxController {
     if (typeId.isEmpty && rxUpcomingPurpose.isNotEmpty) {
       typeId = (rxUpcomingPurpose.first['id'] ?? '').toString();
     }
-    if (typeId.isEmpty) return;
 
     final result = await _dashboardRepository.getUpcomingVisitors(
-      visitorTypeId: typeId,
+      visitorTypeId: typeId.isNotEmpty ? typeId : 'all',
       allVisitorType: true,
       start: 0,
       length: 100,
@@ -399,7 +410,7 @@ class DashboardController extends GetxController {
               ? resData['collection']['data'] as List
               : (resData['data'] is List ? resData['data'] as List : []));
 
-      if (rawList is List) {
+      if (rawList.isNotEmpty) {
         var mappedList = rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
         // 1. Strict Category Isolation: If specific visitor type was requested, filter items to match that category
@@ -561,6 +572,484 @@ class DashboardController extends GetxController {
     applyFiltersAndPagination();
   }
 
+  Future<bool> blacklistVisitor({
+    required String reason,
+    String? targetVisitorId,
+    String? invitationCode,
+  }) async {
+    final visitor = rxSelectedVisitor.value;
+    String vId = targetVisitorId ?? '';
+    String invCode = invitationCode ?? '';
+
+    if (vId.isEmpty && visitor != null) {
+      vId = (visitor['visitor_id'] ??
+              visitor['visitor']?['id'] ??
+              visitor['visitor']?['visitor_id'] ??
+              visitor['raw']?['visitor_id'] ??
+              visitor['raw']?['visitor']?['id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    if (invCode.isEmpty && visitor != null) {
+      invCode = (visitor['invitation_code'] ?? '').toString().trim();
+    }
+
+    // Step 1: If vId is missing/empty, or if we have an invitation code, call /api/operator-invitation/search to extract visitor_id
+    if ((vId.isEmpty || vId == '-' || vId == 'null') && invCode.isNotEmpty && invCode != '-') {
+      rxIsActionLoading.value = true;
+      final searchResult = await _dashboardRepository.searchInvitation(invCode);
+      if (searchResult is Success<Map<String, dynamic>>) {
+        final searchData = searchResult.data;
+        final coll = searchData['collection'] ?? searchData['data'];
+        final list = (coll is Map ? coll['data'] : (coll is List ? coll : [])) as List?;
+        if (list != null && list.isNotEmpty) {
+          final firstItem = Map<String, dynamic>.from(list[0] as Map);
+          vId = (firstItem['visitor_id'] ??
+                  firstItem['visitor']?['id'] ??
+                  firstItem['visitor']?['visitor_id'] ??
+                  firstItem['id'] ??
+                  '')
+              .toString()
+              .trim();
+        }
+      }
+    }
+
+    // Fallback if still empty: use transaction id / visitor id
+    if (vId.isEmpty && visitor != null) {
+      vId = (visitor['id'] ?? visitor['trx_id'] ?? visitor['transaction_visitor_id'] ?? '')
+          .toString()
+          .trim();
+    }
+
+    if (vId.isEmpty) {
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Could not determine visitor ID to blacklist.',
+      );
+      return false;
+    }
+
+    final actualReason = reason.trim();
+    if (actualReason.isEmpty) {
+      AppSnackbar.warning(
+        title: 'Reason Required',
+        message: 'Please provide a reason for blacklisting this visitor.',
+      );
+      return false;
+    }
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.blacklistVisitor(
+      visitorId: vId,
+      reason: actualReason,
+      action: 'blacklist',
+    );
+    rxIsActionLoading.value = false;
+
+    bool isSuccess = result is Success;
+
+    if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      if (err.toLowerCase().contains('blacklisted') || err.toLowerCase().contains('blacklist')) {
+        // Backend confirms the visitor is indeed blacklisted
+        isSuccess = true;
+      } else {
+        AppSnackbar.error(
+          title: 'Blacklist Failed',
+          message: err.isNotEmpty ? err : 'Failed to blacklist visitor',
+        );
+        return false;
+      }
+    }
+
+    if (isSuccess) {
+      // 1. Record ID into rxBlacklistedVisitorIds
+      rxBlacklistedVisitorIds.add(vId);
+
+      // 2. Update active visitor state in memory
+      if (visitor != null) {
+        final updated = Map<String, dynamic>.from(visitor);
+        updated['is_block'] = true;
+        updated['last_activity'] = 'Blacklist';
+        updated['block_reason'] = actualReason;
+        updated['visitor_status'] = 'Blacklist';
+        updated['status'] = 'Blacklist';
+        rxSelectedVisitor.value = updated;
+
+        final trxId = (updated['trx_id'] ?? updated['id'] ?? updated['transaction_visitor_id']).toString();
+        final matchIdx = rxAllRelatedVisitors.indexWhere(
+          (v) => (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id']).toString() == trxId ||
+                 (v['visitor_id'] ?? '').toString() == vId,
+        );
+        if (matchIdx != -1) {
+          rxAllRelatedVisitors[matchIdx] = updated;
+        }
+
+        final liveIdx = rxAllLiveVisitors.indexWhere(
+          (v) => (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id']).toString() == trxId ||
+                 (v['visitor_id'] ?? '').toString() == vId,
+        );
+        if (liveIdx != -1) {
+          rxAllLiveVisitors[liveIdx] = updated;
+        }
+
+        applyFiltersAndPagination();
+
+        // 3. Add Timeline Entry
+        final nowFormatted = formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+        rxTimeline.insert(0, {
+          'time': nowFormatted,
+          'title': 'Visitor Blacklisted',
+          'desc': 'Reason: $actualReason',
+          'status': 'block',
+        });
+      }
+
+      final visitorName = (visitor?['name'] ?? visitor?['visitor_name'] ?? '').toString().trim();
+      final displayName = visitorName.isNotEmpty && visitorName != '-' ? visitorName : 'Visitor';
+
+      AppSnackbar.success(
+        title: 'Visitor Blacklisted',
+        message: '$displayName has been blacklisted successfully.',
+      );
+
+      // Auto-refresh feeds in background so all counts and lists reflect the blacklist status
+      fetchLiveVisitors();
+      fetchUpcomingPurpose(filter: 'Today');
+
+      return true;
+    }
+    return false;
+  }
+
+  // --- Registered Sites (/api/operator-invitation/registered-site) ---
+  Future<void> fetchRegisteredSites() async {
+    final result = await _dashboardRepository.fetchRegisteredSites();
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'];
+      if (rawList is List) {
+        rxRegisteredSites.assignAll(
+          rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+        );
+        if (rxRegisteredSites.isNotEmpty) {
+          final match = rxRegisteredSites.firstWhereOrNull(
+            (s) => (s['name'] ?? '').toString().toLowerCase() == rxSelectedSiteName.value.toLowerCase(),
+          ) ?? rxRegisteredSites.first;
+          rxSelectedSiteId.value = (match['id'] ?? '').toString();
+          if (rxSelectedSiteName.value.isEmpty) {
+            rxSelectedSiteName.value = (match['name'] ?? 'SPU').toString();
+          }
+        }
+      }
+    }
+  }
+
+  // --- Available Cards (/api/operator-invitation/available-cards) ---
+  Future<void> fetchAvailableCards() async {
+    rxIsAvailableCardsLoading.value = true;
+    final result = await _dashboardRepository.fetchAvailableCards();
+    rxIsAvailableCardsLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'];
+      if (rawList is List) {
+        rxAvailableCards.assignAll(
+          rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+        );
+      }
+    }
+  }
+
+  // --- Return Access Card (/api/operator-invitation/return-access-card) ---
+  Future<bool> returnAccessCard({
+    required String cardNumber,
+    String? targetTrxVisitorId,
+    String? targetRegisteredSiteId,
+    String? invitationCode,
+  }) async {
+    final visitor = rxSelectedVisitor.value;
+    String trxId = targetTrxVisitorId ?? '';
+    String invCode = invitationCode ?? '';
+    String cardNum = cardNumber.trim();
+
+    if (trxId.isEmpty && visitor != null) {
+      trxId = (visitor['trx_id'] ??
+              visitor['id'] ??
+              visitor['transaction_visitor_id'] ??
+              visitor['raw']?['id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    if (invCode.isEmpty && visitor != null) {
+      invCode = (visitor['invitation_code'] ?? '').toString().trim();
+    }
+
+    // If trxId is still empty, search via invitation code
+    if ((trxId.isEmpty || trxId == '-' || trxId == 'null') && invCode.isNotEmpty && invCode != '-') {
+      rxIsActionLoading.value = true;
+      final searchResult = await _dashboardRepository.searchInvitation(invCode);
+      if (searchResult is Success<Map<String, dynamic>>) {
+        final searchData = searchResult.data;
+        final coll = searchData['collection'] ?? searchData['data'];
+        final list = (coll is Map ? coll['data'] : (coll is List ? coll : [])) as List?;
+        if (list != null && list.isNotEmpty) {
+          final firstItem = Map<String, dynamic>.from(list[0] as Map);
+          trxId = (firstItem['id'] ??
+                  firstItem['transaction_visitor_id'] ??
+                  firstItem['trx_id'] ??
+                  '')
+              .toString()
+              .trim();
+        }
+      }
+    }
+
+    if (trxId.isEmpty) {
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Could not determine transaction visitor ID for return card.',
+      );
+      return false;
+    }
+
+    if (cardNum.isEmpty) {
+      AppSnackbar.warning(
+        title: 'Card Number Required',
+        message: 'Please enter a valid card number to return.',
+      );
+      return false;
+    }
+
+    // Resolve registered_site_id
+    String siteId = targetRegisteredSiteId ?? '';
+    if (siteId.isEmpty && visitor != null) {
+      final cards = (visitor['cards'] as List?) ?? (visitor['card'] as List?) ?? [];
+      if (cards.isNotEmpty) {
+        final cMatch = cards.firstWhereOrNull(
+          (c) => (c['card_number'] ?? c['card_barcode'] ?? '').toString() == cardNum,
+        ) ?? cards.first;
+        siteId = (cMatch['registered_site_id'] ?? '').toString().trim();
+      }
+    }
+
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      final match = rxRegisteredSites.firstWhereOrNull(
+        (s) => (s['name'] ?? '').toString().toLowerCase() == rxSelectedSiteName.value.toLowerCase(),
+      ) ?? rxRegisteredSites.first;
+      siteId = (match['id'] ?? '').toString().trim();
+    }
+
+    if (siteId.isEmpty) {
+      siteId = rxSelectedSiteId.value.isNotEmpty
+          ? rxSelectedSiteId.value
+          : '1D6C9704-F6AB-47BD-A6B0-3E1FB3D6FAEA';
+    }
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.returnAccessCard(
+      trxVisitorId: trxId,
+      cardNumber: cardNum,
+      registeredSiteId: siteId,
+    );
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      // Update in-memory card list
+      if (visitor != null) {
+        final updated = Map<String, dynamic>.from(visitor);
+        final rawCards = (updated['card'] as List?) ?? (updated['cards'] as List?) ?? [];
+        final newCards = <Map<String, dynamic>>[];
+        for (final c in rawCards) {
+          final cardMap = Map<String, dynamic>.from(c as Map);
+          if ((cardMap['card_number'] ?? cardMap['card_barcode'] ?? '').toString() == cardNum) {
+            cardMap['card_status'] = 'Revoked';
+            cardMap['current_used'] = false;
+          }
+          newCards.add(cardMap);
+        }
+        updated['card'] = newCards;
+        updated['cards'] = newCards;
+        rxSelectedVisitor.value = updated;
+
+        // Insert Timeline Entry
+        final nowFormatted = formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+        rxTimeline.insert(0, {
+          'time': nowFormatted,
+          'title': 'Card Returned',
+          'desc': 'Card Number: $cardNum returned to site',
+          'status': 'return',
+        });
+      }
+
+      AppSnackbar.success(
+        title: 'Card Returned',
+        message: 'Card $cardNum has been returned successfully.',
+      );
+
+      syncCurrentInvitationState();
+      fetchLiveVisitors();
+      fetchAvailableCards();
+      return true;
+    } else if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      AppSnackbar.error(
+        title: 'Return Card Failed',
+        message: err.isNotEmpty ? err : 'Failed to return access card',
+      );
+      return false;
+    }
+    return false;
+  }
+
+  // --- Grant Access Card (/api/operator-invitation/grant-access-card) ---
+  Future<bool> grantAccessCard({
+    required String cardNumber,
+    Map<String, dynamic>? selectedCard,
+    String? targetTrxVisitorId,
+    bool isSwapCard = false,
+    String swapType = 'Other',
+    String? customSwapCardFrom,
+    String? customDescription,
+  }) async {
+    final visitor = rxSelectedVisitor.value;
+    String trxId = targetTrxVisitorId ?? '';
+    String invCode = (visitor?['invitation_code'] ?? '').toString().trim();
+    String cardNum = cardNumber.trim();
+
+    if (trxId.isEmpty && visitor != null) {
+      trxId = (visitor['trx_id'] ??
+              visitor['id'] ??
+              visitor['transaction_visitor_id'] ??
+              visitor['raw']?['id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    if ((trxId.isEmpty || trxId == '-' || trxId == 'null') && invCode.isNotEmpty && invCode != '-') {
+      rxIsActionLoading.value = true;
+      final searchResult = await _dashboardRepository.searchInvitation(invCode);
+      if (searchResult is Success<Map<String, dynamic>>) {
+        final searchData = searchResult.data;
+        final coll = searchData['collection'] ?? searchData['data'];
+        final list = (coll is Map ? coll['data'] : (coll is List ? coll : [])) as List?;
+        if (list != null && list.isNotEmpty) {
+          final firstItem = Map<String, dynamic>.from(list[0] as Map);
+          trxId = (firstItem['id'] ??
+                  firstItem['transaction_visitor_id'] ??
+                  firstItem['trx_id'] ??
+                  '')
+              .toString()
+              .trim();
+        }
+      }
+    }
+
+    if (trxId.isEmpty) {
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Could not determine transaction visitor ID for granting card.',
+      );
+      return false;
+    }
+
+    // Resolve registered_site_id
+    String siteId = rxSelectedSiteId.value.trim();
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+    }
+    if (siteId.isEmpty) {
+      await fetchRegisteredSites();
+      if (rxRegisteredSites.isNotEmpty) {
+        siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+      }
+    }
+
+    // Resolve current card from visitor for swap_card_from_card and swap_card_from_card_id
+    String currentCardNum = (customSwapCardFrom != null && customSwapCardFrom.isNotEmpty)
+        ? customSwapCardFrom.trim()
+        : '';
+    String currentCardId = '';
+    final visitorCards = (visitor?['card'] as List?) ?? (visitor?['cards'] as List?) ?? [];
+    if (visitorCards.isNotEmpty) {
+      final activeCard = visitorCards.firstWhereOrNull((c) => c['current_used'] == true) ??
+          Map<String, dynamic>.from(visitorCards.first as Map);
+      if (currentCardNum.isEmpty) {
+        currentCardNum = (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '').toString().trim();
+      }
+      currentCardId = (activeCard['id'] ?? '').toString().trim();
+    }
+
+    if (currentCardNum.isEmpty) {
+      currentCardNum = (visitor?['visitor_card'] ?? visitor?['visitor_code'] ?? visitor?['visitor_ble_card'] ?? visitor?['identity_id'] ?? '').toString().trim();
+    }
+    if (currentCardId.isEmpty && visitor != null) {
+      currentCardId = (visitor['id'] ?? visitor['visitor_id'] ?? '').toString().trim();
+    }
+
+    final desc = customDescription ??
+        (isSwapCard
+            ? 'Swap card number $cardNum from $siteId'
+            : 'Give card number $cardNum from $siteId');
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.grantAccessCard(
+      cardNumber: cardNum,
+      trxVisitorId: trxId,
+      description: desc,
+      swapCardFromCard: currentCardNum,
+      swapCardFromCardId: currentCardId,
+      swapCardFromSiteId: siteId,
+      isSwapCard: isSwapCard,
+      swapType: swapType.trim(),
+      registeredSiteId: siteId,
+    );
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final nowFormatted = formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+      final actionTitle = isSwapCard ? 'Card Swapped' : 'Card Granted';
+      final actionDesc = isSwapCard
+          ? 'Card Number: $cardNum swapped ($swapType)'
+          : 'Card Number: $cardNum given to visitor';
+
+      rxTimeline.insert(0, {
+        'time': nowFormatted,
+        'title': actionTitle,
+        'desc': actionDesc,
+        'status': 'issued',
+      });
+
+      AppSnackbar.success(
+        title: actionTitle,
+        message: isSwapCard
+            ? 'Card $cardNum has been swapped successfully.'
+            : 'Card $cardNum has been given successfully.',
+      );
+
+      syncCurrentInvitationState();
+      fetchLiveVisitors();
+      fetchAvailableCards();
+      return true;
+    } else if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      AppSnackbar.error(
+        title: isSwapCard ? 'Swap Card Failed' : 'Grant Card Failed',
+        message: err.isNotEmpty ? err : 'Failed to grant access card',
+      );
+      return false;
+    }
+
+    return false;
+  }
+
   // --- Operator Invitation Actions (/api/operator-invitation/action/{trxid}) ---
   Future<bool> performOperatorInvitationAction({
     required String action,
@@ -575,10 +1064,16 @@ class DashboardController extends GetxController {
       return false;
     }
 
+    final lowerAction = action.toLowerCase();
+
+    // Direct Blacklist action to dedicated blacklist API endpoint
+    if (lowerAction == 'blacklist' || lowerAction == 'block') {
+      return await blacklistVisitor(reason: reason ?? 'Blacklisted by operator');
+    }
+
     final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '')
         .toString()
         .toLowerCase();
-    final lowerAction = action.toLowerCase();
 
     // Validation rules
     if (lowerAction == 'checkout') {
@@ -961,9 +1456,31 @@ class DashboardController extends GetxController {
             ? 'Checked in by operator'
             : (cleanAction == 'Checkout'
                 ? 'Checked out by operator'
-                : (cleanAction == 'Unblock'
-                    ? 'Unblocked by operator'
-                    : 'Blocked by operator')));
+                : 'Blacklisted by operator'));
+
+    if (action.toLowerCase() == 'blacklist' || action.toLowerCase() == 'block') {
+      rxIsActionLoading.value = true;
+      int successCount = 0;
+      for (final v in visitors) {
+        final vId = (v['visitor_id'] ?? v['visitor']?['id'] ?? v['id'] ?? v['transaction_visitor_id'] ?? '').toString().trim();
+        final inv = (v['invitation_code'] ?? '').toString().trim();
+        final ok = await blacklistVisitor(
+          reason: actualReason,
+          targetVisitorId: vId,
+          invitationCode: inv,
+        );
+        if (ok) successCount++;
+      }
+      rxIsActionLoading.value = false;
+      if (successCount > 0) {
+        AppSnackbar.success(
+          title: 'Visitors Blacklisted',
+          message: '$successCount visitor(s) have been blacklisted successfully.',
+        );
+        return true;
+      }
+      return false;
+    }
 
     final payload = {
       'data': visitors.map((v) {
@@ -1119,7 +1636,7 @@ class DashboardController extends GetxController {
       primaryHost = Map<String, dynamic>.from(hostsList[0] as Map);
     }
 
-    final rawCards = (item['card'] as List?) ?? [];
+    final rawCards = (item['card'] as List?) ?? (item['cards'] as List?) ?? [];
     final parsedCards = rawCards
         .map((c) => Map<String, dynamic>.from(c as Map))
         .toList();
@@ -1249,6 +1766,21 @@ class DashboardController extends GetxController {
     final hostEmail = sanitize(primaryHost['email'] ?? item['host_email']);
     final hostFaceImage = sanitize(primaryHost['faceimage'], fallback: '');
 
+    final rawVisitorId = (item['visitor_id'] ?? item['visitor']?['id'] ?? item['visitor']?['visitor_id'] ?? '').toString().trim();
+    final isBlacklistedInSet = rawVisitorId.isNotEmpty && rxBlacklistedVisitorIds.contains(rawVisitorId);
+    final isBlocked = isBlacklistedInSet ||
+        item['is_block'] == true ||
+        visitorStatus.toLowerCase() == 'blacklist' ||
+        visitorStatus.toLowerCase() == 'block' ||
+        item['last_activity'] == 'Block' ||
+        item['last_activity'] == 'Blacklist';
+
+    if (isBlocked && rawVisitorId.isNotEmpty) {
+      rxBlacklistedVisitorIds.add(rawVisitorId);
+    }
+
+    final effectiveStatus = isBlocked ? 'Blacklist' : visitorStatus;
+
     return {
       'id':
           item['id'] ??
@@ -1256,7 +1788,7 @@ class DashboardController extends GetxController {
           item['visitor_id'] ??
           'v_${DateTime.now().millisecondsSinceEpoch}',
       'trx_id': item['id'] ?? item['transaction_visitor_id'] ?? '',
-      'visitor_id': item['visitor_id'] ?? '',
+      'visitor_id': rawVisitorId,
       'transaction_visitor_id':
           item['transaction_visitor_id'] ?? item['id'] ?? '',
       'name': visitorName,
@@ -1267,14 +1799,14 @@ class DashboardController extends GetxController {
       'id_card_no': visitorIdentityId,
       'gender': visitorGender,
       'nationality': 'Indonesia',
-      'status': visitorStatus,
-      'visitor_status': visitorStatus,
+      'status': effectiveStatus,
+      'visitor_status': effectiveStatus,
       'occupancy': visitorRole,
       'visitor_role': visitorRole,
       'visitor_type_name': visitorTypeName,
       'vip': item['vip'] == true,
       'frequent': false,
-      'is_block': item['is_block'] == true,
+      'is_block': isBlocked,
       'last_activity': item['last_activity'] ?? '',
       'block_reason': item['block_reason'] ?? '',
       'is_praregister_done': item['is_praregister_done'] == true,
