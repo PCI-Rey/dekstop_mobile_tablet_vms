@@ -2778,6 +2778,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             setState(() {
                               _selectedBulkAction = null;
                             });
+                            if (nextVal &&
+                                controller.rxFeedTabIndex.value == 0 &&
+                                controller.rxRelatedVisitors.isNotEmpty) {
+                              controller.rxFeedTabIndex.value = 1;
+                            }
                           }
 
                           return InkWell(
@@ -3353,7 +3358,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               selectedVisitor?['transaction_visitor_id'] ??
               '')
           .toString();
-      final isMultipleMode = controller.rxSelectMultiple.value;
+      final currentActiveTab = controller.rxFeedTabIndex.value;
+      final isMultipleMode = controller.rxSelectMultiple.value && currentActiveTab == 1;
       final selectedSet = controller.rxSelectedItems.toSet();
 
       final itemId = (item['invitation_code'] ??
@@ -3376,37 +3382,44 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            if (controller.rxSelectMultiple.value) {
-              if (controller.rxSelectedItems.contains(itemId)) {
-                controller.rxSelectedItems.remove(itemId);
-              } else {
+            if (currentActiveTab == 0) {
+              // 1. Tapping Live Visitor card (even if Select Multiple is active)
+              // directly searches its invitation code & loads Related Visitors tab!
+              final invCode = (item['invitation_code'] ??
+                      item['visitor_code'] ??
+                      item['initial_trx_code'] ??
+                      '')
+                  .toString()
+                  .trim();
+
+              if (controller.rxSelectMultiple.value) {
+                controller.rxSelectedItems.clear();
                 controller.rxSelectedItems.add(itemId);
               }
-              final actions = _getAvailableBulkActions();
-              if (_selectedBulkAction != null &&
-                  !actions.contains(_selectedBulkAction)) {
-                setState(() {
-                  _selectedBulkAction = null;
-                });
+
+              if (invCode.isNotEmpty && invCode != '-') {
+                await controller.searchInvitationCode(invCode);
+              } else {
+                controller.rxSelectedVisitor.value = item;
+                controller.rxFeedTabIndex.value = 1;
               }
             } else {
-              final currentActiveTab = controller.rxFeedTabIndex.value;
-              if (currentActiveTab == 0) {
-                // 1. Tapping Live Visitor card directly searches its invitation code & loads Related Visitors
-                final invCode = (item['invitation_code'] ??
-                        item['visitor_code'] ??
-                        item['initial_trx_code'] ??
-                        '')
-                    .toString()
-                    .trim();
-                if (invCode.isNotEmpty && invCode != '-') {
-                  await controller.searchInvitationCode(invCode);
+              // 2. In Related Visitors tab:
+              if (controller.rxSelectMultiple.value) {
+                if (controller.rxSelectedItems.contains(itemId)) {
+                  controller.rxSelectedItems.remove(itemId);
                 } else {
-                  controller.rxSelectedVisitor.value = item;
-                  controller.rxFeedTabIndex.value = 1;
+                  controller.rxSelectedItems.add(itemId);
+                }
+                final actions = _getAvailableBulkActions();
+                if (_selectedBulkAction != null &&
+                    !actions.contains(_selectedBulkAction)) {
+                  setState(() {
+                    _selectedBulkAction = null;
+                  });
                 }
               } else {
-                // 2. Tapping Related Visitor card selects that specific visitor & syncs complete host info
+                // Tapping Related Visitor card selects that specific visitor & syncs complete host info
                 controller.rxSelectedVisitor.value = item;
                 controller.syncHostForVisitor(item);
               }
