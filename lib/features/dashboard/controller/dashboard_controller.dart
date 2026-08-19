@@ -250,10 +250,27 @@ class DashboardController extends GetxController {
 
     // Initial empty state
     resetDashboardToInitialState();
-    fetchRegisteredSites();
-    fetchUpcomingPurpose(filter: 'Today');
-    fetchLiveVisitors();
-    fetchAvailableCards();
+    _loadInitialDashboardData();
+  }
+
+  Future<void> _loadInitialDashboardData() async {
+    try {
+      await fetchRegisteredSites();
+      await fetchUpcomingPurpose(filter: 'Today');
+      await fetchLiveVisitors();
+      await fetchAvailableCards();
+
+      // If initial socket timeout occurred, auto-retry smoothly
+      if (rxUpcomingPurpose.isEmpty || rxLiveVisitors.isEmpty) {
+        await Future.delayed(const Duration(milliseconds: 1200));
+        if (rxUpcomingPurpose.isEmpty) {
+          await fetchUpcomingPurpose(filter: 'Today');
+        }
+        if (rxLiveVisitors.isEmpty) {
+          await fetchLiveVisitors();
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> fetchUpcomingPurpose({String filter = 'Today'}) async {

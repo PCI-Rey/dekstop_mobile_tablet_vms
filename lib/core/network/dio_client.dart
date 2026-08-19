@@ -38,28 +38,55 @@ class DioClient {
     Options? options,
     T Function(dynamic json)? fromJson,
   }) async {
-    try {
-      final isDemo = await _isDemoServer();
-      if (isDemo) {
-        return await _handleDemoGet(path, queryParameters, fromJson);
-      }
+    int attempts = 0;
+    const maxAttempts = 3;
 
-      final activeDio = await dio;
-      final response = await activeDio.get(
-        path,
-        queryParameters: queryParameters,
-        options: options,
-      );
-      
-      if (fromJson != null) {
-        return ApiResult.success(fromJson(response.data));
-      } else {
-        return ApiResult.success(response.data as T);
+    while (true) {
+      attempts++;
+      try {
+        final isDemo = await _isDemoServer();
+        if (isDemo) {
+          return await _handleDemoGet(path, queryParameters, fromJson);
+        }
+
+        final activeDio = await dio;
+        final response = await activeDio.get(
+          path,
+          queryParameters: queryParameters,
+          options: options,
+        );
+
+        if (fromJson != null) {
+          return ApiResult.success(fromJson(response.data));
+        } else {
+          return ApiResult.success(response.data as T);
+        }
+      } on DioException catch (e) {
+        final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        final isTransient = e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            errStr.contains('semaphore') ||
+            errStr.contains('SocketException') ||
+            errStr.contains('Software caused connection abort');
+
+        if (isTransient && attempts < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(NetworkException.fromDioException(e));
+      } catch (e) {
+        final errStr = e.toString();
+        if (attempts < maxAttempts &&
+            (errStr.contains('semaphore') ||
+                errStr.contains('SocketException') ||
+                errStr.contains('TimeoutException'))) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(UnknownException(e.toString()));
       }
-    } on DioException catch (e) {
-      return ApiResult.failure(NetworkException.fromDioException(e));
-    } catch (e) {
-      return ApiResult.failure(UnknownException(e.toString()));
     }
   }
 
@@ -71,29 +98,56 @@ class DioClient {
     Options? options,
     T Function(dynamic json)? fromJson,
   }) async {
-    try {
-      final isDemo = await _isDemoServer();
-      if (isDemo) {
-        return await _handleDemoPost(path, data, fromJson);
-      }
+    int attempts = 0;
+    const maxAttempts = 3;
 
-      final activeDio = await dio;
-      final response = await activeDio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
+    while (true) {
+      attempts++;
+      try {
+        final isDemo = await _isDemoServer();
+        if (isDemo) {
+          return await _handleDemoPost(path, data, fromJson);
+        }
 
-      if (fromJson != null) {
-        return ApiResult.success(fromJson(response.data));
-      } else {
-        return ApiResult.success(response.data as T);
+        final activeDio = await dio;
+        final response = await activeDio.post(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+        );
+
+        if (fromJson != null) {
+          return ApiResult.success(fromJson(response.data));
+        } else {
+          return ApiResult.success(response.data as T);
+        }
+      } on DioException catch (e) {
+        final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        final isTransient = e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            errStr.contains('semaphore') ||
+            errStr.contains('SocketException') ||
+            errStr.contains('Software caused connection abort');
+
+        if (isTransient && attempts < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(NetworkException.fromDioException(e));
+      } catch (e) {
+        final errStr = e.toString();
+        if (attempts < maxAttempts &&
+            (errStr.contains('semaphore') ||
+                errStr.contains('SocketException') ||
+                errStr.contains('TimeoutException'))) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(UnknownException(e.toString()));
       }
-    } on DioException catch (e) {
-      return ApiResult.failure(NetworkException.fromDioException(e));
-    } catch (e) {
-      return ApiResult.failure(UnknownException(e.toString()));
     }
   }
 
@@ -105,29 +159,56 @@ class DioClient {
     Options? options,
     T Function(dynamic json)? fromJson,
   }) async {
-    try {
-      final isDemo = await _isDemoServer();
-      if (isDemo) {
-        return await _handleDemoPost(path, data, fromJson);
-      }
+    int attempts = 0;
+    const maxAttempts = 3;
 
-      final activeDio = await dio;
-      final response = await activeDio.put(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
+    while (true) {
+      attempts++;
+      try {
+        final isDemo = await _isDemoServer();
+        if (isDemo) {
+          return await _handleDemoPost(path, data, fromJson);
+        }
 
-      if (fromJson != null) {
-        return ApiResult.success(fromJson(response.data));
-      } else {
-        return ApiResult.success(response.data as T);
+        final activeDio = await dio;
+        final response = await activeDio.put(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+        );
+
+        if (fromJson != null) {
+          return ApiResult.success(fromJson(response.data));
+        } else {
+          return ApiResult.success(response.data as T);
+        }
+      } on DioException catch (e) {
+        final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        final isTransient = e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            errStr.contains('semaphore') ||
+            errStr.contains('SocketException') ||
+            errStr.contains('Software caused connection abort');
+
+        if (isTransient && attempts < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(NetworkException.fromDioException(e));
+      } catch (e) {
+        final errStr = e.toString();
+        if (attempts < maxAttempts &&
+            (errStr.contains('semaphore') ||
+                errStr.contains('SocketException') ||
+                errStr.contains('TimeoutException'))) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(UnknownException(e.toString()));
       }
-    } on DioException catch (e) {
-      return ApiResult.failure(NetworkException.fromDioException(e));
-    } catch (e) {
-      return ApiResult.failure(UnknownException(e.toString()));
     }
   }
 
@@ -139,29 +220,56 @@ class DioClient {
     Options? options,
     T Function(dynamic json)? fromJson,
   }) async {
-    try {
-      final isDemo = await _isDemoServer();
-      if (isDemo) {
-        return await _handleDemoPost(path, data, fromJson);
-      }
+    int attempts = 0;
+    const maxAttempts = 3;
 
-      final activeDio = await dio;
-      final response = await activeDio.patch(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: options,
-      );
+    while (true) {
+      attempts++;
+      try {
+        final isDemo = await _isDemoServer();
+        if (isDemo) {
+          return await _handleDemoPost(path, data, fromJson);
+        }
 
-      if (fromJson != null) {
-        return ApiResult.success(fromJson(response.data));
-      } else {
-        return ApiResult.success(response.data as T);
+        final activeDio = await dio;
+        final response = await activeDio.patch(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+        );
+
+        if (fromJson != null) {
+          return ApiResult.success(fromJson(response.data));
+        } else {
+          return ApiResult.success(response.data as T);
+        }
+      } on DioException catch (e) {
+        final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        final isTransient = e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            errStr.contains('semaphore') ||
+            errStr.contains('SocketException') ||
+            errStr.contains('Software caused connection abort');
+
+        if (isTransient && attempts < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(NetworkException.fromDioException(e));
+      } catch (e) {
+        final errStr = e.toString();
+        if (attempts < maxAttempts &&
+            (errStr.contains('semaphore') ||
+                errStr.contains('SocketException') ||
+                errStr.contains('TimeoutException'))) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(UnknownException(e.toString()));
       }
-    } on DioException catch (e) {
-      return ApiResult.failure(NetworkException.fromDioException(e));
-    } catch (e) {
-      return ApiResult.failure(UnknownException(e.toString()));
     }
   }
 
