@@ -92,6 +92,15 @@ class DashboardController extends GetxController {
 
           final matchIdx = rxAllRelatedVisitors.indexWhere((item) => item['id'].toString() == vId);
           if (matchIdx != -1) {
+            final existing = rxAllRelatedVisitors[matchIdx];
+            final existingEndDt = parseApiDateTime(existing['visitor_period_end'] ?? existing['period_end']);
+            final mappedEndDt = parseApiDateTime(mapped['visitor_period_end'] ?? mapped['period_end']);
+
+            if (existingEndDt != null && (mappedEndDt == null || existingEndDt.isAfter(mappedEndDt))) {
+              mapped['visitor_period_end'] = existing['visitor_period_end'];
+              mapped['period_end'] = existing['period_end'];
+              mapped['extend_visitor_period'] = existing['extend_visitor_period'];
+            }
             rxAllRelatedVisitors[matchIdx] = mapped;
           } else {
             rxAllRelatedVisitors.add(mapped);
@@ -1390,77 +1399,102 @@ class DashboardController extends GetxController {
     rxIsActionLoading.value = false;
 
     if (successCount > 0) {
-      // 1. Calculate and update visitor period end and extend_visitor_period dynamically
-      final currentVisitor = rxSelectedVisitor.value;
-      if (currentVisitor != null) {
-        final updated = Map<String, dynamic>.from(currentVisitor);
-        final rawEnd = updated['raw']?['visitor_period_end'] ??
-            updated['visitor_period_end'] ??
-            updated['period_end'];
+      // 1. Calculate and update visitor period end and extend_visitor_period dynamically for all related visitors
+      for (int i = 0; i < rxAllRelatedVisitors.length; i++) {
+        final item = Map<String, dynamic>.from(rxAllRelatedVisitors[i]);
+        final itemId = (item['raw']?['id'] ??
+                item['trx_id'] ??
+                item['id'] ??
+                item['transaction_visitor_id'] ??
+                item['invitation_code'] ??
+                '')
+            .toString();
 
-        DateTime currentEndDt = parseApiDateTime(rawEnd) ??
-            DateTime.now().add(const Duration(hours: 4));
-        final newEndDt = currentEndDt.add(Duration(minutes: period));
-        final newIsoEnd = newEndDt.toIso8601String();
-        final newFormattedEnd = formatLocalDateTime(newEndDt);
+        if (applyToAll || idsToExtend.contains(itemId)) {
+          final currentEnd = item['visitor_period_end'] ??
+              item['period_end'] ??
+              item['raw']?['visitor_period_end'];
+          DateTime currentEndDt = parseApiDateTime(currentEnd) ??
+              parseApiDateTime(item['raw']?['visitor_period_end']) ??
+              DateTime.now();
+          final newEndDt = currentEndDt.add(Duration(minutes: period));
+          final newFormattedEnd = formatLocalDateTime(newEndDt);
+          final newIsoEnd = newEndDt.toUtc().toIso8601String();
 
-        final currentExtend = int.tryParse(
-                (updated['extend_visitor_period'] ?? 0).toString()) ??
-            0;
-        final newExtend = currentExtend + period;
+          final currentExtend = int.tryParse(
+                  (item['extend_visitor_period'] ?? 0).toString()) ??
+              0;
+          final newExtend = currentExtend + period;
 
-        updated['extend_visitor_period'] = newExtend;
-        updated['visitor_period_end'] = newFormattedEnd;
-        updated['period_end'] = newFormattedEnd;
-        if (updated['raw'] is Map) {
-          final updatedRaw = Map<String, dynamic>.from(updated['raw'] as Map);
-          updatedRaw['extend_visitor_period'] = newExtend;
-          updatedRaw['visitor_period_end'] = newIsoEnd;
-          updated['raw'] = updatedRaw;
-        }
-
-        rxSelectedVisitor.value = updated;
-
-        // Also update all matching related visitors in memory
-        for (int i = 0; i < rxAllRelatedVisitors.length; i++) {
-          final item = Map<String, dynamic>.from(rxAllRelatedVisitors[i]);
-          final itemId = (item['raw']?['id'] ??
-                  item['trx_id'] ??
-                  item['id'] ??
-                  item['invitation_code'] ??
-                  '')
-              .toString();
-          if (applyToAll || idsToExtend.contains(itemId)) {
-            item['extend_visitor_period'] = newExtend;
-            item['visitor_period_end'] = newFormattedEnd;
-            item['period_end'] = newFormattedEnd;
-            rxAllRelatedVisitors[i] = item;
+          item['extend_visitor_period'] = newExtend;
+          item['visitor_period_end'] = newFormattedEnd;
+          item['period_end'] = newFormattedEnd;
+          if (item['raw'] is Map) {
+            final updatedRaw = Map<String, dynamic>.from(item['raw'] as Map);
+            updatedRaw['extend_visitor_period'] = newExtend;
+            updatedRaw['visitor_period_end'] = newIsoEnd;
+            item['raw'] = updatedRaw;
           }
+          rxAllRelatedVisitors[i] = item;
         }
-        applyFiltersAndPagination();
-
-        // 2. Add Timeline Entry
-        final nowFormatted =
-            formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
-        rxTimeline.insert(0, {
-          'time': nowFormatted,
-          'title': 'Period Extended',
-          'desc': 'Extended by +$period min ($successCount visitor${successCount > 1 ? "s" : ""})',
-          'status': 'extend',
-        });
       }
+
+      // Also update selected visitor if affected
+      if (rxSelectedVisitor.value != null) {
+        final selectedId = (rxSelectedVisitor.value!['raw']?['id'] ??
+                rxSelectedVisitor.value!['trx_id'] ??
+                rxSelectedVisitor.value!['id'] ??
+                rxSelectedVisitor.value!['transaction_visitor_id'] ??
+                '')
+            .toString();
+        if (applyToAll || idsToExtend.contains(selectedId)) {
+          final currentEnd = rxSelectedVisitor.value!['visitor_period_end'] ??
+              rxSelectedVisitor.value!['period_end'] ??
+              rxSelectedVisitor.value!['raw']?['visitor_period_end'];
+          DateTime currentEndDt = parseApiDateTime(currentEnd) ??
+              parseApiDateTime(rxSelectedVisitor.value!['raw']?['visitor_period_end']) ??
+              DateTime.now();
+          final newEndDt = currentEndDt.add(Duration(minutes: period));
+          final newFormattedEnd = formatLocalDateTime(newEndDt);
+          final newIsoEnd = newEndDt.toUtc().toIso8601String();
+
+          final currentExtend = int.tryParse(
+                  (rxSelectedVisitor.value!['extend_visitor_period'] ?? 0).toString()) ??
+              0;
+          final newExtend = currentExtend + period;
+
+          final updated = Map<String, dynamic>.from(rxSelectedVisitor.value!);
+          updated['extend_visitor_period'] = newExtend;
+          updated['visitor_period_end'] = newFormattedEnd;
+          updated['period_end'] = newFormattedEnd;
+          if (updated['raw'] is Map) {
+            final updatedRaw = Map<String, dynamic>.from(updated['raw'] as Map);
+            updatedRaw['extend_visitor_period'] = newExtend;
+            updatedRaw['visitor_period_end'] = newIsoEnd;
+            updated['raw'] = updatedRaw;
+          }
+          rxSelectedVisitor.value = updated;
+        }
+      }
+
+      applyFiltersAndPagination();
+
+      // 2. Add Timeline Entry
+      final nowFormatted =
+          formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+      rxTimeline.insert(0, {
+        'time': nowFormatted,
+        'title': 'Period Extended',
+        'desc': 'Extended by +$period min ($successCount visitor${successCount > 1 ? "s" : ""})',
+        'status': 'extend',
+      });
 
       AppSnackbar.success(
         title: 'Period Extended',
         message: 'Visit period extended by $period minutes successfully',
       );
 
-      // Refresh visitor invitation details to reflect extended period
-      final invCode =
-          rxSelectedVisitor.value?['invitation_code']?.toString() ?? '';
-      if (invCode.isNotEmpty && invCode != '-') {
-        searchInvitationCode(invCode);
-      }
+      // Refresh live visitors in background
       fetchLiveVisitors();
       return true;
     } else {

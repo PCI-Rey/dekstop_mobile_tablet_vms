@@ -4209,7 +4209,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showScanQrDialog();
       return;
     }
-    if (actionName == 'Extend') {
+    if (actionName == 'Extend' || actionName == 'Extend Visit') {
+      final isMultiple = controller.rxSelectMultiple.value;
+      final hasSelected = isMultiple
+          ? controller.rxSelectedItems.isNotEmpty
+          : visitor != null;
+      if (!hasSelected) {
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first to extend visit period.',
+        );
+        return;
+      }
       _showExtendVisitDialog(context);
       return;
     }
@@ -4351,10 +4362,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return;
       }
       _showChooseCardDialog(context);
-      return;
-    }
-    if (actionName == 'Extend' || actionName == 'Extend Visit') {
-      _showExtendVisitDialog(context);
       return;
     }
     if (actionName == 'Whitelist' || actionName == 'Unblock') {
