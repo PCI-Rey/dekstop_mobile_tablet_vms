@@ -303,12 +303,12 @@ class DashboardRepository {
       'apply_to_all': applyToAll,
     };
 
-    // 1. Try PUT /operator-invitation/extend-period (Standard for updating period resource)
-    final putDirect = await _dioClient.put<Map<String, dynamic>>(
-      '/operator-invitation/extend-period',
+    // 1. Try POST /api/operator-invitation/extend-period
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/extend-period',
       data: body,
     );
-    if (putDirect is Success) return putDirect;
+    if (postApi is Success) return postApi;
 
     // 2. Try PUT /api/operator-invitation/extend-period
     final putApi = await _dioClient.put<Map<String, dynamic>>(
@@ -317,12 +317,12 @@ class DashboardRepository {
     );
     if (putApi is Success) return putApi;
 
-    // 3. Try POST /api/operator-invitation/extend-period
-    final postApi = await _dioClient.post<Map<String, dynamic>>(
-      '/api/operator-invitation/extend-period',
+    // 3. Try PUT /operator-invitation/extend-period
+    final putDirect = await _dioClient.put<Map<String, dynamic>>(
+      '/operator-invitation/extend-period',
       data: body,
     );
-    if (postApi is Success) return postApi;
+    if (putDirect is Success) return putDirect;
 
     // 4. Try POST /operator-invitation/extend-period
     final postDirect = await _dioClient.post<Map<String, dynamic>>(
@@ -331,14 +331,7 @@ class DashboardRepository {
     );
     if (postDirect is Success) return postDirect;
 
-    // 5. Try PATCH /operator-invitation/extend-period
-    final patchDirect = await _dioClient.patch<Map<String, dynamic>>(
-      '/operator-invitation/extend-period',
-      data: body,
-    );
-    if (patchDirect is Success) return patchDirect;
-
-    return putDirect;
+    return postApi;
   }
 
   Future<ApiResult<Map<String, dynamic>>> blacklistVisitor({

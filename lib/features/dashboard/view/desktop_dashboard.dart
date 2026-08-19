@@ -4346,7 +4346,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       return;
     }
     if (actionName == 'Card Issuance' || actionName == 'Choose Card') {
+      if (visitor == null) {
+        _showChangeCardDialog(context);
+        return;
+      }
       _showChooseCardDialog(context);
+      return;
+    }
+    if (actionName == 'Extend' || actionName == 'Extend Visit') {
+      _showExtendVisitDialog(context);
       return;
     }
     if (actionName == 'Whitelist' || actionName == 'Unblock') {
@@ -4363,6 +4371,419 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     AppSnackbar.info(
       title: actionName,
       message: 'Processing $actionName for operator terminal...',
+    );
+  }
+
+  void _showChangeCardDialog(BuildContext context) {
+    final oldCardController = TextEditingController();
+    final newCardController = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final hasOldCard = oldCardController.text.trim().isNotEmpty;
+            final hasNewCard = newCardController.text.trim().isNotEmpty;
+            final isReady = hasOldCard || hasNewCard;
+
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: 680,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Modal Header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Change Card Dialog',
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => Navigator.of(dialogContext).pop(),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                    // Content Body (Two Card Containers with Arrow in center)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 1. Old Card Box
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Card Illustration / Tap Area
+                                  Container(
+                                    height: 180,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        style: BorderStyle.solid,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.contactless_outlined,
+                                          size: 54,
+                                          color: hasOldCard
+                                              ? const Color(0xFF004385)
+                                              : const Color(0xFF94A3B8),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Old Card',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+
+                                  // Input Field
+                                  Container(
+                                    height: 42,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: hasOldCard
+                                            ? const Color(0xFF005696)
+                                            : const Color(0xFFCBD5E1),
+                                        width: hasOldCard ? 1.4 : 1.0,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: TextField(
+                                        controller: oldCardController,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                        textAlignVertical: TextAlignVertical.center,
+                                        onChanged: (_) => setDialogState(() {}),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          hintText: 'Enter your card',
+                                          hintStyle: GoogleFonts.inter(
+                                            fontSize: 12.5,
+                                            color: const Color(0xFF94A3B8),
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.zero,
+                                          suffixIcon: Icon(
+                                            Icons.check_rounded,
+                                            size: 18,
+                                            color: hasOldCard
+                                                ? const Color(0xFF10B981)
+                                                : const Color(0xFFCBD5E1),
+                                          ),
+                                          suffixIconConstraints: const BoxConstraints(
+                                            minWidth: 24,
+                                            minHeight: 24,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Center Arrow
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF1F5F9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 22,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+
+                          // 2. New Card Box
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Card Illustration / Tap Area
+                                  Container(
+                                    height: 180,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        style: BorderStyle.solid,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.contactless_outlined,
+                                          size: 54,
+                                          color: hasNewCard
+                                              ? const Color(0xFF004385)
+                                              : const Color(0xFF94A3B8),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'New Card',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+
+                                  // Input Field
+                                  Container(
+                                    height: 42,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: hasNewCard
+                                            ? const Color(0xFF005696)
+                                            : const Color(0xFFCBD5E1),
+                                        width: hasNewCard ? 1.4 : 1.0,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: TextField(
+                                        controller: newCardController,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                        textAlignVertical: TextAlignVertical.center,
+                                        onChanged: (_) => setDialogState(() {}),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          hintText: 'Enter new card number',
+                                          hintStyle: GoogleFonts.inter(
+                                            fontSize: 12.5,
+                                            color: const Color(0xFF94A3B8),
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.zero,
+                                          suffixIcon: Icon(
+                                            Icons.check_rounded,
+                                            size: 18,
+                                            color: hasNewCard
+                                                ? const Color(0xFF10B981)
+                                                : const Color(0xFFCBD5E1),
+                                          ),
+                                          suffixIconConstraints: const BoxConstraints(
+                                            minWidth: 24,
+                                            minHeight: 24,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Bottom Action Buttons (Swipe & Give)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 20),
+                      child: Row(
+                        children: [
+                          // Swipe Button
+                          Expanded(
+                            child: SizedBox(
+                              height: 44,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isReady
+                                      ? const Color(0xFFFFA000)
+                                      : const Color(0xFFE2E8F0),
+                                  foregroundColor: isReady
+                                      ? Colors.white
+                                      : const Color(0xFF94A3B8),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                onPressed: isReady
+                                    ? () {
+                                        final oldCard = oldCardController.text.trim();
+                                        final newCard = newCardController.text.trim();
+                                        AppSnackbar.info(
+                                          title: 'Card Reader (Swipe)',
+                                          message: 'Ready for API reader integration (Old: $oldCard, New: $newCard)',
+                                        );
+                                      }
+                                    : null,
+                                child: Text(
+                                  'Swipe',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isReady
+                                        ? Colors.white
+                                        : const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+
+                          // Give Button
+                          Expanded(
+                            child: SizedBox(
+                              height: 44,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isReady
+                                      ? const Color(0xFF004385)
+                                      : const Color(0xFFE2E8F0),
+                                  foregroundColor: isReady
+                                      ? Colors.white
+                                      : const Color(0xFF94A3B8),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                onPressed: isReady
+                                    ? () {
+                                        final oldCard = oldCardController.text.trim();
+                                        final newCard = newCardController.text.trim();
+                                        AppSnackbar.info(
+                                          title: 'Card Reader (Give)',
+                                          message: 'Ready for API reader integration (Old: $oldCard, New: $newCard)',
+                                        );
+                                      }
+                                    : null,
+                                child: Text(
+                                  'Give',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isReady
+                                        ? Colors.white
+                                        : const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -6793,7 +7214,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
   void _showExtendVisitDialog(BuildContext context) {
     final visitor = controller.rxSelectedVisitor.value;
-    if (visitor == null) {
+    final hasMultiple = controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty;
+    if (visitor == null && !hasMultiple) {
       AppSnackbar.warning(
         title: 'Warning',
         message: 'Please select a visitor first to extend visit period.',
@@ -6964,7 +7386,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                               Icons.check_rounded,
                                               size: 13,
                                               color: Colors.white,
-                                            ),
+                                            )
                                           )
                                         : null,
                                   ),
@@ -7005,13 +7427,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ? null
                                   : () async {
                                       setModalState(() => isSubmitting = true);
+                                      final periodVal = selectedPeriod!;
                                       final success = await controller.extendVisitorPeriod(
-                                        period: selectedPeriod!,
+                                        period: periodVal,
                                         applyToAll: applyToAll,
                                       );
                                       setModalState(() => isSubmitting = false);
                                       if (success && dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();
+                                        _showExtendSuccessDialog(context, periodVal);
                                       }
                                     },
                               child: isSubmitting
@@ -7043,6 +7467,79 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showExtendSuccessDialog(BuildContext context, int minutes) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (successContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            width: 360,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: InkWell(
+                    onTap: () => Navigator.of(successContext).pop(),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 32,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Success!',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF10B981),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Visit extended by $minutes minutes',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

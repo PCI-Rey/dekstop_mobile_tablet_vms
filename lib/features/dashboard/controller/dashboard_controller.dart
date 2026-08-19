@@ -1312,20 +1312,57 @@ class DashboardController extends GetxController {
     required int period,
     bool applyToAll = false,
     String? visitorId,
+    List<String>? targetVisitorIds,
   }) async {
-    String targetId = visitorId ?? '';
-    if (targetId.isEmpty) {
+    final List<String> idsToExtend = [];
+
+    if (targetVisitorIds != null && targetVisitorIds.isNotEmpty) {
+      idsToExtend.addAll(targetVisitorIds);
+    } else if (visitorId != null && visitorId.isNotEmpty) {
+      idsToExtend.add(visitorId);
+    } else if (rxSelectMultiple.value && rxSelectedItems.isNotEmpty) {
+      final allPool = [
+        ...rxAllRelatedVisitors,
+        ...rxLiveVisitors,
+        if (rxSelectedVisitor.value != null) rxSelectedVisitor.value!,
+      ];
+
+      for (final selKey in rxSelectedItems) {
+        final found = allPool.firstWhereOrNull(
+          (v) =>
+              (v['id'] ?? '').toString() == selKey ||
+              (v['trx_id'] ?? '').toString() == selKey ||
+              (v['transaction_visitor_id'] ?? '').toString() == selKey ||
+              (v['invitation_code'] ?? '').toString() == selKey ||
+              (v['visitor_code'] ?? '').toString() == selKey ||
+              (v['name'] ?? '').toString() == selKey,
+        );
+        final resolvedId = (found?['raw']?['id'] ??
+                found?['trx_id'] ??
+                found?['id'] ??
+                found?['transaction_visitor_id'] ??
+                selKey)
+            .toString()
+            .trim();
+        if (resolvedId.isNotEmpty && !idsToExtend.contains(resolvedId)) {
+          idsToExtend.add(resolvedId);
+        }
+      }
+    } else {
       final v = rxSelectedVisitor.value;
-      targetId = (v?['raw']?['id'] ??
+      final targetId = (v?['raw']?['id'] ??
               v?['trx_id'] ??
               v?['id'] ??
               v?['transaction_visitor_id'] ??
               '')
           .toString()
           .trim();
+      if (targetId.isNotEmpty) {
+        idsToExtend.add(targetId);
+      }
     }
 
-    if (targetId.isEmpty) {
+    if (idsToExtend.isEmpty) {
       AppSnackbar.error(
         title: 'Validation Error',
         message: 'No visitor selected to extend period',
@@ -1334,19 +1371,25 @@ class DashboardController extends GetxController {
     }
 
     rxIsActionLoading.value = true;
-    final result = await _dashboardRepository.extendVisitorPeriod(
-      id: targetId,
-      period: period,
-      applyToAll: applyToAll,
-    );
+    int successCount = 0;
+    String lastErrorMsg = '';
+
+    for (final targetId in idsToExtend) {
+      final result = await _dashboardRepository.extendVisitorPeriod(
+        id: targetId,
+        period: period,
+        applyToAll: applyToAll,
+      );
+
+      if (result is Success<Map<String, dynamic>>) {
+        successCount++;
+      } else if (result is Failure) {
+        lastErrorMsg = (result as Failure).exception.message;
+      }
+    }
     rxIsActionLoading.value = false;
 
-    if (result is Success<Map<String, dynamic>>) {
-      final resData = result.data;
-      final msg = resData['msg'] ??
-          resData['message'] ??
-          'Visitor period extended by $period minutes successfully';
-
+    if (successCount > 0) {
       // 1. Calculate and update visitor period end and extend_visitor_period dynamically
       final currentVisitor = rxSelectedVisitor.value;
       if (currentVisitor != null) {
@@ -1387,7 +1430,7 @@ class DashboardController extends GetxController {
                   item['invitation_code'] ??
                   '')
               .toString();
-          if (applyToAll || itemId == targetId) {
+          if (applyToAll || idsToExtend.contains(itemId)) {
             item['extend_visitor_period'] = newExtend;
             item['visitor_period_end'] = newFormattedEnd;
             item['period_end'] = newFormattedEnd;
@@ -1402,14 +1445,14 @@ class DashboardController extends GetxController {
         rxTimeline.insert(0, {
           'time': nowFormatted,
           'title': 'Period Extended',
-          'desc': 'Extended by +$period min (End: $newFormattedEnd)',
+          'desc': 'Extended by +$period min ($successCount visitor${successCount > 1 ? "s" : ""})',
           'status': 'extend',
         });
       }
 
       AppSnackbar.success(
         title: 'Period Extended',
-        message: msg.toString(),
+        message: 'Visit period extended by $period minutes successfully',
       );
 
       // Refresh visitor invitation details to reflect extended period
@@ -1418,16 +1461,15 @@ class DashboardController extends GetxController {
       if (invCode.isNotEmpty && invCode != '-') {
         searchInvitationCode(invCode);
       }
+      fetchLiveVisitors();
       return true;
-    } else if (result is Failure) {
-      final err = (result as Failure).exception.message;
+    } else {
       AppSnackbar.error(
         title: 'Extend Failed',
-        message: err.isNotEmpty ? err : 'Failed to extend visitor period',
+        message: lastErrorMsg.isNotEmpty ? lastErrorMsg : 'Failed to extend visitor period.',
       );
       return false;
     }
-    return false;
   }
 
   // --- Multiple Operator Invitation Actions (/api/operator-invitation/multiple-action) ---
