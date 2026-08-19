@@ -1317,6 +1317,35 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<Map<String, dynamic>?> fetchVisitorAccessDetails(String visitorId) async {
+    if (visitorId.isEmpty) return null;
+    try {
+      final res = await _dashboardRepository.getInvitationRelatedVisitors(
+        visitorId,
+        start: 0,
+        length: 50,
+        draw: 1,
+      );
+      if (res is Success<Map<String, dynamic>>) {
+        final data = res.data;
+        final rawList = (data['collection'] is List)
+            ? data['collection'] as List
+            : ((data['collection'] is Map && data['collection']['data'] is List)
+                ? data['collection']['data'] as List
+                : (data['data'] is List ? data['data'] as List : []));
+        if (rawList.isNotEmpty) {
+          final matched = rawList.firstWhereOrNull(
+            (v) =>
+                (v['id'] ?? v['transaction_visitor_id'] ?? '').toString() ==
+                visitorId,
+          ) ?? rawList.first;
+          return Map<String, dynamic>.from(matched as Map);
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<bool> extendVisitorPeriod({
     required int period,
     bool applyToAll = false,
@@ -1717,6 +1746,11 @@ class DashboardController extends GetxController {
         .map((c) => Map<String, dynamic>.from(c as Map))
         .toList();
 
+    final rawAccess = (item['access'] as List?) ?? [];
+    final parsedAccess = rawAccess
+        .map((a) => Map<String, dynamic>.from(a as Map))
+        .toList();
+
     String sanitize(dynamic val, {String fallback = '-'}) {
       if (val == null) return fallback;
       final s = val.toString().trim();
@@ -1930,6 +1964,7 @@ class DashboardController extends GetxController {
       'checkin_at': checkinAt,
       'cards': parsedCards,
       'card': parsedCards,
+      'access': parsedAccess,
       'hosts': hostsList,
       'raw': item,
     };

@@ -4371,6 +4371,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       );
       return;
     }
+    if (actionName == 'Access Issuance') {
+      if (visitor == null) {
+        _showScanQrDialog();
+        return;
+      }
+      _showAccessIssuanceDialog(context, visitor);
+      return;
+    }
     if (actionName == 'Fill Form') {
       AppSnackbar.info(title: 'Fill Form', message: 'Opening visitor form...');
       return;
@@ -7547,6 +7555,767 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTableCheckbox({
+    required bool isChecked,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        width: 17,
+        height: 17,
+        decoration: BoxDecoration(
+          color: isChecked ? const Color(0xFF003082) : Colors.white,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: isChecked ? const Color(0xFF003082) : const Color(0xFFCBD5E1),
+            width: 1.5,
+          ),
+        ),
+        child: isChecked
+            ? const Center(
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 13,
+                  color: Colors.white,
+                ),
+              )
+            : null,
+      ),
+    );
+  }
+
+  void _showAccessIssuanceDialog(
+    BuildContext context,
+    Map<String, dynamic> visitor,
+  ) {
+    final searchController = TextEditingController();
+    final visitorId = (visitor['id'] ??
+            visitor['transaction_visitor_id'] ??
+            visitor['visitor_id'] ??
+            '')
+        .toString();
+
+    List<Map<String, dynamic>> cardList = List<Map<String, dynamic>>.from(
+      (visitor['card'] as List?) ?? (visitor['cards'] as List?) ?? [],
+    );
+    List<Map<String, dynamic>> accessList = List<Map<String, dynamic>>.from(
+      (visitor['access'] as List?) ?? [],
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        bool isLoadingDetails =
+            cardList.isEmpty && accessList.isEmpty && visitorId.isNotEmpty;
+        bool hasFetched = false;
+        final selectedCards = <int>{};
+        final selectedAccess = <int>{};
+        String searchQuery = '';
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            if (isLoadingDetails && !hasFetched) {
+              hasFetched = true;
+              controller.fetchVisitorAccessDetails(visitorId).then((details) {
+                if (details != null && dialogContext.mounted) {
+                  setDialogState(() {
+                    cardList = List<Map<String, dynamic>>.from(
+                      (details['card'] as List?) ??
+                          (details['cards'] as List?) ??
+                          [],
+                    );
+                    accessList = List<Map<String, dynamic>>.from(
+                      (details['access'] as List?) ?? [],
+                    );
+                    isLoadingDetails = false;
+                  });
+                } else if (dialogContext.mounted) {
+                  setDialogState(() {
+                    isLoadingDetails = false;
+                  });
+                }
+              });
+            }
+
+            final filteredAccess = accessList.where((a) {
+              if (searchQuery.trim().isEmpty) return true;
+              final name = (a['access_control_name'] ?? a['name'] ?? '')
+                  .toString()
+                  .toLowerCase();
+              return name.contains(searchQuery.trim().toLowerCase());
+            }).toList();
+
+            final allCardsSelected =
+                cardList.isNotEmpty && selectedCards.length == cardList.length;
+            final allAccessSelected = filteredAccess.isNotEmpty &&
+                selectedAccess.length == filteredAccess.length;
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: Container(
+                width: 960,
+                constraints: const BoxConstraints(maxHeight: 560),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.14),
+                      blurRadius: 28,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Modal Header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 16, 16, 14),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Access Issuance',
+                            style: GoogleFonts.inter(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const Spacer(),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: () => Navigator.of(dialogContext).pop(),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 19,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF1F5F9),
+                    ),
+
+                    // Content Body (Two Columns: List Card & Access)
+                    Expanded(
+                      child: isLoadingDetails
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Color(0xFF003082),
+                              ),
+                            )
+                          : Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 14, 20, 16),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Left Column: List Card
+                                  Expanded(
+                                    flex: 5,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'List Card',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+
+                                        // List Card Table Header
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF8FAFC),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            border: Border.all(
+                                              color: const Color(0xFFE2E8F0),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              _buildTableCheckbox(
+                                                isChecked: allCardsSelected,
+                                                onTap: () {
+                                                  setDialogState(() {
+                                                    if (allCardsSelected) {
+                                                      selectedCards.clear();
+                                                    } else {
+                                                      selectedCards.addAll(
+                                                        List.generate(
+                                                          cardList.length,
+                                                          (i) => i,
+                                                        ),
+                                                      );
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(width: 8),
+                                              SizedBox(
+                                                width: 30,
+                                                child: Text(
+                                                  'No',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  'Card Number',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 90,
+                                                child: Center(
+                                                  child: Text(
+                                                    'Current Used',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: const Color(
+                                                          0xFF64748B),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+
+                                        // List Card Rows
+                                        Expanded(
+                                          child: cardList.isEmpty
+                                              ? Center(
+                                                  child: Text(
+                                                    'No cards assigned to this visitor',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 12.5,
+                                                      color: const Color(
+                                                          0xFF94A3B8),
+                                                    ),
+                                                  ),
+                                                )
+                                              : ListView.separated(
+                                                  itemCount: cardList.length,
+                                                  separatorBuilder: (_, __) =>
+                                                      const Divider(
+                                                    height: 1,
+                                                    color: Color(0xFFF1F5F9),
+                                                  ),
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final c = cardList[index];
+                                                    final isSelected =
+                                                        selectedCards
+                                                            .contains(index);
+                                                    final cardNum = (c[
+                                                                'card_number'] ??
+                                                            c['card_barcode'] ??
+                                                            c['visitor_card'] ??
+                                                            '-')
+                                                        .toString();
+                                                    final isUsed = c[
+                                                                'current_used'] ==
+                                                            true ||
+                                                        c['is_employee_used'] ==
+                                                            true ||
+                                                        (c['card_status'] ?? '')
+                                                                .toString()
+                                                                .toLowerCase() ==
+                                                            'available' ||
+                                                        (c['status'] ?? '')
+                                                                .toString()
+                                                                .toLowerCase() ==
+                                                            'issued';
+
+                                                    return Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 10,
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          _buildTableCheckbox(
+                                                            isChecked:
+                                                                isSelected,
+                                                            onTap: () {
+                                                              setDialogState(
+                                                                  () {
+                                                                if (isSelected) {
+                                                                  selectedCards
+                                                                      .remove(
+                                                                          index);
+                                                                } else {
+                                                                  selectedCards
+                                                                      .add(
+                                                                          index);
+                                                                }
+                                                              });
+                                                            },
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          SizedBox(
+                                                            width: 30,
+                                                            child: Text(
+                                                              '${index + 1}',
+                                                              style:
+                                                                  GoogleFonts
+                                                                      .inter(
+                                                                fontSize: 12.5,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                color: const Color(
+                                                                    0xFF1E293B),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                            child: Text(
+                                                              cardNum,
+                                                              style:
+                                                                  GoogleFonts
+                                                                      .inter(
+                                                                fontSize: 12.5,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                color: const Color(
+                                                                    0xFF1E293B),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: 90,
+                                                            child: Center(
+                                                              child: isUsed
+                                                                  ? const Icon(
+                                                                      Icons
+                                                                          .check_circle_rounded,
+                                                                      size: 19,
+                                                                      color: Color(
+                                                                          0xFF10B981),
+                                                                    )
+                                                                  : const Icon(
+                                                                      Icons
+                                                                          .cancel_rounded,
+                                                                      size: 19,
+                                                                      color: Color(
+                                                                          0xFFEF4444),
+                                                                    ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // Subtle Vertical Divider
+                                  Container(
+                                    width: 1,
+                                    color: const Color(0xFFE2E8F0),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                  ),
+
+                                  // Right Column: Access
+                                  Expanded(
+                                    flex: 6,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Access',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+
+                                        // Search Bar Row
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Container(
+                                                height: 36,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                  border: Border.all(
+                                                    color:
+                                                        const Color(0xFFCBD5E1),
+                                                  ),
+                                                ),
+                                                child: TextField(
+                                                  controller: searchController,
+                                                  onChanged: (val) {
+                                                    setDialogState(() {
+                                                      searchQuery = val;
+                                                    });
+                                                  },
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12.5,
+                                                    color:
+                                                        const Color(0xFF1E293B),
+                                                  ),
+                                                  decoration: InputDecoration(
+                                                    hintText: 'Search...',
+                                                    hintStyle:
+                                                        GoogleFonts.inter(
+                                                      fontSize: 12.5,
+                                                      color: const Color(
+                                                          0xFF94A3B8),
+                                                    ),
+                                                    prefixIcon: const Icon(
+                                                      Icons.search_rounded,
+                                                      size: 17,
+                                                      color: Color(0xFF94A3B8),
+                                                    ),
+                                                    prefixIconConstraints:
+                                                        const BoxConstraints(
+                                                      minWidth: 32,
+                                                      minHeight: 32,
+                                                    ),
+                                                    border: InputBorder.none,
+                                                    contentPadding:
+                                                        const EdgeInsets.only(
+                                                            top: 6),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    const Color(0xFF003082),
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 16),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                minimumSize: const Size(0, 36),
+                                              ),
+                                              onPressed: () {
+                                                setDialogState(() {
+                                                  searchQuery =
+                                                      searchController.text;
+                                                });
+                                              },
+                                              child: Text(
+                                                'Search',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 12.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+
+                                        // Access Table Header
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF8FAFC),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            border: Border.all(
+                                              color: const Color(0xFFE2E8F0),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              _buildTableCheckbox(
+                                                isChecked: allAccessSelected,
+                                                onTap: () {
+                                                  setDialogState(() {
+                                                    if (allAccessSelected) {
+                                                      selectedAccess.clear();
+                                                    } else {
+                                                      selectedAccess.addAll(
+                                                        List.generate(
+                                                          filteredAccess.length,
+                                                          (i) => i,
+                                                        ),
+                                                      );
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                              const SizedBox(width: 8),
+                                              SizedBox(
+                                                width: 30,
+                                                child: Text(
+                                                  'No',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  'Name',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 90,
+                                                child: Center(
+                                                  child: Text(
+                                                    'Early Access',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: const Color(
+                                                          0xFF64748B),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+
+                                        // Access Table Rows
+                                        Expanded(
+                                          child: filteredAccess.isEmpty
+                                              ? Center(
+                                                  child: Text(
+                                                    'No access controls found',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 12.5,
+                                                      color: const Color(
+                                                          0xFF94A3B8),
+                                                    ),
+                                                  ),
+                                                )
+                                              : ListView.separated(
+                                                  itemCount:
+                                                      filteredAccess.length,
+                                                  separatorBuilder: (_, __) =>
+                                                      const Divider(
+                                                    height: 1,
+                                                    color: Color(0xFFF1F5F9),
+                                                  ),
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final a =
+                                                        filteredAccess[index];
+                                                    final isSelected =
+                                                        selectedAccess
+                                                            .contains(index);
+                                                    final accessName = (a[
+                                                                'access_control_name'] ??
+                                                            a['name'] ??
+                                                            a['access_name'] ??
+                                                            '-')
+                                                        .toString();
+                                                    final isEarlyAccess = a[
+                                                            'early_access'] ==
+                                                        true;
+
+                                                    return Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 10,
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          _buildTableCheckbox(
+                                                            isChecked:
+                                                                isSelected,
+                                                            onTap: () {
+                                                              setDialogState(
+                                                                  () {
+                                                                if (isSelected) {
+                                                                  selectedAccess
+                                                                      .remove(
+                                                                          index);
+                                                                } else {
+                                                                  selectedAccess
+                                                                      .add(
+                                                                          index);
+                                                                }
+                                                              });
+                                                            },
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          SizedBox(
+                                                            width: 30,
+                                                            child: Text(
+                                                              '${index + 1}',
+                                                              style:
+                                                                  GoogleFonts
+                                                                      .inter(
+                                                                fontSize: 12.5,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                color: const Color(
+                                                                    0xFF1E293B),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Expanded(
+                                                            child: Text(
+                                                              accessName,
+                                                              style:
+                                                                  GoogleFonts
+                                                                      .inter(
+                                                                fontSize: 12.5,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                color: const Color(
+                                                                    0xFF1E293B),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: 90,
+                                                            child: Center(
+                                                              child: isEarlyAccess
+                                                                  ? const Icon(
+                                                                      Icons
+                                                                          .check_circle_rounded,
+                                                                      size: 19,
+                                                                      color: Color(
+                                                                          0xFF10B981),
+                                                                    )
+                                                                  : const Icon(
+                                                                      Icons
+                                                                          .cancel_rounded,
+                                                                      size: 19,
+                                                                      color: Color(
+                                                                          0xFFEF4444),
+                                                                    ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                        ),
+
+                                        const SizedBox(height: 6),
+                                        // Bottom Action dropdown selector matching Image 3
+                                        Container(
+                                          height: 32,
+                                          width: 85,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                            border: Border.all(
+                                                color: const Color(0xFFCBD5E1)),
+                                          ),
+                                          child: const Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Spacer(),
+                                              Icon(
+                                                Icons
+                                                    .keyboard_arrow_down_rounded,
+                                                size: 18,
+                                                color: Color(0xFF64748B),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
