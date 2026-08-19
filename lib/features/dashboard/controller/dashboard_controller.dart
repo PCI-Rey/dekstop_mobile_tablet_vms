@@ -10,20 +10,43 @@ class DashboardController extends GetxController {
 
   DashboardController(this._dashboardRepository);
 
-  Timer? _liveSyncTimer;
   String? _activeSearchVisitorId;
 
-  @override
-  void onClose() {
-    _liveSyncTimer?.cancel();
-    super.onClose();
-  }
+  Future<void> refreshDashboardAllStatus() async {
+    rxIsActionLoading.value = true;
 
-  void _startLiveAutoSync() {
-    _liveSyncTimer?.cancel();
-    _liveSyncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      syncCurrentInvitationState();
-    });
+    try {
+      // 1. Refresh Live Occupancy
+      await fetchUpcomingPurpose(filter: 'Today');
+
+      // 2. Refresh Live Visitors Feed
+      await fetchLiveVisitors();
+
+      // 3. Refresh Active Selected Visitor / Related Visitors if active
+      final currentVisitor = rxSelectedVisitor.value;
+      final invCode = (currentVisitor?['invitation_code'] ?? '').toString().trim();
+      final currentId = (_activeSearchVisitorId != null && _activeSearchVisitorId!.isNotEmpty)
+          ? _activeSearchVisitorId!
+          : (currentVisitor?['id'] ?? currentVisitor?['transaction_visitor_id'] ?? '').toString().trim();
+
+      if (invCode.isNotEmpty && invCode != '-') {
+        await searchInvitationCode(invCode);
+      } else if (currentId.isNotEmpty) {
+        await syncCurrentInvitationState();
+      }
+
+      AppSnackbar.success(
+        title: 'Success',
+        message: 'Refresh Successfully',
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Refresh Failed',
+        message: 'Could not refresh statuses from server',
+      );
+    } finally {
+      rxIsActionLoading.value = false;
+    }
   }
 
   Future<void> syncCurrentInvitationState() async {
@@ -115,6 +138,14 @@ class DashboardController extends GetxController {
 
   // UI Interactive States
   final rxSearchQuery = ''.obs;
+  final rxLiveSearchQuery = ''.obs;
+  final rxLiveCurrentPage = 1.obs;
+  final rxLiveTotalPages = 1.obs;
+
+  final rxRelatedSearchQuery = ''.obs;
+  final rxRelatedCurrentPage = 1.obs;
+  final rxRelatedTotalPages = 1.obs;
+
   final rxFeedTabIndex = 0.obs; // 0 for Live Visitors, 1 for Related Visitors
   final rxSelectedTab =
       0.obs; // Tab index for visitor information details (desktop)
@@ -191,7 +222,6 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _startLiveAutoSync();
     // Load initial theme state locally to prevent lag
     try {
       final storage = Get.find<StorageService>();
@@ -253,6 +283,7 @@ class DashboardController extends GetxController {
 
     final result = await _dashboardRepository.getUpcomingVisitors(
       visitorTypeId: typeId,
+      allVisitorType: true,
       start: 0,
       length: 100,
       search: search,
@@ -282,8 +313,19 @@ class DashboardController extends GetxController {
           m['status'] = m['visitor_status'];
           m['agenda'] = (m['agenda'] ?? m['purpose'] ?? 'Meeting').toString();
           m['purpose'] = m['agenda'];
-          m['vehicle_plate_number'] = (m['vehicle_plate_number'] ?? m['plate_number'] ?? '').toString();
-          m['vehicle_type'] = (m['vehicle_type'] ?? 'Car').toString();
+          m['vehicle_plate_number'] = (m['vehicle_plate_number'] ?? m['vehicle_plate'] ?? m['plate_number'] ?? '').toString();
+          m['vehicle_type'] = (m['vehicle_type'] ??
+                  m['vehicle_type_name'] ??
+                  m['vehicle_name'] ??
+                  m['vehicle'] ??
+                  m['type_vehicle'] ??
+                  m['vehicle_mode'] ??
+                  m['transportation_type'] ??
+                  m['transportation'] ??
+                  m['visitor_vehicle_type'] ??
+                  m['visitor_vehicle'] ??
+                  '-')
+              .toString();
           m['host_name'] = (m['host_name'] ?? m['host'] ?? 'Host').toString();
           m['host'] = m['host_name'];
           m['host_organization_name'] = (m['host_organization_name'] ?? m['host_organization'] ?? '').toString();
@@ -305,6 +347,15 @@ class DashboardController extends GetxController {
           rxLiveVisitors.assignAll(filtered);
         } else {
           rxLiveVisitors.assignAll(mappedList);
+        }
+
+        final liveTotal = rxLiveVisitors.isNotEmpty ? (rxLiveVisitors.length / 10).ceil() : 1;
+        rxLiveTotalPages.value = liveTotal;
+        if (rxLiveCurrentPage.value > liveTotal) {
+          rxLiveCurrentPage.value = liveTotal;
+        }
+        if (rxLiveCurrentPage.value < 1 && rxLiveVisitors.isNotEmpty) {
+          rxLiveCurrentPage.value = 1;
         }
       } else {
         rxLiveVisitors.clear();
@@ -333,6 +384,7 @@ class DashboardController extends GetxController {
     final start = (targetPage - 1) * targetLength;
     final result = await _dashboardRepository.getUpcomingVisitors(
       visitorTypeId: typeId,
+      allVisitorType: false,
       start: start,
       length: targetLength,
       search: targetSearch.isNotEmpty ? targetSearch : null,
@@ -341,25 +393,78 @@ class DashboardController extends GetxController {
 
     if (result is Success<Map<String, dynamic>>) {
       final resData = result.data;
-      final rawList = resData['collection'] ?? resData['data'] ?? [];
+      final rawList = (resData['collection'] is List)
+          ? resData['collection'] as List
+          : ((resData['collection'] is Map && resData['collection']['data'] is List)
+              ? resData['collection']['data'] as List
+              : (resData['data'] is List ? resData['data'] as List : []));
 
       if (rawList is List) {
         var mappedList = rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
-        // Strict filtering by Visitor Name
+        // 1. Strict Category Isolation: If specific visitor type was requested, filter items to match that category
+        final selectedCatName = rxSelectedPurposeCategory.value.trim().toLowerCase();
+        if (typeId.isNotEmpty && typeId.toLowerCase() != 'all') {
+          final typeFiltered = mappedList.where((item) {
+            final vTypeId = (item['visitor_type'] ?? item['visitor_type_id'] ?? item['visitor']?['visitor_type'] ?? '').toString().trim();
+            final vTypeName = (item['visitor_type_name'] ?? item['occupancy'] ?? item['category'] ?? item['visitor']?['visitor_type_name'] ?? '').toString().trim().toLowerCase();
+
+            if (vTypeId.isNotEmpty && vTypeId == typeId) return true;
+            if (selectedCatName.isNotEmpty && (vTypeName == selectedCatName || vTypeName.contains(selectedCatName) || selectedCatName.contains(vTypeName))) return true;
+            return false;
+          }).toList();
+
+          if (typeFiltered.isNotEmpty) {
+            mappedList = typeFiltered;
+          }
+        }
+
+        // 2. Parse total records directly from API DataTables response
+        int apiTotal = 0;
+        if (resData['recordsFiltered'] != null) {
+          apiTotal = int.tryParse(resData['recordsFiltered'].toString()) ?? 0;
+        } else if (resData['recordsTotal'] != null) {
+          apiTotal = int.tryParse(resData['recordsTotal'].toString()) ?? 0;
+        } else if (resData['total'] != null) {
+          apiTotal = int.tryParse(resData['total'].toString()) ?? 0;
+        } else if (resData['total_records'] != null) {
+          apiTotal = int.tryParse(resData['total_records'].toString()) ?? 0;
+        } else if (resData['count'] != null) {
+          apiTotal = int.tryParse(resData['count'].toString()) ?? 0;
+        } else if (resData['collection'] is Map) {
+          final c = resData['collection'] as Map;
+          apiTotal = int.tryParse((c['recordsFiltered'] ?? c['recordsTotal'] ?? c['total'] ?? c['count'] ?? 0).toString()) ?? 0;
+        }
+
+        // Cross-check with category's count from rxUpcomingPurpose
+        final matchingPurpose = rxUpcomingPurpose.firstWhereOrNull((p) {
+          final pId = (p['id'] ?? p['visitor_type_id'] ?? '').toString();
+          final pName = (p['name'] ?? p['purpose'] ?? '').toString().toLowerCase();
+          return (pId.isNotEmpty && pId == typeId) || (selectedCatName.isNotEmpty && (pName == selectedCatName || pName.contains(selectedCatName) || selectedCatName.contains(pName)));
+        });
+        final categoryCount = matchingPurpose != null
+            ? (int.tryParse((matchingPurpose['count'] ?? matchingPurpose['total'] ?? 0).toString()) ?? 0)
+            : 0;
+
+        if (categoryCount > 0 && (apiTotal == 0 || apiTotal > categoryCount && mappedList.length <= categoryCount)) {
+          apiTotal = categoryCount;
+        }
+
+        // Strict filtering by Visitor Name if search query is active
         if (targetSearch.trim().isNotEmpty) {
           final query = targetSearch.trim().toLowerCase();
           mappedList = mappedList.where((item) {
             final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '').toString().toLowerCase();
             return name.contains(query);
           }).toList();
+          apiTotal = mappedList.length;
         }
 
-        final total = targetSearch.trim().isNotEmpty
-            ? mappedList.length
-            : (resData['RecordsTotal'] ?? resData['recordsTotal'] ?? resData['RecordsFiltered'] ?? mappedList.length);
+        if (apiTotal == 0) {
+          apiTotal = mappedList.length;
+        }
 
-        rxUpcomingVisitorsTotal.value = int.tryParse(total.toString()) ?? mappedList.length;
+        rxUpcomingVisitorsTotal.value = apiTotal;
         rxUpcomingVisitorsPage.value = targetPage;
         rxUpcomingVisitorsLength.value = targetLength;
         rxUpcomingVisitorsList.assignAll(mappedList);
@@ -382,115 +487,54 @@ class DashboardController extends GetxController {
   void applyFiltersAndPagination() {
     var list = List<Map<String, dynamic>>.from(rxAllRelatedVisitors);
 
-    if (list.isEmpty) {
-      rxCurrentPage.value = 0;
-      rxTotalPages.value = 0;
-      rxRelatedVisitors.value = [];
-      return;
-    }
-
-    // 1. Search Query filtering
-    final query = rxSearchQuery.value.trim().toLowerCase();
+    // 1. Strict Search Query filtering by Visitor Name ONLY
+    final query = rxRelatedSearchQuery.value.trim().toLowerCase();
     if (query.isNotEmpty) {
       list = list.where((visitor) {
-        final name = (visitor['name'] ?? '').toString().toLowerCase();
-        final company = (visitor['company'] ?? visitor['organization'] ?? '')
-            .toString()
-            .toLowerCase();
-        final code =
-            (visitor['invitation_code'] ?? visitor['visitor_code'] ?? '')
-                .toString()
-                .toLowerCase();
-        return name.contains(query) ||
-            company.contains(query) ||
-            code.contains(query);
+        final name = (visitor['name'] ?? visitor['visitor_name'] ?? '').toString().toLowerCase();
+        return name.contains(query);
       }).toList();
     }
 
-    // 2. Active Category filtering
-    final filter = rxActiveFilter.value;
-    if (filter != 'All') {
-      if (filter == 'VIP') {
-        list = list
-            .where(
-              (v) =>
-                  v['vip'] == true ||
-                  v['name'].toString().contains('VIP') ||
-                  v['company'].toString().contains('VIP'),
-            )
-            .toList();
-      } else if (filter == 'Frequent') {
-        list = list
-            .where(
-              (v) =>
-                  v['name'].toString().contains('Frequent') ||
-                  v['company'].toString().contains('Frequent') ||
-                  v['id'] == '3' ||
-                  v['id'] == '5',
-            )
-            .toList();
-      } else if (filter == 'Verified') {
-        list = list
-            .where(
-              (v) =>
-                  v['status'].toString().contains('Verified') ||
-                  v['name'].toString().contains('Verified') ||
-                  v['id'] == '1' ||
-                  v['id'] == '2',
-            )
-            .toList();
-      }
-    }
+    rxRelatedVisitors.assignAll(list);
+    final total = list.isNotEmpty ? (list.length / 10).ceil() : 1;
+    rxRelatedTotalPages.value = total;
+    rxTotalPages.value = total;
 
-    // 3. Paginate items (simulated size 4)
-    final pageSize = 4;
-    final totalItems = list.length;
-    final calculatedPages = (totalItems / pageSize).ceil();
-    rxTotalPages.value = calculatedPages > 0 ? calculatedPages : 0;
-
-    if (rxCurrentPage.value > rxTotalPages.value) {
-      rxCurrentPage.value = rxTotalPages.value;
+    if (rxRelatedCurrentPage.value > total) {
+      rxRelatedCurrentPage.value = total;
     }
-    if (rxCurrentPage.value == 0 && totalItems > 0) {
-      rxCurrentPage.value = 1;
+    if (rxRelatedCurrentPage.value < 1 && list.isNotEmpty) {
+      rxRelatedCurrentPage.value = 1;
     }
-
-    final startIndex =
-        (rxCurrentPage.value > 0 ? (rxCurrentPage.value - 1) : 0) * pageSize;
-    final endIndex = startIndex + pageSize;
-
-    if (startIndex < list.length) {
-      rxRelatedVisitors.value = list.sublist(
-        startIndex,
-        endIndex > list.length ? list.length : endIndex,
-      );
-    } else {
-      rxRelatedVisitors.value = [];
-    }
+    rxCurrentPage.value = rxRelatedCurrentPage.value;
   }
 
   void filterVisitors(String query) {
-    rxSearchQuery.value = query;
     if (rxFeedTabIndex.value == 0) {
+      rxLiveSearchQuery.value = query;
       if (query.trim().isEmpty) {
         rxLiveVisitors.assignAll(rxAllLiveVisitors);
       } else {
         final lower = query.trim().toLowerCase();
+        // Strict filtering by Visitor Name ONLY
         final filtered = rxAllLiveVisitors.where((item) {
           final name = (item['name'] ?? item['visitor_name'] ?? '').toString().toLowerCase();
-          final org = (item['organization'] ?? item['visitor_organization_name'] ?? '').toString().toLowerCase();
-          final code = (item['invitation_code'] ?? item['visitor_code'] ?? '').toString().toLowerCase();
-          return name.contains(lower) || org.contains(lower) || code.contains(lower);
+          return name.contains(lower);
         }).toList();
         rxLiveVisitors.assignAll(filtered);
       }
+      final total = rxLiveVisitors.isNotEmpty ? (rxLiveVisitors.length / 10).ceil() : 1;
+      rxLiveTotalPages.value = total;
+      rxLiveCurrentPage.value = 1;
     } else {
+      rxRelatedSearchQuery.value = query;
       applyFiltersAndPagination();
+      rxRelatedCurrentPage.value = 1;
     }
   }
 
   void clearSearch() {
-    rxSearchQuery.value = '';
     filterVisitors('');
   }
 
@@ -505,9 +549,15 @@ class DashboardController extends GetxController {
     rxFeedTabIndex.value = 0;
     rxTimeline.clear();
     rxSearchQuery.value = '';
+    rxLiveSearchQuery.value = '';
+    rxLiveCurrentPage.value = 1;
+    rxLiveTotalPages.value = 1;
+    rxRelatedSearchQuery.value = '';
+    rxRelatedCurrentPage.value = 1;
+    rxRelatedTotalPages.value = 1;
     rxActiveFilter.value = 'All';
-    rxCurrentPage.value = 0;
-    rxTotalPages.value = 0;
+    rxCurrentPage.value = 1;
+    rxTotalPages.value = 1;
     applyFiltersAndPagination();
   }
 
@@ -1129,10 +1179,26 @@ class DashboardController extends GetxController {
     final rawPlate = sanitize(
       item['vehicle_plate_number'] ??
           item['vehicle_plate'] ??
+          item['plate_number'] ??
           item['parking_slot'],
     );
     final vehiclePlate = rawPlate;
-    final vehicleType = (rawPlate != '-') ? 'Car' : '-';
+    final rawVehicleType = item['vehicle_type'] ??
+        item['vehicle_type_name'] ??
+        item['vehicle_name'] ??
+        item['vehicle'] ??
+        item['type_vehicle'] ??
+        item['vehicle_mode'] ??
+        item['transportation_type'] ??
+        item['transportation'] ??
+        item['visitor_vehicle_type'] ??
+        item['visitor_vehicle'] ??
+        item['vehicle']?['vehicle_type'] ??
+        item['vehicle']?['name'] ??
+        item['vehicle']?['type'] ??
+        item['visitor']?['vehicle_type'] ??
+        item['visitor']?['vehicle'];
+    final vehicleType = sanitize(rawVehicleType);
     final invitedBy = sanitize(item['invited_by_name'] ?? item['host_name']);
     final agenda = sanitize(
       item['agenda'] ?? item['remarks'],

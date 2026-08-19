@@ -86,6 +86,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   final TextEditingController _visitorSearchController =
       TextEditingController();
   final TextEditingController _topSearchController = TextEditingController();
+  final PageController _livePageController = PageController();
+  final PageController _relatedPageController = PageController();
   String _selectedSite = 'SPU';
   String? _selectedBulkAction;
 
@@ -117,6 +119,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     _clockTimer.cancel();
+    _livePageController.dispose();
+    _relatedPageController.dispose();
     _visitorSearchController.dispose();
     _topSearchController.dispose();
     super.dispose();
@@ -1289,6 +1293,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       _buildQrDetailField(
                                         'Invitation Code',
                                         visitor?['invitation_code'] ?? '-',
+                                        isCopyable: true,
                                       ),
                                       const SizedBox(height: 3),
                                       _buildQrDetailField(
@@ -1405,7 +1410,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           '-',
                     ),
                     _buildMetadataField(
-                      Icons.directions_car_outlined,
+                      Icons.commute_outlined,
                       'Vehicle Type',
                       visitor?['vehicle_type'] ?? '-',
                     ),
@@ -2055,7 +2060,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildQrDetailField(String label, String? value) {
+  Widget _buildQrDetailField(String label, String? value, {bool isCopyable = false}) {
     final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
         ? '-'
         : value.trim();
@@ -2072,15 +2077,45 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             color: const Color(0xFF1E293B),
           ),
         ),
-        Text(
-          displayValue,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFF64748B),
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              displayValue,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            if (isCopyable && displayValue != '-') ...[
+              const SizedBox(width: 4),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(4),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: displayValue));
+                    AppSnackbar.success(
+                      title: 'Copied',
+                      message: 'Invitation code copied to clipboard',
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(2.0),
+                    child: Icon(
+                      Icons.copy_rounded,
+                      size: 13,
+                      color: Color(0xFF003082),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -2188,14 +2223,44 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                       const SizedBox(height: 16),
 
-                      Text(
-                        invitationCode,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF003082),
-                          letterSpacing: 1.2,
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            invitationCode,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF003082),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          if (invitationCode.isNotEmpty && invitationCode != '-') ...[
+                            const SizedBox(width: 6),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(4),
+                                onTap: () {
+                                  Clipboard.setData(ClipboardData(text: invitationCode));
+                                  AppSnackbar.success(
+                                    title: 'Copied',
+                                    message: 'Invitation code copied to clipboard',
+                                  );
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4.0),
+                                  child: Icon(
+                                    Icons.copy_rounded,
+                                    size: 16,
+                                    color: Color(0xFF003082),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -2443,14 +2508,64 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         0,
                         'Live Visitors ($liveCount)',
                         isSelected: activeTab == 0,
-                        onTap: () => controller.rxFeedTabIndex.value = 0,
+                        onTap: () {
+                          controller.rxFeedTabIndex.value = 0;
+                          _visitorSearchController.text = controller.rxLiveSearchQuery.value;
+                          setState(() {});
+                        },
                       ),
                       const SizedBox(width: 24),
                       _buildVisitorListTab(
                         1,
                         'Related Visitors ($relatedCount)',
                         isSelected: activeTab == 1,
-                        onTap: () => controller.rxFeedTabIndex.value = 1,
+                        onTap: () {
+                          controller.rxFeedTabIndex.value = 1;
+                          _visitorSearchController.text = controller.rxRelatedSearchQuery.value;
+                          setState(() {});
+                        },
+                      ),
+                      const Spacer(),
+                      // Refresh Button Box on the far right of the tab bar
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            await controller.refreshDashboardAllStatus();
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            height: 28,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFF1976D2).withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 14,
+                                  color: Color(0xFF003082),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Refresh',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF003082),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -2461,7 +2576,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Search Bar
+                    // Search Bar (Strictly searches by Visitor Name only)
                     Expanded(
                       child: Container(
                         height: 36,
@@ -2484,6 +2599,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             ),
                             onChanged: (query) {
                               controller.filterVisitors(query);
+                              setState(() {});
                             },
                             decoration: InputDecoration(
                               hintText: 'Search Visitor',
@@ -2500,6 +2616,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 minWidth: 36,
                                 minHeight: 36,
                               ),
+                              suffixIcon: _visitorSearchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.cancel_rounded,
+                                        size: 16,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+                                      onPressed: () {
+                                        _visitorSearchController.clear();
+                                        controller.filterVisitors('');
+                                        setState(() {});
+                                      },
+                                    )
+                                  : null,
                               border: InputBorder.none,
                               isDense: true,
                               contentPadding: const EdgeInsets.only(right: 10),
@@ -2596,45 +2728,110 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           );
                         }),
                         const SizedBox(width: 12),
-                        // Pagination Indicator (< 0/0 >)
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 22,
-                            minHeight: 22,
-                          ),
-                          icon: const Icon(
-                            Icons.chevron_left_rounded,
-                            size: 20,
-                            color: Color(0xFF64748B),
-                          ),
-                          onPressed: () {},
-                        ),
+                        // Dedicated Pagination Indicator (< current/total >) with Button Controls
                         Obx(() {
-                          final current = controller.rxCurrentPage.value;
-                          final total = controller.rxTotalPages.value;
-                          return Text(
-                            '$current/$total',
-                            style: GoogleFonts.inter(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: _textDark,
-                            ),
+                          final activeTab = controller.rxFeedTabIndex.value;
+                          final list = activeTab == 0
+                              ? controller.rxLiveVisitors
+                              : controller.rxRelatedVisitors;
+                          final total = list.isNotEmpty ? (list.length / 10).ceil() : 1;
+                          final current = activeTab == 0
+                              ? controller.rxLiveCurrentPage.value
+                              : controller.rxRelatedCurrentPage.value;
+                          final safeCurrent = current > total ? total : (current < 1 ? 1 : current);
+                          final hasPrev = safeCurrent > 1;
+                          final hasNext = safeCurrent < total;
+
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 22,
+                                  minHeight: 22,
+                                ),
+                                icon: Icon(
+                                  Icons.chevron_left_rounded,
+                                  size: 20,
+                                  color: hasPrev
+                                      ? const Color(0xFF003082)
+                                      : const Color(0xFFCBD5E1),
+                                ),
+                                onPressed: hasPrev
+                                    ? () {
+                                        final targetIndex = safeCurrent - 2;
+                                        if (activeTab == 0) {
+                                          if (_livePageController.hasClients) {
+                                            _livePageController.animateToPage(
+                                              targetIndex,
+                                              duration: const Duration(milliseconds: 250),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          }
+                                          controller.rxLiveCurrentPage.value = targetIndex + 1;
+                                        } else {
+                                          if (_relatedPageController.hasClients) {
+                                            _relatedPageController.animateToPage(
+                                              targetIndex,
+                                              duration: const Duration(milliseconds: 250),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          }
+                                          controller.rxRelatedCurrentPage.value = targetIndex + 1;
+                                        }
+                                      }
+                                    : null,
+                              ),
+                              Text(
+                                '$safeCurrent/$total',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: _textDark,
+                                ),
+                              ),
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 22,
+                                  minHeight: 22,
+                                ),
+                                icon: Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 20,
+                                  color: hasNext
+                                      ? const Color(0xFF003082)
+                                      : const Color(0xFFCBD5E1),
+                                ),
+                                onPressed: hasNext
+                                    ? () {
+                                        final targetIndex = safeCurrent;
+                                        if (activeTab == 0) {
+                                          if (_livePageController.hasClients) {
+                                            _livePageController.animateToPage(
+                                              targetIndex,
+                                              duration: const Duration(milliseconds: 250),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          }
+                                          controller.rxLiveCurrentPage.value = targetIndex + 1;
+                                        } else {
+                                          if (_relatedPageController.hasClients) {
+                                            _relatedPageController.animateToPage(
+                                              targetIndex,
+                                              duration: const Duration(milliseconds: 250),
+                                              curve: Curves.easeInOut,
+                                            );
+                                          }
+                                          controller.rxRelatedCurrentPage.value = targetIndex + 1;
+                                        }
+                                      }
+                                    : null,
+                              ),
+                            ],
                           );
                         }),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 22,
-                            minHeight: 22,
-                          ),
-                          icon: const Icon(
-                            Icons.chevron_right_rounded,
-                            size: 20,
-                            color: Color(0xFF64748B),
-                          ),
-                          onPressed: () {},
-                        ),
                       ],
                     ),
                   ],
@@ -2646,23 +2843,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   color: Color(0xFFF1F5F9),
                 ),
 
-                // Visitor List / Feed Content Area (Horizontal Mini-Cards matching screenshot)
+                // Visitor List / Feed Content Area (2 Rows x 5 Cards = 10 Cards per Page with Swipe)
                 Expanded(
                   child: Obx(() {
                     final activeTab = controller.rxFeedTabIndex.value;
                     final list = activeTab == 0
                         ? controller.rxLiveVisitors
                         : controller.rxRelatedVisitors;
-                    final selectedVisitor = controller.rxSelectedVisitor.value;
-                    final selectedId = (selectedVisitor?['invitation_code'] ??
-                            selectedVisitor?['visitor_code'] ??
-                            selectedVisitor?['id'] ??
-                            selectedVisitor?['transaction_visitor_id'] ??
-                            '')
-                        .toString();
-                    final isMultipleMode = controller.rxSelectMultiple.value;
-                    // Observe reactive selection state so every tap re-renders in 0ms
-                    final selectedSet = controller.rxSelectedItems.toSet();
+                    final totalPages = list.isNotEmpty ? (list.length / 10).ceil() : 1;
+                    final pageController = activeTab == 0
+                        ? _livePageController
+                        : _relatedPageController;
 
                     if (list.isEmpty) {
                       return Center(
@@ -2671,221 +2862,87 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               ? 'No live visitors available'
                               : 'No related visitors available',
                           style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF94A3B8),
-                              fontWeight: FontWeight.w500),
+                            fontSize: 13,
+                            color: const Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       );
                     }
 
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: SizedBox(
-                        height: 142,
-                        child: ScrollConfiguration(
-                          behavior: ScrollConfiguration.of(context).copyWith(
-                            dragDevices: {
-                              PointerDeviceKind.touch,
-                              PointerDeviceKind.mouse,
-                              PointerDeviceKind.stylus,
-                              PointerDeviceKind.trackpad,
-                            },
-                          ),
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(
-                              parent: AlwaysScrollableScrollPhysics(),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 4,
-                              horizontal: 2,
-                            ),
-                            itemCount: list.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 14),
-                            itemBuilder: (context, index) {
-                            final item = list[index];
-                            final itemId = (item['invitation_code'] ??
-                                    item['visitor_code'] ??
-                                    item['id'] ??
-                                    item['transaction_visitor_id'] ??
-                                    '')
-                                .toString();
-                            final isSelected = isMultipleMode
-                                ? selectedSet.contains(itemId)
-                                : (selectedId.isNotEmpty && selectedId == itemId);
-                            final faceImg =
-                                (item['faceimage'] ?? item['photo'] ?? item['avatar'] ?? item['host_faceimage'] ?? '')
-                                    .toString();
+                    return ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.stylus,
+                          PointerDeviceKind.trackpad,
+                        },
+                      ),
+                      child: PageView.builder(
+                        controller: pageController,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: totalPages > 0 ? totalPages : 1,
+                        onPageChanged: (idx) {
+                          if (activeTab == 0) {
+                            controller.rxLiveCurrentPage.value = idx + 1;
+                          } else {
+                            controller.rxRelatedCurrentPage.value = idx + 1;
+                          }
+                        },
+                        itemBuilder: (context, pageIndex) {
+                          final startIndex = pageIndex * 10;
+                          final pageItems = list.skip(startIndex).take(10).toList();
+                          final row1Items = pageItems.take(5).toList();
+                          final row2Items = pageItems.skip(5).take(5).toList();
 
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () async {
-                                  if (controller.rxSelectMultiple.value) {
-                                    if (controller.rxSelectedItems.contains(itemId)) {
-                                      controller.rxSelectedItems.remove(itemId);
-                                    } else {
-                                      controller.rxSelectedItems.add(itemId);
-                                    }
-                                    final actions = _getAvailableBulkActions();
-                                    if (_selectedBulkAction != null && !actions.contains(_selectedBulkAction)) {
-                                      setState(() {
-                                        _selectedBulkAction = null;
-                                      });
-                                    }
-                                  } else {
-                                    final currentActiveTab = controller.rxFeedTabIndex.value;
-                                    if (currentActiveTab == 0) {
-                                      // 1. Tapping Live Visitor card directly searches its invitation code & loads Related Visitors
-                                      final invCode = (item['invitation_code'] ??
-                                              item['visitor_code'] ??
-                                              item['initial_trx_code'] ??
-                                              '')
-                                          .toString()
-                                          .trim();
-                                      if (invCode.isNotEmpty && invCode != '-') {
-                                        await controller.searchInvitationCode(invCode);
-                                      } else {
-                                        controller.rxSelectedVisitor.value = item;
-                                        controller.rxFeedTabIndex.value = 1;
-                                      }
-                                    } else {
-                                      // 2. Tapping Related Visitor card selects that specific visitor & syncs complete host info
-                                      controller.rxSelectedVisitor.value = item;
-                                      controller.syncHostForVisitor(item);
-                                    }
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(14),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 100),
-                                  width: 105,
-                                  height: 138,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF003082)
-                                          : const Color(0xFFE2E8F0),
-                                      width: isSelected ? 1.8 : 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: isSelected
-                                            ? const Color(0xFF003082).withValues(alpha: 0.12)
-                                            : Colors.black.withValues(alpha: 0.03),
-                                        blurRadius: isSelected ? 6 : 3,
-                                        offset: const Offset(0, 1),
-                                      ),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                            child: Column(
+                              children: [
+                                // Row 1 (Expanded, fills top half)
+                                Expanded(
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      for (int i = 0; i < 5; i++) ...[
+                                        if (i < row1Items.length)
+                                          Expanded(
+                                            child: _buildFeedVisitorCard(row1Items[i]),
+                                          )
+                                        else
+                                          const Expanded(child: SizedBox()),
+                                        if (i < 4) const SizedBox(width: 6),
+                                      ],
                                     ],
                                   ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // Avatar with circle frame (clean, without side badge)
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFEFF6FF),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: (faceImg.isNotEmpty &&
-                                              faceImg != '-' &&
-                                              faceImg != 'null' &&
-                                              !faceImg.startsWith('assets/'))
-                                          ? Image.network(
-                                              AppConstants.getCdnImageUrl(faceImg),
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
-                                                  const Center(
-                                                child: Icon(
-                                                  Icons.person,
-                                                  size: 28,
-                                                  color: Color(0xFF003082),
-                                                ),
-                                              ),
-                                            )
-                                          : const Center(
-                                              child: Icon(
-                                                Icons.person,
-                                                size: 28,
-                                                color: Color(0xFF003082),
-                                              ),
-                                            ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item['name'] ?? 'Visitor',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF1E293B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    Text(
-                                      item['organization'] ??
-                                          item['company'] ??
-                                          '-',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF64748B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    // Checkbox Indicator (Box with solid blue fill & white checkmark when selected)
-                                    Container(
-                                      width: 17,
-                                      height: 17,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? const Color(0xFF003082)
-                                            : Colors.white,
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF003082)
-                                              : const Color(0xFFCBD5E1),
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      child: isSelected
-                                          ? const Center(
-                                              child: Icon(
-                                                Icons.check_rounded,
-                                                size: 13,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                  ],
                                 ),
-                              ),
+                                const SizedBox(height: 8),
+                                // Row 2 (Expanded, fills bottom half)
+                                Expanded(
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      for (int i = 0; i < 5; i++) ...[
+                                        if (i < row2Items.length)
+                                          Expanded(
+                                            child: _buildFeedVisitorCard(row2Items[i]),
+                                          )
+                                        else
+                                          const Expanded(child: SizedBox()),
+                                        if (i < 4) const SizedBox(width: 6),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         },
                       ),
-                    ),
-                  ),
-                );
-              }),
-            ),
+                    );
+                  }),
+                ),
 
                 // Bottom Bulk Action Toolbar (Only for Related Visitors; Hidden on Live Visitors)
                 Obx(() {
@@ -3188,6 +3245,201 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         ],
       ),
     );
+  }
+
+  Widget _buildFeedVisitorCard(Map<String, dynamic> item) {
+    return Obx(() {
+      final selectedVisitor = controller.rxSelectedVisitor.value;
+      final selectedId = (selectedVisitor?['invitation_code'] ??
+              selectedVisitor?['visitor_code'] ??
+              selectedVisitor?['id'] ??
+              selectedVisitor?['transaction_visitor_id'] ??
+              '')
+          .toString();
+      final isMultipleMode = controller.rxSelectMultiple.value;
+      final selectedSet = controller.rxSelectedItems.toSet();
+
+      final itemId = (item['invitation_code'] ??
+              item['visitor_code'] ??
+              item['id'] ??
+              item['transaction_visitor_id'] ??
+              '')
+          .toString();
+      final isSelected = isMultipleMode
+          ? selectedSet.contains(itemId)
+          : (selectedId.isNotEmpty && selectedId == itemId);
+      final faceImg = (item['faceimage'] ??
+              item['photo'] ??
+              item['avatar'] ??
+              item['host_faceimage'] ??
+              '')
+          .toString();
+
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            if (controller.rxSelectMultiple.value) {
+              if (controller.rxSelectedItems.contains(itemId)) {
+                controller.rxSelectedItems.remove(itemId);
+              } else {
+                controller.rxSelectedItems.add(itemId);
+              }
+              final actions = _getAvailableBulkActions();
+              if (_selectedBulkAction != null &&
+                  !actions.contains(_selectedBulkAction)) {
+                setState(() {
+                  _selectedBulkAction = null;
+                });
+              }
+            } else {
+              final currentActiveTab = controller.rxFeedTabIndex.value;
+              if (currentActiveTab == 0) {
+                // 1. Tapping Live Visitor card directly searches its invitation code & loads Related Visitors
+                final invCode = (item['invitation_code'] ??
+                        item['visitor_code'] ??
+                        item['initial_trx_code'] ??
+                        '')
+                    .toString()
+                    .trim();
+                if (invCode.isNotEmpty && invCode != '-') {
+                  await controller.searchInvitationCode(invCode);
+                } else {
+                  controller.rxSelectedVisitor.value = item;
+                  controller.rxFeedTabIndex.value = 1;
+                }
+              } else {
+                // 2. Tapping Related Visitor card selects that specific visitor & syncs complete host info
+                controller.rxSelectedVisitor.value = item;
+                controller.syncHostForVisitor(item);
+              }
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            height: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF003082)
+                    : const Color(0xFFE2E8F0),
+                width: isSelected ? 1.8 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isSelected
+                      ? const Color(0xFF003082).withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.03),
+                  blurRadius: isSelected ? 6 : 3,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar with circle frame
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFDBEAFE),
+                      width: 1.5,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: (faceImg.isNotEmpty &&
+                          faceImg != '-' &&
+                          faceImg != 'null' &&
+                          !faceImg.startsWith('assets/'))
+                      ? Image.network(
+                          AppConstants.getCdnImageUrl(faceImg),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(
+                              Icons.person,
+                              size: 26,
+                              color: Color(0xFF003082),
+                            ),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 26,
+                            color: Color(0xFF003082),
+                          ),
+                        ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item['name'] ?? 'Visitor',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E293B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item['organization'] ?? item['company'] ?? '-',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+                // Checkbox Indicator
+                Container(
+                  width: 17,
+                  height: 17,
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF003082) : Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF003082)
+                          : const Color(0xFFCBD5E1),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: isSelected
+                      ? const Center(
+                          child: Icon(
+                            Icons.check_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -3557,10 +3809,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 onTap: () {
                                   final categoryId = (item['id'] ?? item['visitor_type_id'] ?? '').toString();
                                   final categoryName = (item['name'] ?? item['purpose'] ?? 'Visitors').toString();
+                                  final initialCount = int.tryParse((item['count'] ?? item['total'] ?? 0).toString());
                                   _showUpcomingVisitorsDialog(
                                     context,
                                     categoryName: categoryName,
                                     categoryId: categoryId,
+                                    initialCount: initialCount,
                                   );
                                 },
                                 child: Container(
@@ -5053,7 +5307,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         applyToAll: applyToAll,
                                       );
                                       setModalState(() => isSubmitting = false);
-                                      if (success) {
+                                      if (success && dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();
                                       }
                                     },
@@ -5999,12 +6253,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     BuildContext context, {
     required String categoryName,
     required String categoryId,
+    int? initialCount,
   }) {
     controller.rxSelectedPurposeCategory.value = categoryName;
     controller.rxSelectedPurposeId.value = categoryId;
     controller.rxUpcomingVisitorsSearch.value = '';
     controller.rxUpcomingVisitorsPage.value = 1;
     controller.rxUpcomingVisitorsLength.value = 10;
+    if (initialCount != null && initialCount > 0) {
+      controller.rxUpcomingVisitorsTotal.value = initialCount;
+    }
 
     final searchController = TextEditingController();
     Timer? searchDebounce;
@@ -6094,7 +6352,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               Row(
                                 children: [
                                   Text(
-                                    '$categoryName Visitors',
+                                    categoryName.toLowerCase().endsWith('visitors')
+                                        ? categoryName
+                                        : (categoryName.toLowerCase().endsWith('visitor')
+                                            ? '${categoryName}s'
+                                            : '$categoryName Visitors'),
                                     style: GoogleFonts.inter(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w800,
@@ -6588,24 +6850,55 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 flex: 4,
                                 child: Align(
                                   alignment: Alignment.centerLeft,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEFF6FF),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                                    ),
-                                    child: Text(
-                                      invCode,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF003082),
-                                        letterSpacing: 0.3,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEFF6FF),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                                          ),
+                                          child: Text(
+                                            invCode,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF003082),
+                                              letterSpacing: 0.3,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                      if (invCode.isNotEmpty && invCode != '-') ...[
+                                        const SizedBox(width: 4),
+                                        Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(4),
+                                            onTap: () {
+                                              Clipboard.setData(ClipboardData(text: invCode));
+                                              AppSnackbar.success(
+                                                title: 'Copied',
+                                                message: 'Invitation code copied to clipboard',
+                                              );
+                                            },
+                                            child: const Padding(
+                                              padding: EdgeInsets.all(3.0),
+                                              child: Icon(
+                                                Icons.copy_rounded,
+                                                size: 13.5,
+                                                color: Color(0xFF003082),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                               ),

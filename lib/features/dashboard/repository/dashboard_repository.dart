@@ -257,14 +257,16 @@ class DashboardRepository {
 
   Future<ApiResult<Map<String, dynamic>>> getUpcomingVisitors({
     required String visitorTypeId,
+    bool allVisitorType = false,
     int start = 0,
     int length = 10,
     String? search,
   }) async {
+    final hasSpecificType = !allVisitorType && visitorTypeId.isNotEmpty && visitorTypeId.toLowerCase() != 'all';
     final queryParams = <String, dynamic>{
       'today': 'true',
       'visitor-type': visitorTypeId,
-      'all-visitor-type': 'true',
+      'all-visitor-type': hasSpecificType ? 'false' : 'true',
       'start': start,
       'length': length,
       'show-checkout': 'false',
