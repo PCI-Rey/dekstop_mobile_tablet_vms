@@ -413,5 +413,15 @@ class DashboardRepository {
       data: body,
     );
   }
+
+  // --- Grant Access Card Multiple (/api/operator-invitation/grant-access-card-multiple) ---
+  Future<ApiResult<Map<String, dynamic>>> grantAccessCardMultiple(
+    Map<String, dynamic> payload,
+  ) async {
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/grant-access-card-multiple',
+      data: payload,
+    );
+  }
 }
 

@@ -1076,6 +1076,161 @@ class DashboardController extends GetxController {
     return false;
   }
 
+  // --- Grant Access Card Multiple (/api/operator-invitation/grant-access-card-multiple) ---
+  Future<bool> grantAccessCardMultiple({
+    required List<Map<String, dynamic>> items,
+    bool isSwapCard = false,
+  }) async {
+    if (items.isEmpty) {
+      AppSnackbar.warning(
+        title: 'Validation Error',
+        message: 'No visitors selected for card issuance.',
+      );
+      return false;
+    }
+
+    // Resolve site ID
+    String siteId = rxSelectedSiteId.value.trim();
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+    }
+    if (siteId.isEmpty) {
+      await fetchRegisteredSites();
+      if (rxRegisteredSites.isNotEmpty) {
+        siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+      }
+    }
+
+    final dataList = <Map<String, dynamic>>[];
+
+    for (final item in items) {
+      final visitor = item['visitor'] as Map<String, dynamic>?;
+      final cardNum = (item['card_number'] ?? '').toString().trim();
+      String trxVisitorId = (item['trx_visitor_id'] ??
+              visitor?['id'] ??
+              visitor?['transaction_visitor_id'] ??
+              visitor?['trx_id'] ??
+              '')
+          .toString()
+          .trim();
+
+      // Resolve trx_card_id from visitor's current card
+      String trxCardId = (item['trx_card_id'] ?? '').toString().trim();
+      String currentCardNum = (item['swap_card_from_card'] ?? '').toString().trim();
+      String currentCardId = (item['swap_card_from_card_id'] ?? '').toString().trim();
+
+      final visitorCards = (visitor?['card'] as List?) ?? (visitor?['cards'] as List?) ?? [];
+      if (visitorCards.isNotEmpty) {
+        final activeCard = visitorCards.firstWhereOrNull((c) => c['current_used'] == true) ??
+            Map<String, dynamic>.from(visitorCards.first as Map);
+        if (trxCardId.isEmpty) {
+          trxCardId = (activeCard['id'] ?? '').toString().trim();
+        }
+        if (currentCardNum.isEmpty) {
+          currentCardNum = (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '').toString().trim();
+        }
+        if (currentCardId.isEmpty) {
+          currentCardId = (activeCard['id'] ?? '').toString().trim();
+        }
+      }
+
+      if (trxCardId.isEmpty && visitor != null) {
+        trxCardId = (visitor['id'] ?? visitor['transaction_visitor_id'] ?? '').toString().trim();
+      }
+      if (currentCardNum.isEmpty && visitor != null) {
+        currentCardNum = (visitor['visitor_card'] ?? visitor['visitor_code'] ?? visitor['visitor_ble_card'] ?? visitor['identity_id'] ?? '').toString().trim();
+      }
+      if (currentCardId.isEmpty && visitor != null) {
+        currentCardId = (visitor['id'] ?? visitor['visitor_id'] ?? '').toString().trim();
+      }
+
+      String visitorSiteId = '';
+      if (visitor != null) {
+        final trackingBle = (visitor['tracking_ble'] as List?);
+        if (trackingBle != null && trackingBle.isNotEmpty) {
+          visitorSiteId = (trackingBle[0]['site_id'] ?? '').toString().trim();
+        }
+        if (visitorSiteId.isEmpty) {
+          final trxSites = (visitor['trx_visitor_sites'] as List?);
+          if (trxSites != null && trxSites.isNotEmpty) {
+            visitorSiteId = (trxSites[0]['site_id'] ?? trxSites[0]['id'] ?? '').toString().trim();
+          }
+        }
+        if (visitorSiteId.isEmpty) {
+          visitorSiteId = (visitor['site_id'] ?? visitor['registered_site_id'] ?? '').toString().trim();
+        }
+      }
+      if (visitorSiteId.isEmpty) {
+        visitorSiteId = siteId;
+      }
+
+      final swapType = (item['swap_type'] ?? (isSwapCard ? 'CardAccess' : 'NIK')).toString().trim();
+      final desc = (item['description'] ?? '').toString().trim().isNotEmpty
+          ? item['description'].toString().trim()
+          : (isSwapCard
+              ? 'Swap card number $cardNum from $siteId'
+              : 'Give card number $cardNum from $siteId');
+
+      dataList.add({
+        'card_number': cardNum,
+        'trx_visitor_id': trxVisitorId,
+        'description': desc,
+        'trx_card_id': trxCardId,
+        'swap_card_from_card': currentCardNum,
+        'swap_card_from_card_id': currentCardId,
+        'swap_card_from_site_id': siteId,
+        'swap_type': swapType,
+        'is_swapcard': isSwapCard,
+        'registered_site_id': siteId,
+      });
+    }
+
+    final payload = {'data': dataList};
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.grantAccessCardMultiple(payload);
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final count = dataList.length;
+      final actionTitle = isSwapCard ? 'Multiple Cards Swapped' : 'Multiple Cards Granted';
+      final actionMsg = isSwapCard
+          ? '$count cards have been swapped successfully.'
+          : '$count cards have been given successfully.';
+
+      final nowFormatted = formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+      rxTimeline.insert(0, {
+        'time': nowFormatted,
+        'title': actionTitle,
+        'desc': actionMsg,
+        'status': 'issued',
+      });
+
+      AppSnackbar.success(
+        title: actionTitle,
+        message: actionMsg,
+      );
+
+      // Unselect multiple after completion
+      rxSelectMultiple.value = false;
+      rxSelectedItems.clear();
+
+      syncCurrentInvitationState();
+      fetchLiveVisitors();
+      fetchAvailableCards();
+      return true;
+    } else if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      AppSnackbar.error(
+        title: isSwapCard ? 'Multiple Swap Failed' : 'Multiple Grant Failed',
+        message: err.isNotEmpty ? err : 'Failed to process multiple card issuance',
+      );
+      return false;
+    }
+
+    return false;
+  }
+
   // --- Operator Invitation Actions (/api/operator-invitation/action/{trxid}) ---
   Future<bool> performOperatorInvitationAction({
     required String action,

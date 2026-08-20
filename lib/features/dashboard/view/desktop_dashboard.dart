@@ -3362,15 +3362,28 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       final isMultipleMode = controller.rxSelectMultiple.value && currentActiveTab == 1;
       final selectedSet = controller.rxSelectedItems.toSet();
 
-      final itemId = (item['invitation_code'] ??
-              item['visitor_code'] ??
-              item['id'] ??
+      final keys = [
+        item['id'],
+        item['trx_id'],
+        item['transaction_visitor_id'],
+        item['visitor_id'],
+        item['invitation_code'],
+        item['visitor_code'],
+        item['visitor_number'],
+        item['name'],
+        item['visitor_name'],
+      ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+
+      final itemId = (item['id'] ??
               item['transaction_visitor_id'] ??
+              item['visitor_id'] ??
+              item['invitation_code'] ??
+              item['visitor_code'] ??
               '')
           .toString();
       final isSelected = isMultipleMode
-          ? selectedSet.contains(itemId)
-          : (selectedId.isNotEmpty && selectedId == itemId);
+          ? keys.any((k) => selectedSet.contains(k))
+          : (selectedId.isNotEmpty && keys.contains(selectedId));
       final faceImg = (item['faceimage'] ??
               item['photo'] ??
               item['avatar'] ??
@@ -3406,8 +3419,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             } else {
               // 2. In Related Visitors tab:
               if (controller.rxSelectMultiple.value) {
-                if (controller.rxSelectedItems.contains(itemId)) {
-                  controller.rxSelectedItems.remove(itemId);
+                final isAlreadySelected = keys.any((k) => controller.rxSelectedItems.contains(k));
+                if (isAlreadySelected) {
+                  controller.rxSelectedItems.removeWhere((k) => keys.contains(k));
                 } else {
                   controller.rxSelectedItems.add(itemId);
                 }
@@ -4824,29 +4838,78 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     final visitor = controller.rxSelectedVisitor.value;
     final visitorName = (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor').toString();
 
-    // Find current card from active visitor or related visitors
-    Map<String, dynamic>? currentCard;
-    final visitorCards = (visitor?['cards'] as List?) ?? (visitor?['card'] as List?) ?? [];
-    if (visitorCards.isNotEmpty) {
-      currentCard = visitorCards.firstWhereOrNull(
-        (c) => c['current_used'] == true,
-      ) ?? Map<String, dynamic>.from(visitorCards.first as Map);
-    }
-    if (currentCard == null && controller.rxAllRelatedVisitors.isNotEmpty) {
-      for (final rel in controller.rxAllRelatedVisitors) {
-        final relCards = (rel['cards'] as List?) ?? (rel['card'] as List?) ?? [];
-        final found = relCards.firstWhereOrNull((c) => c['current_used'] == true);
-        if (found != null) {
-          currentCard = Map<String, dynamic>.from(found as Map);
-          break;
-        }
+    // Determine if multiple visitors are selected
+    final isMultiple = controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty;
+    final selectedSet = controller.rxSelectedItems.toSet();
+    final targetVisitors = isMultiple
+        ? controller.rxRelatedVisitors.where((r) {
+            final keys = [
+              r['id'],
+              r['trx_id'],
+              r['transaction_visitor_id'],
+              r['visitor_id'],
+              r['invitation_code'],
+              r['visitor_code'],
+              r['visitor_number'],
+              r['name'],
+              r['visitor_name'],
+            ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+            return keys.any((k) => selectedSet.contains(k));
+          }).toList()
+        : (visitor != null ? [visitor] : <Map<String, dynamic>>[]);
+    final int maxAllowedCards = targetVisitors.isNotEmpty
+        ? targetVisitors.length
+        : (isMultiple ? controller.rxSelectedItems.length : 1);
+
+    // Resolve current cards for all targeted visitors (Single and Multiple)
+    // Resolve current cards for all targeted visitors (Single and Multiple)
+    final List<Map<String, dynamic>> targetVisitorCurrentCards = [];
+    for (final v in targetVisitors) {
+      final vName = (v['name'] ?? v['visitor_name'] ?? 'Visitor').toString();
+      final vCards = (v['cards'] as List?) ?? (v['card'] as List?) ?? [];
+      Map<String, dynamic>? activePhysicalCard;
+      if (vCards.isNotEmpty) {
+        activePhysicalCard = vCards.firstWhereOrNull((c) {
+          final isCurrentUsed = (c['current_used'] == true);
+          final cardType = (c['card_type'] ?? c['type'] ?? '').toString().toLowerCase();
+          final isBarcode = cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
+          final status = (c['card_status'] ?? '').toString().toLowerCase();
+          final isReturned = status == 'returned' || status == 'inactive' || status == 'revoked';
+          return isCurrentUsed && !isBarcode && !isReturned;
+        });
       }
+      targetVisitorCurrentCards.add({
+        'visitor': v,
+        'visitorName': vName,
+        'card': activePhysicalCard,
+      });
+    }
+
+    // Fallback if targetVisitorCurrentCards is empty and visitor is selected
+    if (targetVisitorCurrentCards.isEmpty && visitor != null) {
+      final visitorCards = (visitor['cards'] as List?) ?? (visitor['card'] as List?) ?? [];
+      Map<String, dynamic>? activePhysicalCard;
+      if (visitorCards.isNotEmpty) {
+        activePhysicalCard = visitorCards.firstWhereOrNull((c) {
+          final isCurrentUsed = (c['current_used'] == true);
+          final cardType = (c['card_type'] ?? c['type'] ?? '').toString().toLowerCase();
+          final isBarcode = cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
+          final status = (c['card_status'] ?? '').toString().toLowerCase();
+          final isReturned = status == 'returned' || status == 'inactive' || status == 'revoked';
+          return isCurrentUsed && !isBarcode && !isReturned;
+        });
+      }
+      targetVisitorCurrentCards.add({
+        'visitor': visitor,
+        'visitorName': visitorName,
+        'card': activePhysicalCard,
+      });
     }
 
     final searchController = TextEditingController();
     final cardScrollController = ScrollController();
     String searchQuery = '';
-    String? selectedCardId;
+    final Set<String> selectedCardIds = <String>{};
     bool isSelectAll = false;
 
     showDialog(
@@ -5012,7 +5075,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               setDialogState(() {
                                 isSelectAll = !isSelectAll;
                                 if (isSelectAll) {
-                                  // Pick 1 random card from the UNUSED available cards list
                                   final allCards = controller.rxAvailableCards;
                                   final filteredCards = allCards.where((c) {
                                     if (searchQuery.isEmpty) return true;
@@ -5027,33 +5089,46 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   }).toList();
 
                                   final unusedCards = filteredCards.where((c) => c['is_used'] != true).toList();
+                                  selectedCardIds.clear();
                                   if (unusedCards.isNotEmpty) {
-                                    final randomIndex = Random().nextInt(unusedCards.length);
-                                    final picked = unusedCards[randomIndex];
-                                    selectedCardId = (picked['id'] ?? picked['card_number'] ?? '').toString();
+                                    final random = Random();
+                                    final shuffled = List<Map<String, dynamic>>.from(unusedCards)..shuffle(random);
+                                    final pickCount = shuffled.length < maxAllowedCards ? shuffled.length : maxAllowedCards;
+                                    final pickedList = shuffled.take(pickCount).toList();
 
-                                    // Smoothly scroll/drag down directly to the randomly selected card
-                                    final pickedIndex = filteredCards.indexOf(picked);
-                                    if (pickedIndex != -1) {
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        if (cardScrollController.hasClients) {
+                                    for (final c in pickedList) {
+                                      final cId = (c['id'] ?? c['card_number'] ?? '').toString();
+                                      if (cId.isNotEmpty) selectedCardIds.add(cId);
+                                    }
+
+                                    // Smoothly drag / scroll down sequentially to each chosen card
+                                    WidgetsBinding.instance.addPostFrameCallback((_) async {
+                                      final baseOffset = targetVisitorCurrentCards.isNotEmpty ? 260.0 : 0.0;
+                                      const rowHeight = 220.0;
+
+                                      for (int i = 0; i < pickedList.length; i++) {
+                                        if (!cardScrollController.hasClients) break;
+                                        final card = pickedList[i];
+                                        final pickedIndex = filteredCards.indexOf(card);
+                                        if (pickedIndex != -1) {
                                           final rowIndex = pickedIndex ~/ 4;
-                                          const rowHeight = 220.0;
-                                          final baseOffset = currentCard != null ? 240.0 : 0.0;
                                           final targetOffset = (baseOffset + (rowIndex * rowHeight) - 20.0).clamp(
                                             0.0,
                                             cardScrollController.position.maxScrollExtent,
                                           );
-                                          cardScrollController.animateTo(
+                                          await cardScrollController.animateTo(
                                             targetOffset,
-                                            duration: const Duration(milliseconds: 450),
+                                            duration: const Duration(milliseconds: 600),
                                             curve: Curves.easeInOutCubic,
                                           );
+                                          // If multiple cards, pause briefly so operator sees each highlighted card
+                                          if (i < pickedList.length - 1) {
+                                            await Future.delayed(const Duration(milliseconds: 650));
+                                          }
                                         }
-                                      });
-                                    }
+                                      }
+                                    });
                                   } else {
-                                    selectedCardId = null;
                                     isSelectAll = false;
                                     AppSnackbar.info(
                                       title: 'Notice',
@@ -5061,12 +5136,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     );
                                   }
                                 } else {
-                                  selectedCardId = null;
+                                  selectedCardIds.clear();
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (cardScrollController.hasClients) {
                                       cardScrollController.animateTo(
                                         0.0,
-                                        duration: const Duration(milliseconds: 300),
+                                        duration: const Duration(milliseconds: 350),
                                         curve: Curves.easeOutCubic,
                                       );
                                     }
@@ -5162,33 +5237,76 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ── 1. Current Card Section ─────────────────────────────
-                                if (currentCard != null) ...[
-                                  Text(
-                                    'Current Card – $visitorName',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFFFFA000),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _buildCurrentCardWidget(
-                                    currentCard: currentCard,
-                                    visitorName: visitorName,
-                                    isSelected: selectedCardId == (currentCard['id'] ?? currentCard['card_number']).toString(),
-                                    onTap: () {
-                                      setDialogState(() {
-                                        final currentId = (currentCard!['id'] ?? currentCard['card_number']).toString();
-                                        if (selectedCardId == currentId) {
-                                          selectedCardId = null;
-                                          isSelectAll = false;
-                                        } else {
-                                          selectedCardId = currentId;
-                                          isSelectAll = false;
-                                        }
-                                      });
-                                    },
+                                // ── 1. Current Card Section (Single & Multiple) ─────────────────────────
+                                if (targetVisitorCurrentCards.isNotEmpty) ...[
+                                  Wrap(
+                                    spacing: 16,
+                                    runSpacing: 16,
+                                    children: targetVisitorCurrentCards.map((item) {
+                                      final vName = item['visitorName'] as String;
+                                      final c = item['card'] as Map<String, dynamic>?;
+
+                                      if (c == null) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(bottom: 6),
+                                          child: Text(
+                                            'Current Card – $vName',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFFFFA000),
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      final cId = (c['id'] ?? c['card_number']).toString();
+                                      final isSelected = selectedCardIds.contains(cId);
+
+                                      return Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Current Card – $vName',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFFFFA000),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          _buildCurrentCardWidget(
+                                            currentCard: c,
+                                            visitorName: vName,
+                                            isSelected: isSelected,
+                                            onTap: () {
+                                              setDialogState(() {
+                                                if (selectedCardIds.contains(cId)) {
+                                                  selectedCardIds.remove(cId);
+                                                  isSelectAll = false;
+                                                } else {
+                                                  if (maxAllowedCards == 1) {
+                                                    selectedCardIds.clear();
+                                                    selectedCardIds.add(cId);
+                                                  } else {
+                                                    if (selectedCardIds.length < maxAllowedCards) {
+                                                      selectedCardIds.add(cId);
+                                                    } else {
+                                                      AppSnackbar.warning(
+                                                        title: 'Limit Reached',
+                                                        message: 'Maximum $maxAllowedCards cards allowed for the selected visitors.',
+                                                      );
+                                                    }
+                                                  }
+                                                  isSelectAll = selectedCardIds.length >= maxAllowedCards;
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
                                   ),
                                   const SizedBox(height: 16),
                                   const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
@@ -5227,7 +5345,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         itemBuilder: (context, index) {
                                           final card = filteredCards[index];
                                           final cardId = (card['id'] ?? card['card_number'] ?? 'card_$index').toString();
-                                          final isSelected = selectedCardId == cardId;
+                                          final isSelected = selectedCardIds.contains(cardId);
 
                                           return _buildAvailableCardItem(
                                             card: card,
@@ -5235,12 +5353,24 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             onTap: () {
                                               if (card['is_used'] == true) return;
                                               setDialogState(() {
-                                                if (selectedCardId == cardId) {
-                                                  selectedCardId = null;
+                                                if (selectedCardIds.contains(cardId)) {
+                                                  selectedCardIds.remove(cardId);
                                                   isSelectAll = false;
                                                 } else {
-                                                  selectedCardId = cardId;
-                                                  isSelectAll = false;
+                                                  if (maxAllowedCards == 1) {
+                                                    selectedCardIds.clear();
+                                                    selectedCardIds.add(cardId);
+                                                  } else {
+                                                    if (selectedCardIds.length < maxAllowedCards) {
+                                                      selectedCardIds.add(cardId);
+                                                    } else {
+                                                      AppSnackbar.warning(
+                                                        title: 'Limit Reached',
+                                                        message: 'Maximum $maxAllowedCards cards allowed for the selected visitors.',
+                                                      );
+                                                    }
+                                                  }
+                                                  isSelectAll = selectedCardIds.length >= maxAllowedCards;
                                                 }
                                               });
                                             },
@@ -5259,11 +5389,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     // Cards chosen counter text
                     Obx(() {
                       final totalCards = controller.rxAvailableCards.length;
-                      final chosenCount = selectedCardId != null ? 1 : 0;
+                      final chosenCount = selectedCardIds.length;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         child: Text(
-                          'Cards chosen: $chosenCount / $totalCards  Maximum cards allowed: 1',
+                          'Cards chosen: $chosenCount / $totalCards  Maximum cards allowed: $maxAllowedCards',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -5292,31 +5422,26 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                 ),
                                 onPressed: () async {
-                                  if (selectedCardId == null) {
+                                  if (selectedCardIds.isEmpty || selectedCardIds.length < maxAllowedCards) {
                                     AppSnackbar.warning(
                                       title: 'Card Required',
-                                      message: 'Please choose a card first.',
+                                      message: maxAllowedCards > 1
+                                          ? 'Please choose $maxAllowedCards cards for the $maxAllowedCards selected visitors.'
+                                          : 'Please choose a card first.',
                                     );
                                     return;
                                   }
 
                                   final allCards = controller.rxAvailableCards;
-                                  final pickedCard = allCards.firstWhereOrNull(
-                                    (c) => (c['id'] ?? c['card_number']).toString() == selectedCardId,
-                                  );
-
-                                  final cardNum = (pickedCard?['card_number'] ??
-                                          pickedCard?['card_barcode'] ??
-                                          pickedCard?['card_mac'] ??
-                                          selectedCardId)
-                                      .toString()
-                                      .trim();
+                                  final pickedCardsList = allCards.where(
+                                    (c) => selectedCardIds.contains((c['id'] ?? c['card_number']).toString()),
+                                  ).toList();
 
                                   await _showSwipeCardModal(
                                     context: context,
                                     parentDialogContext: dialogContext,
-                                    newCardNumber: cardNum,
-                                    selectedCard: pickedCard,
+                                    targetVisitors: targetVisitors,
+                                    selectedCardsList: pickedCardsList,
                                   );
                                 },
                                 child: Row(
@@ -5356,33 +5481,57 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                 ),
                                 onPressed: () async {
-                                  if (selectedCardId == null) {
+                                  if (selectedCardIds.isEmpty || selectedCardIds.length < maxAllowedCards) {
                                     AppSnackbar.warning(
                                       title: 'Card Required',
-                                      message: 'Please choose a card first.',
+                                      message: maxAllowedCards > 1
+                                          ? 'Please choose $maxAllowedCards cards for the $maxAllowedCards selected visitors.'
+                                          : 'Please choose a card first.',
                                     );
                                     return;
                                   }
 
                                   final allCards = controller.rxAvailableCards;
-                                  final pickedCard = allCards.firstWhereOrNull(
-                                    (c) => (c['id'] ?? c['card_number']).toString() == selectedCardId,
-                                  );
+                                  final pickedCardsList = allCards.where(
+                                    (c) => selectedCardIds.contains((c['id'] ?? c['card_number']).toString()),
+                                  ).toList();
 
-                                  final cardNum = (pickedCard?['card_number'] ??
-                                          pickedCard?['card_barcode'] ??
-                                          pickedCard?['card_mac'] ??
-                                          selectedCardId)
-                                      .toString()
-                                      .trim();
+                                  if (maxAllowedCards > 1) {
+                                    final items = <Map<String, dynamic>>[];
+                                    for (int i = 0; i < targetVisitors.length; i++) {
+                                      final v = targetVisitors[i];
+                                      final c = (i < pickedCardsList.length) ? pickedCardsList[i] : pickedCardsList.first;
+                                      final cardNum = (c['card_number'] ?? c['card_barcode'] ?? c['card_mac'] ?? '').toString().trim();
+                                      items.add({
+                                        'visitor': v,
+                                        'card_number': cardNum,
+                                        'trx_visitor_id': (v['id'] ?? v['transaction_visitor_id'] ?? '').toString().trim(),
+                                      });
+                                    }
+                                    final success = await controller.grantAccessCardMultiple(
+                                      items: items,
+                                      isSwapCard: false,
+                                    );
+                                    if (success && dialogContext.mounted) {
+                                      Navigator.of(dialogContext).pop();
+                                    }
+                                  } else {
+                                    final pickedCard = pickedCardsList.isNotEmpty ? pickedCardsList.first : null;
+                                    final cardNum = (pickedCard?['card_number'] ??
+                                            pickedCard?['card_barcode'] ??
+                                            pickedCard?['card_mac'] ??
+                                            selectedCardIds.first)
+                                        .toString()
+                                        .trim();
 
-                                  final success = await controller.grantAccessCard(
-                                    cardNumber: cardNum,
-                                    selectedCard: pickedCard,
-                                  );
+                                    final success = await controller.grantAccessCard(
+                                      cardNumber: cardNum,
+                                      selectedCard: pickedCard,
+                                    );
 
-                                  if (success && dialogContext.mounted) {
-                                    Navigator.of(dialogContext).pop();
+                                    if (success && dialogContext.mounted) {
+                                      Navigator.of(dialogContext).pop();
+                                    }
                                   }
                                 },
                                 child: Obx(() {
@@ -5436,74 +5585,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   Future<void> _showSwipeCardModal({
     required BuildContext context,
     required BuildContext parentDialogContext,
-    required String newCardNumber,
-    Map<String, dynamic>? selectedCard,
+    required List<Map<String, dynamic>> targetVisitors,
+    required List<Map<String, dynamic>> selectedCardsList,
   }) async {
-    final visitor = controller.rxSelectedVisitor.value;
-    final visitorName = (visitor?['visitor_name'] ??
-            visitor?['name'] ??
-            'Visitor')
-        .toString();
+    if (targetVisitors.isEmpty) return;
 
-    // Visitor Index & Total Count (Relative to selected targets)
-    final isMultiple = controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty;
-    final targetVisitors = isMultiple
-        ? controller.rxRelatedVisitors.where((r) {
-            final id = (r['id'] ?? r['transaction_visitor_id'] ?? '').toString();
-            return controller.rxSelectedItems.contains(id);
-          }).toList()
-        : (visitor != null ? [visitor] : <Map<String, dynamic>>[]);
-    final int totalVisitors = targetVisitors.isNotEmpty ? targetVisitors.length : 1;
-    int visitorIndex = 0;
-    if (targetVisitors.isNotEmpty && visitor != null) {
-      final vId = (visitor['id'] ?? visitor['transaction_visitor_id'] ?? '').toString();
-      final idx = targetVisitors.indexWhere((r) => (r['id'] ?? r['transaction_visitor_id'] ?? '').toString() == vId);
-      if (idx != -1) visitorIndex = idx;
-    }
+    int currentStep = 0;
+    final totalSteps = targetVisitors.length;
 
-    // Resolve current card number from visitor
-    String defaultCardNum = '';
-    final visitorCards = (visitor?['card'] as List?) ?? (visitor?['cards'] as List?) ?? [];
-    if (visitorCards.isNotEmpty) {
-      final activeCard = visitorCards.firstWhereOrNull((c) => c['current_used'] == true) ??
-          Map<String, dynamic>.from(visitorCards.first as Map);
-      defaultCardNum = (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '').toString().trim();
-    }
-    if (defaultCardNum.isEmpty) {
-      defaultCardNum = (visitor?['visitor_card'] ??
-              visitor?['visitor_code'] ??
-              visitor?['visitor_ble_card'] ??
-              visitor?['identity_id'] ??
-              '')
-          .toString()
-          .trim();
-    }
-
-    final identityId = (visitor?['identity_id'] ??
-            visitor?['id_number'] ??
-            visitor?['visitor_identity_id'] ??
-            '')
-        .toString()
-        .trim();
-
-    // Type is only locked if the visitor has already performed a swap card previously
-    final bool isTypeLocked = (visitor?['is_swapcard'] == true || visitor?['is_swap'] == true) ||
-        (visitorCards.isNotEmpty &&
-            visitorCards.any((c) => (c['is_swapcard'] == true || c['is_swap'] == true)));
-
-    final inputController = TextEditingController(text: defaultCardNum);
-    String selectedType = 'Card Access';
-    final typeOptions = [
-      'NIK',
-      'KTP',
-      'Passport',
-      'Driver License',
-      'Card Access',
-      'Face ID',
-      'NDA',
-      'Other',
-    ];
-
+    // Helper functions
     String mapSwapTypeToApi(String displayType) {
       switch (displayType) {
         case 'NIK':
@@ -5548,12 +5638,105 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       }
     }
 
+    final typeOptions = [
+      'NIK',
+      'KTP',
+      'Passport',
+      'Driver License',
+      'Card Access',
+      'Face ID',
+      'NDA',
+      'Other',
+    ];
+
+    // Initialize state per visitor
+    final List<Map<String, dynamic>> stepStates = targetVisitors.map((v) {
+      final visitorCards = (v['card'] as List?) ?? (v['cards'] as List?) ?? [];
+
+      Map<String, dynamic>? activeCard;
+      if (visitorCards.isNotEmpty) {
+        activeCard = visitorCards.firstWhereOrNull((c) {
+          final isCurrentUsed = (c['current_used'] == true);
+          final cardType = (c['card_type'] ?? c['type'] ?? '').toString().toLowerCase();
+          final isBarcode = cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
+          final status = (c['card_status'] ?? '').toString().toLowerCase();
+          final isReturned = status == 'returned' || status == 'inactive' || status == 'revoked';
+          return isCurrentUsed && !isBarcode && !isReturned;
+        });
+      }
+
+      String defaultCardNum = '';
+      if (activeCard != null) {
+        defaultCardNum = (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '').toString().trim();
+      }
+      if (defaultCardNum.isEmpty) {
+        defaultCardNum = (v['visitor_card'] ??
+                v['visitor_code'] ??
+                v['visitor_ble_card'] ??
+                v['identity_id'] ??
+                '')
+            .toString()
+            .trim();
+      }
+
+      final identityId = (v['identity_id'] ??
+              v['id_number'] ??
+              v['visitor_identity_id'] ??
+              '')
+            .toString()
+            .trim();
+
+      final bool isTypeLocked = activeCard != null;
+      String initialType = 'Card Access';
+      if (activeCard != null) {
+        final rawSwapType = (activeCard['swap_type'] ?? activeCard['type'] ?? activeCard['card_type'] ?? '').toString().trim();
+        if (rawSwapType.isNotEmpty) {
+          if (rawSwapType.toLowerCase().contains('ktp')) {
+            initialType = 'KTP';
+          } else if (rawSwapType.toLowerCase().contains('nik')) {
+            initialType = 'NIK';
+          } else if (rawSwapType.toLowerCase().contains('passport')) {
+            initialType = 'Passport';
+          } else if (rawSwapType.toLowerCase().contains('driver')) {
+            initialType = 'Driver License';
+          } else if (rawSwapType.toLowerCase().contains('face')) {
+            initialType = 'Face ID';
+          } else if (rawSwapType.toLowerCase().contains('nda')) {
+            initialType = 'NDA';
+          } else if (rawSwapType.toLowerCase().contains('card')) {
+            initialType = 'Card Access';
+          } else {
+            initialType = 'Card Access';
+          }
+        }
+      }
+
+      return {
+        'visitor': v,
+        'selectedType': initialType,
+        'controller': TextEditingController(text: defaultCardNum),
+        'defaultCardNum': defaultCardNum,
+        'identityId': identityId,
+        'isTypeLocked': isTypeLocked,
+      };
+    }).toList();
+
     await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (swipeDialogContext) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final currentItem = stepStates[currentStep];
+            final currentVisitor = currentItem['visitor'] as Map<String, dynamic>;
+            final currentVisitorName = (currentVisitor['visitor_name'] ?? currentVisitor['name'] ?? 'Visitor').toString();
+            final isLastStep = currentStep == totalSteps - 1;
+            final isTypeLocked = currentItem['isTypeLocked'] == true;
+            final inputController = currentItem['controller'] as TextEditingController;
+            final selectedType = currentItem['selectedType'] as String;
+            final identityId = currentItem['identityId'] as String;
+            final defaultCardNum = currentItem['defaultCardNum'] as String;
+
             return Dialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -5615,7 +5798,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         children: [
                           // Visitor count & name
                           Text(
-                            'Visitor ${visitorIndex + 1} / $totalVisitors',
+                            'Visitor ${currentStep + 1} / $totalSteps',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -5624,7 +5807,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            visitorName,
+                            currentVisitorName,
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -5662,7 +5845,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                           const SizedBox(height: 6),
 
-                          // Type Dropdown Box (Locked if already has a card, or selectable PopupMenuButton on first swap)
+                          // Type Dropdown Box
                           isTypeLocked
                               ? Container(
                                   height: 42,
@@ -5721,7 +5904,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     elevation: 6,
                                     onSelected: (newVal) {
                                       setModalState(() {
-                                        selectedType = newVal;
+                                        currentItem['selectedType'] = newVal;
                                         if ((newVal == 'NIK' || newVal == 'KTP') && identityId.isNotEmpty) {
                                           inputController.text = identityId;
                                         } else if (newVal == 'Card Access' && defaultCardNum.isNotEmpty) {
@@ -5802,34 +5985,37 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           // Dynamic Value Input Field
                           Container(
                             height: 42,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            alignment: Alignment.centerLeft,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: const Color(0xFFCBD5E1),
+                                width: 1.2,
                               ),
                             ),
-                            child: Center(
-                              child: TextField(
-                                controller: inputController,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.5,
-                                  color: const Color(0xFF1E293B),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlignVertical: TextAlignVertical.center,
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
+                            child: TextField(
+                              controller: inputController,
+                              textAlignVertical: TextAlignVertical.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 13.5,
+                                height: 1.2,
+                                color: const Color(0xFF1E293B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 22),
 
-                          // Swipe Action Button (Full Width Blue)
+                          // Action Button (Next or Swipe)
                           SizedBox(
                             width: double.infinity,
                             height: 44,
@@ -5843,28 +6029,78 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 ),
                               ),
                               onPressed: () async {
-                                final customSwapFrom = inputController.text.trim();
-                                final apiSwapType = mapSwapTypeToApi(selectedType);
-                                final success = await controller.grantAccessCard(
-                                  cardNumber: newCardNumber,
-                                  selectedCard: selectedCard,
-                                  isSwapCard: true,
-                                  swapType: apiSwapType,
-                                  customSwapCardFrom: customSwapFrom,
-                                );
+                                if (!isLastStep) {
+                                  setModalState(() {
+                                    currentStep++;
+                                  });
+                                } else {
+                                  // Final step: Execute Swipe
+                                  if (totalSteps > 1) {
+                                    final items = <Map<String, dynamic>>[];
+                                    for (int i = 0; i < totalSteps; i++) {
+                                      final s = stepStates[i];
+                                      final v = s['visitor'] as Map<String, dynamic>;
+                                      final c = (i < selectedCardsList.length) ? selectedCardsList[i] : selectedCardsList.first;
+                                      final cardNum = (c['card_number'] ?? c['card_barcode'] ?? c['card_mac'] ?? '').toString().trim();
+                                      final customSwapFrom = (s['controller'] as TextEditingController).text.trim();
+                                      final sType = mapSwapTypeToApi(s['selectedType'] as String);
 
-                                if (success) {
-                                  if (swipeDialogContext.mounted) {
-                                    Navigator.of(swipeDialogContext).pop();
-                                  }
-                                  if (parentDialogContext.mounted) {
-                                    Navigator.of(parentDialogContext).pop();
+                                      items.add({
+                                        'visitor': v,
+                                        'card_number': cardNum,
+                                        'trx_visitor_id': (v['id'] ?? v['transaction_visitor_id'] ?? '').toString().trim(),
+                                        'swap_card_from_card': customSwapFrom,
+                                        'swap_type': sType,
+                                      });
+                                    }
+
+                                    final success = await controller.grantAccessCardMultiple(
+                                      items: items,
+                                      isSwapCard: true,
+                                    );
+
+                                    if (success) {
+                                      if (swipeDialogContext.mounted) {
+                                        Navigator.of(swipeDialogContext).pop();
+                                      }
+                                      if (parentDialogContext.mounted) {
+                                        Navigator.of(parentDialogContext).pop();
+                                      }
+                                    }
+                                  } else {
+                                    // Single Visitor Swipe
+                                    final pickedCard = selectedCardsList.isNotEmpty ? selectedCardsList.first : null;
+                                    final newCardNumber = (pickedCard?['card_number'] ??
+                                            pickedCard?['card_barcode'] ??
+                                            pickedCard?['card_mac'] ??
+                                            '')
+                                        .toString()
+                                        .trim();
+                                    final customSwapFrom = inputController.text.trim();
+                                    final apiSwapType = mapSwapTypeToApi(selectedType);
+
+                                    final success = await controller.grantAccessCard(
+                                      cardNumber: newCardNumber,
+                                      selectedCard: pickedCard,
+                                      isSwapCard: true,
+                                      swapType: apiSwapType,
+                                      customSwapCardFrom: customSwapFrom,
+                                    );
+
+                                    if (success) {
+                                      if (swipeDialogContext.mounted) {
+                                        Navigator.of(swipeDialogContext).pop();
+                                      }
+                                      if (parentDialogContext.mounted) {
+                                        Navigator.of(parentDialogContext).pop();
+                                      }
+                                    }
                                   }
                                 }
                               },
                               child: Obx(() {
                                 final isLoading = controller.rxIsActionLoading.value;
-                                if (isLoading) {
+                                if (isLoading && isLastStep) {
                                   return const SizedBox(
                                     width: 20,
                                     height: 20,
@@ -5875,7 +6111,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   );
                                 }
                                 return Text(
-                                  'Swipe',
+                                  !isLastStep ? 'Next (${currentStep + 1}/$totalSteps)' : 'Swipe',
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -8651,13 +8887,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       return [];
     }
 
-    final selectedList = <Map<String, dynamic>>[];
-    for (final id in controller.rxSelectedItems) {
-      final match = controller.rxAllRelatedVisitors.firstWhereOrNull(
-        (v) => (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id']).toString() == id.toString(),
-      );
-      if (match != null) selectedList.add(match);
-    }
+    final selectedSet = controller.rxSelectedItems.toSet();
+    final selectedList = controller.rxAllRelatedVisitors.where((v) {
+      final keys = [
+        v['id'],
+        v['trx_id'],
+        v['transaction_visitor_id'],
+        v['visitor_id'],
+        v['invitation_code'],
+        v['visitor_code'],
+        v['visitor_number'],
+        v['name'],
+        v['visitor_name'],
+      ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+      return keys.any((k) => selectedSet.contains(k));
+    }).toList();
 
     if (selectedList.isEmpty) {
       return [];
@@ -8695,12 +8939,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
     final selectedVisitors = <Map<String, dynamic>>[];
     if (controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty) {
-      for (final id in controller.rxSelectedItems) {
-        final match = controller.rxAllRelatedVisitors.firstWhereOrNull(
-          (v) => (v['trx_id'] ?? v['id'] ?? v['transaction_visitor_id']).toString() == id.toString(),
-        );
-        if (match != null) selectedVisitors.add(match);
-      }
+      final selectedSet = controller.rxSelectedItems.toSet();
+      selectedVisitors.addAll(controller.rxAllRelatedVisitors.where((v) {
+        final keys = [
+          v['id'],
+          v['trx_id'],
+          v['transaction_visitor_id'],
+          v['visitor_id'],
+          v['invitation_code'],
+          v['visitor_code'],
+          v['visitor_number'],
+          v['name'],
+          v['visitor_name'],
+        ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+        return keys.any((k) => selectedSet.contains(k));
+      }));
     }
 
     if (selectedVisitors.isEmpty) {
