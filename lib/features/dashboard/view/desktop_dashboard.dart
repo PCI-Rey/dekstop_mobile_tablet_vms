@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../controller/dashboard_controller.dart';
 import '../widgets/operator_tour_overlay.dart';
+import '../widgets/add_pra_registration_modal.dart';
 import 'desktop_overview_analytics.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/config/constants.dart';
@@ -1486,39 +1487,41 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               final isBlocked = visitor['is_block'] == true ||
                   rawStatus == 'block' ||
                   rawStatus == 'blacklist';
+              final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
 
-              // 1. If visitor is blocked / blacklisted (is_block == true): show Blacklisted indicator badge
+              // 1. If visitor is blocked / blacklisted (is_block == true): show Unblock button
               if (isBlocked) {
                 return Align(
                   alignment: Alignment.center,
-                  child: Container(
+                  child: SizedBox(
                     height: 26,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFFCA5A5)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.block_rounded, size: 13, color: Color(0xFFDC2626)),
-                        const SizedBox(width: 5),
-                        Text(
-                          'Blacklisted',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFFDC2626),
-                          ),
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF004385),
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                      ],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 0,
+                        ),
+                      ),
+                      onPressed: () => _handleAction('Unblock'),
+                      icon: const Icon(Icons.lock_open_rounded, size: 14, color: Colors.white),
+                      label: Text(
+                        'Unblock',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 );
               }
-              // 2. If is_block == false and visitor is Checkin: show BOTH Check Out + Blacklist buttons
+              // 2. If is_block == false and visitor is Checkin: show BOTH Check Out + Block buttons
               else if (rawStatus.contains('checkin') || rawStatus == 'in') {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1565,10 +1568,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             vertical: 0,
                           ),
                         ),
-                        onPressed: () => _handleAction('Blacklist'),
+                        onPressed: () => _handleAction('Block'),
                         icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
                         label: Text(
-                          'Blacklist',
+                          'Block',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -1579,8 +1582,40 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 );
               }
-              // 3. If visitor is Available or Waiting: show Check In + Blacklist buttons
-              else if (rawStatus.contains('available') || rawStatus.contains('waiting')) {
+              // 3. If visitor is Checkout: show ONLY the Block button
+              else if (rawStatus.contains('checkout') || rawStatus == 'out') {
+                return Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    height: 26,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E293B),
+                        foregroundColor: Colors.white,
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 0,
+                        ),
+                      ),
+                      onPressed: () => _handleAction('Block'),
+                      icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
+                      label: Text(
+                        'Block',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              // 4. If Host (is_host == true) OR visitor is Available / Waiting: show Check In + Block buttons
+              else if (isHost || rawStatus.contains('available') || rawStatus.contains('waiting')) {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1626,10 +1661,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             vertical: 0,
                           ),
                         ),
-                        onPressed: () => _handleAction('Blacklist'),
+                        onPressed: () => _handleAction('Block'),
                         icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
                         label: Text(
-                          'Blacklist',
+                          'Block',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -1640,15 +1675,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 );
               }
-              // 4. If visitor is Checkout: show ONLY the Blacklist button
-              else if (rawStatus.contains('checkout') || rawStatus == 'out') {
+              // 5. Regular visitor with Preregis / Praregis or default: show ONLY the Fill Form button
+              else {
                 return Align(
                   alignment: Alignment.center,
                   child: SizedBox(
                     height: 26,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E293B),
+                        backgroundColor: const Color(0xFF004385),
                         foregroundColor: Colors.white,
                         elevation: 1,
                         shape: RoundedRectangleBorder(
@@ -1659,10 +1694,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           vertical: 0,
                         ),
                       ),
-                      onPressed: () => _handleAction('Blacklist'),
-                      icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
-                      label: Text(
-                        'Blacklist',
+                      onPressed: () => _handleAction('Fill Form'),
+                      child: Text(
+                        'Fill Form',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -1670,66 +1704,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
                   ),
-                );
-              }
-              // 5. If visitor is Preregis / Praregis or default: show BOTH Fill Form + Blacklist buttons
-              else {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: 26,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF004385),
-                          foregroundColor: Colors.white,
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 0,
-                          ),
-                        ),
-                        onPressed: () => _handleAction('Fill Form'),
-                        child: Text(
-                          'Fill Form',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: 26,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
-                          foregroundColor: Colors.white,
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 0,
-                          ),
-                        ),
-                        onPressed: () => _handleAction('Blacklist'),
-                        icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
-                        label: Text(
-                          'Blacklist',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 );
               }
             },
@@ -4270,8 +4244,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return;
       }
 
-      // Rule 2: Preregis / Form incomplete (only if not Available / Approved)
-      if (!isAvailable && (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone)) {
+      final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
+
+      // Rule 2: Preregis / Form incomplete (only if not Available / Approved and not Host)
+      if (!isHost && !isAvailable && (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone)) {
         _showWarningNoticeDialog(
           context,
           title: 'Registration Form Required',
@@ -4280,8 +4256,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return;
       }
 
-      // Rule 3: Waiting / Pending host approval (only if still pending/waiting)
-      if (!isAvailable && (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait'))) {
+      // Rule 3: Waiting / Pending host approval (only if still pending/waiting and not Host)
+      if (!isHost && !isAvailable && (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait'))) {
         _showWarningNoticeDialog(
           context,
           title: 'Awaiting Host Approval',
@@ -4359,12 +4335,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showConfirmationActionDialog(context, action: 'Checkout', question: 'Do you want to check out?');
       return;
     }
-    if (actionName == 'Blacklist' || actionName == 'Block') {
+    if (actionName == 'Blacklist') {
       if (visitor == null) {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
         return;
       }
-      if (isBlocked) {
+      final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '').toString().toLowerCase();
+      if (visitor['is_blacklist'] == true || rawStatus == 'blacklist') {
         _showWarningNoticeDialog(
           context,
           title: 'Already Blacklisted',
@@ -4373,6 +4350,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return;
       }
       _showReasonActionDialog(context, action: 'Blacklist');
+      return;
+    }
+    if (actionName == 'Block') {
+      if (visitor == null) {
+        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      if (isBlocked) {
+        _showWarningNoticeDialog(
+          context,
+          title: 'Already Blocked',
+          message: 'Visitor ${visitor['name'] ?? ''} is already blocked.',
+        );
+        return;
+      }
+      _showReasonActionDialog(context, action: 'Block');
       return;
     }
     if (actionName == 'Card Return' || actionName == 'Return Card') {
@@ -4392,10 +4385,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       return;
     }
     if (actionName == 'Whitelist' || actionName == 'Unblock') {
-      AppSnackbar.info(
-        title: 'Whitelist Notice',
-        message: 'Unblacklist / Whitelist feature is not available.',
-      );
+      if (visitor == null) {
+        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        return;
+      }
+      _showConfirmationActionDialog(context, action: 'Unblock', question: 'Do you want to unblock this visitor?');
       return;
     }
     if (actionName == 'Access Issuance') {
@@ -4410,8 +4404,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showAccessIssuanceDialog(context, visitor);
       return;
     }
-    if (actionName == 'Fill Form') {
-      AppSnackbar.info(title: 'Fill Form', message: 'Opening visitor form...');
+    if (actionName == 'Pra Register' ||
+        actionName == 'Pra-Register' ||
+        actionName == 'Pre Register' ||
+        actionName == 'Fill Form') {
+      AddPraRegistrationModal.show(context);
       return;
     }
     AppSnackbar.info(
@@ -6807,7 +6804,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
-        final isBlock = action.toLowerCase() == 'block' || action.toLowerCase() == 'blacklist';
+        final isBlacklist = action.toLowerCase() == 'blacklist';
+        final isBlock = action.toLowerCase() == 'block';
 
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -6871,7 +6869,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                 // Title
                 Text(
-                  isBlock ? 'Blacklist Visitor' : 'Action Reason',
+                  isBlacklist
+                      ? 'Blacklist Visitor'
+                      : (isBlock ? 'Block Visitor' : 'Action Reason'),
                   style: GoogleFonts.inter(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w700,
@@ -6884,9 +6884,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    isBlock
+                    isBlacklist
                         ? 'Please provide a reason for blacklisting this visitor:'
-                        : 'Please provide a reason for this action:',
+                        : (isBlock
+                            ? 'Please provide a reason for blocking this visitor:'
+                            : 'Please provide a reason for this action:'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 13,
@@ -6978,7 +6980,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               return;
                             }
                             Navigator.of(dialogContext).pop();
-                            if (isBlock) {
+                            if (isBlacklist) {
                               controller.blacklistVisitor(reason: reasonText);
                             } else {
                               controller.performOperatorInvitationAction(
@@ -8911,16 +8913,27 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     for (final v in selectedList) {
       final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
       final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
+      final isHost = v['is_host'] == true || v['raw']?['is_host'] == true;
 
-      if (!isBlocked) {
-        actions.add('Blacklist');
-      }
-      if (rawStatus.contains('checkin') || rawStatus == 'in') {
-        actions.add('Check Out');
-      } else if (rawStatus.contains('available') || rawStatus.contains('waiting')) {
-        actions.add('Check In');
-      } else if (!rawStatus.contains('checkout') && rawStatus != 'out' && !isBlocked) {
-        actions.add('Fill Form');
+      // 1. Blocked visitor -> can Unblock
+      if (isBlocked) {
+        actions.add('Unblock');
+      } else {
+        // 2. Active non-blocked visitor -> can Block
+        actions.add('Block');
+
+        // 3. Status Checkin -> can Check Out
+        if (rawStatus.contains('checkin') || rawStatus == 'in') {
+          actions.add('Check Out');
+        }
+        // 4. Host or Available/Waiting -> can Check In
+        else if (isHost || rawStatus.contains('available') || rawStatus.contains('waiting')) {
+          actions.add('Check In');
+        }
+        // 5. Preregis regular visitor -> can Fill Form
+        else if (!rawStatus.contains('checkout') && rawStatus != 'out') {
+          actions.add('Fill Form');
+        }
       }
     }
 
@@ -8973,12 +8986,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     for (final v in selectedVisitors) {
       final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
       final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
+      final isHost = v['is_host'] == true || v['raw']?['is_host'] == true;
 
-      if ((action == 'Check In' || action == 'Checkin') && !isBlocked && (rawStatus.contains('available') || rawStatus.contains('waiting'))) {
+      if ((action == 'Check In' || action == 'Checkin') && !isBlocked && (isHost || rawStatus.contains('available') || rawStatus.contains('waiting'))) {
         validVisitors.add(v);
       } else if ((action == 'Check Out' || action == 'Checkout') && !isBlocked && (rawStatus.contains('checkin') || rawStatus == 'in')) {
         validVisitors.add(v);
-      } else if ((action == 'Blacklist' || action == 'Block') && !isBlocked) {
+      } else if (action == 'Block' && !isBlocked) {
+        validVisitors.add(v);
+      } else if (action == 'Unblock' && isBlocked) {
+        validVisitors.add(v);
+      } else if (action == 'Blacklist' && !isBlocked) {
         validVisitors.add(v);
       }
     }
@@ -8992,7 +9010,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
 
     if (action == 'Blacklist' || action == 'Block') {
-      _showMultipleReasonActionDialog(context, action: 'Blacklist', validVisitors: validVisitors);
+      _showMultipleReasonActionDialog(context, action: action, validVisitors: validVisitors);
     } else {
       _showMultipleConfirmationActionDialog(context, action: action, validVisitors: validVisitors);
     }
@@ -9351,9 +9369,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       case 'check out':
       case 'checkout':
         return Icons.logout_rounded;
-      case 'blacklist':
+      case 'unblock':
+        return Icons.lock_open_rounded;
       case 'block':
         return Icons.block_rounded;
+      case 'blacklist':
+        return Icons.gavel_rounded;
       case 'fill form':
       default:
         return Icons.edit_note_rounded;
@@ -9368,8 +9389,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       case 'check out':
       case 'checkout':
         return const Color(0xFFEF4444);
-      case 'blacklist':
+      case 'unblock':
+        return const Color(0xFF004385);
       case 'block':
+        return const Color(0xFF1E293B);
+      case 'blacklist':
         return const Color(0xFF212121);
       case 'fill form':
       default:

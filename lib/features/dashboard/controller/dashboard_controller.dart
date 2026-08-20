@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
@@ -160,6 +161,117 @@ class DashboardController extends GetxController {
   // Available Cards
   final rxAvailableCards = <Map<String, dynamic>>[].obs;
   final rxIsAvailableCardsLoading = false.obs;
+
+  // Pra-Registration Form Dependencies
+  final rxIsPraRegLoading = false.obs;
+  final rxPraRegSites = <Map<String, dynamic>>[].obs;
+  final rxPraRegVisitorTypes = <Map<String, dynamic>>[].obs;
+  final rxPraRegVisitors = <Map<String, dynamic>>[].obs;
+  final rxPraRegEmployees = <Map<String, dynamic>>[].obs;
+
+  Future<void> fetchPraRegistrationDependencies() async {
+    rxIsPraRegLoading.value = true;
+    try {
+      final results = await Future.wait([
+        _dashboardRepository.getInvitationSites(),
+        _dashboardRepository.getInvitationVisitorTypes(),
+        _dashboardRepository.getInvitationVisitors(),
+        _dashboardRepository.getInvitationEmployees(),
+      ]);
+
+      // 1. Sites
+      final sitesRes = results[0];
+      if (sitesRes is Success<Map<String, dynamic>>) {
+        final collection = sitesRes.data['collection'] as List<dynamic>? ?? [];
+        rxPraRegSites.assignAll(collection.map((e) => Map<String, dynamic>.from(e as Map)).toList());
+      }
+
+      // 2. Visitor Types
+      final typesRes = results[1];
+      if (typesRes is Success<Map<String, dynamic>>) {
+        final collection = typesRes.data['collection'] as List<dynamic>? ?? [];
+        rxPraRegVisitorTypes.assignAll(collection.map((e) => Map<String, dynamic>.from(e as Map)).toList());
+      }
+
+      // 3. Visitors
+      final visitorsRes = results[2];
+      if (visitorsRes is Success<Map<String, dynamic>>) {
+        final collection = visitorsRes.data['collection'] as List<dynamic>? ?? [];
+        rxPraRegVisitors.assignAll(collection.map((e) => Map<String, dynamic>.from(e as Map)).toList());
+      }
+
+      // 4. Employees
+      final empRes = results[3];
+      if (empRes is Success<Map<String, dynamic>>) {
+        final collection = empRes.data['collection'] as List<dynamic>? ?? [];
+        rxPraRegEmployees.assignAll(collection.map((e) => Map<String, dynamic>.from(e as Map)).toList());
+      }
+    } catch (e) {
+      debugPrint('Error fetching Pra Registration dependencies: $e');
+    } finally {
+      rxIsPraRegLoading.value = false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchVisitorTypeDetail(String id) async {
+    final res = await _dashboardRepository.getVisitorTypeDetail(id);
+    if (res is Success<Map<String, dynamic>>) {
+      final collection = res.data['collection'];
+      if (collection is Map<String, dynamic>) {
+        return collection;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> submitOperatorPraRegistration({
+    required Map<String, dynamic> payload,
+    required bool isGroup,
+  }) async {
+    rxIsActionLoading.value = true;
+    try {
+      final res = isGroup
+          ? await _dashboardRepository.submitOperatorNewPraInviteGroup(payload)
+          : await _dashboardRepository.submitOperatorNewPraInvite(payload);
+
+      if (res is Success<Map<String, dynamic>>) {
+        final data = res.data;
+        final status = data['status']?.toString() ?? '';
+        final msg = data['msg']?.toString() ?? 'Pra-registration created successfully!';
+        if (status == 'success' || data['status_code'] == 200) {
+          AppSnackbar.success(
+            title: 'Pra-Registration Success',
+            message: msg,
+          );
+          // Refresh upcoming purpose / visitors
+          fetchUpcomingPurpose(filter: 'Today');
+          return true;
+        } else {
+          AppSnackbar.error(
+            title: 'Registration Failed',
+            message: msg,
+          );
+          return false;
+        }
+      } else if (res is Failure<Map<String, dynamic>>) {
+        AppSnackbar.error(
+          title: 'Registration Error',
+          message: res.exception.message,
+        );
+        return false;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error submitting Pra Registration: $e');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'An unexpected error occurred: $e',
+      );
+      return false;
+    } finally {
+      rxIsActionLoading.value = false;
+    }
+  }
 
   // UI Interactive States
   final rxSearchQuery = ''.obs;
@@ -1247,8 +1359,8 @@ class DashboardController extends GetxController {
 
     final lowerAction = action.toLowerCase();
 
-    // Direct Blacklist action to dedicated blacklist API endpoint
-    if (lowerAction == 'blacklist' || lowerAction == 'block') {
+    // Direct Blacklist action to dedicated blacklist API endpoint (/api/operator-invitation/blacklist)
+    if (lowerAction == 'blacklist') {
       return await blacklistVisitor(reason: reason ?? 'Blacklisted by operator');
     }
 
@@ -1275,17 +1387,18 @@ class DashboardController extends GetxController {
     }
 
     if (lowerAction == 'checkin') {
+      final isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
       final isPraregisterDone = visitor['is_praregister_done'] == true;
       final approvalStatus = (visitor['approval_status'] ?? '').toString().toLowerCase();
 
-      if (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone) {
+      if (!isHost && (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone)) {
         AppSnackbar.warning(
           title: 'Registration Form Required',
           message: 'Please complete the registration form first. Visitor will be automatically checked in upon form completion.',
         );
         return false;
       }
-      if (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait')) {
+      if (!isHost && (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait'))) {
         AppSnackbar.warning(
           title: 'Awaiting Host Approval',
           message: 'This visitor is awaiting confirmation from the host. Please wait for approval.',
@@ -1733,9 +1846,11 @@ class DashboardController extends GetxController {
             ? 'Checked in by operator'
             : (cleanAction == 'Checkout'
                 ? 'Checked out by operator'
-                : 'Blacklisted by operator'));
+                : (cleanAction == 'Unblock'
+                    ? 'Unblocked by operator'
+                    : 'Blocked by operator')));
 
-    if (action.toLowerCase() == 'blacklist' || action.toLowerCase() == 'block') {
+    if (action.toLowerCase() == 'blacklist') {
       rxIsActionLoading.value = true;
       int successCount = 0;
       for (final v in visitors) {

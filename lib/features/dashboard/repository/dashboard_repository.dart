@@ -423,5 +423,62 @@ class DashboardRepository {
       data: payload,
     );
   }
+
+  // --- Invitation Sites (/api/invitation-site) ---
+  Future<ApiResult<Map<String, dynamic>>> getInvitationSites() async {
+    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-site');
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/invitation-site');
+  }
+
+  // --- Invitation Visitor Types (/api/invitation-visitor-type) ---
+  Future<ApiResult<Map<String, dynamic>>> getInvitationVisitorTypes() async {
+    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor-type');
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor-type');
+  }
+
+  // --- Invitation Visitors (/api/invitation-visitor) ---
+  Future<ApiResult<Map<String, dynamic>>> getInvitationVisitors() async {
+    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor');
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor');
+  }
+
+  // --- Invitation Employees (/api/invitation-visitor/employee) ---
+  Future<ApiResult<Map<String, dynamic>>> getInvitationEmployees() async {
+    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor/employee');
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor/employee');
+  }
+
+  // --- Visitor Type Detail / Form Structure (/api/visitor-type/{id}) ---
+  Future<ApiResult<Map<String, dynamic>>> getVisitorTypeDetail(String id) async {
+    final cleanId = id.trim();
+    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/visitor-type/$cleanId');
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/visitor-type/$cleanId');
+  }
+
+  // --- Submit Operator Pra-Invite Single (/api/operator-invitation/new-pra-invite) ---
+  Future<ApiResult<Map<String, dynamic>>> submitOperatorNewPraInvite(
+    Map<String, dynamic> body,
+  ) async {
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/new-pra-invite',
+      data: body,
+    );
+  }
+
+  // --- Submit Operator Pra-Invite Group (/api/operator-invitation/new-pra-invite-group) ---
+  Future<ApiResult<Map<String, dynamic>>> submitOperatorNewPraInviteGroup(
+    Map<String, dynamic> body,
+  ) async {
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/new-pra-invite-group',
+      data: body,
+    );
+  }
 }
+
 

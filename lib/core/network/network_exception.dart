@@ -28,9 +28,9 @@ sealed class NetworkException implements Exception {
         if (statusCode == 401) {
           return UnauthorizedException(statusMessage ?? 'Sesi telah berakhir. Silakan masuk kembali.');
         } else if (statusCode == 403) {
-          return const ServerException(statusCode: 403, message: 'Akses ditolak.');
+          return ServerException(statusCode: 403, message: statusMessage ?? 'Akses ditolak.');
         } else if (statusCode != null && statusCode >= 500) {
-          return ServerException(statusCode: statusCode, message: 'Terjadi kesalahan internal server.');
+          return ServerException(statusCode: statusCode, message: statusMessage ?? 'Terjadi kesalahan internal server.');
         }
         return ServerException(statusCode: statusCode, message: statusMessage ?? 'Terjadi kesalahan pada server.');
       case DioExceptionType.cancel:
