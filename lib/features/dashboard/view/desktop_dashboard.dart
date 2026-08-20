@@ -5445,13 +5445,19 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             'Visitor')
         .toString();
 
-    // Visitor Index (e.g. 1/1 or relative to related visitors)
-    final related = controller.rxRelatedVisitors;
+    // Visitor Index & Total Count (Relative to selected targets)
+    final isMultiple = controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty;
+    final targetVisitors = isMultiple
+        ? controller.rxRelatedVisitors.where((r) {
+            final id = (r['id'] ?? r['transaction_visitor_id'] ?? '').toString();
+            return controller.rxSelectedItems.contains(id);
+          }).toList()
+        : (visitor != null ? [visitor] : <Map<String, dynamic>>[]);
+    final int totalVisitors = targetVisitors.isNotEmpty ? targetVisitors.length : 1;
     int visitorIndex = 0;
-    int totalVisitors = related.isNotEmpty ? related.length : 1;
-    if (related.isNotEmpty && visitor != null) {
+    if (targetVisitors.isNotEmpty && visitor != null) {
       final vId = (visitor['id'] ?? visitor['transaction_visitor_id'] ?? '').toString();
-      final idx = related.indexWhere((r) => (r['id'] ?? r['transaction_visitor_id'] ?? '').toString() == vId);
+      final idx = targetVisitors.indexWhere((r) => (r['id'] ?? r['transaction_visitor_id'] ?? '').toString() == vId);
       if (idx != -1) visitorIndex = idx;
     }
 
@@ -5480,11 +5486,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         .toString()
         .trim();
 
-    final bool isTypeLocked = visitorCards.isNotEmpty &&
-        visitorCards.any((c) =>
-            (c['current_used'] == true) ||
-            (c['is_swapcard'] == true) ||
-            ((c['card_number'] ?? c['card_barcode'] ?? '').toString().trim().isNotEmpty));
+    // Type is only locked if the visitor has already performed a swap card previously
+    final bool isTypeLocked = (visitor?['is_swapcard'] == true || visitor?['is_swap'] == true) ||
+        (visitorCards.isNotEmpty &&
+            visitorCards.any((c) => (c['is_swapcard'] == true || c['is_swap'] == true)));
 
     final inputController = TextEditingController(text: defaultCardNum);
     String selectedType = 'Card Access';
