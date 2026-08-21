@@ -320,39 +320,7 @@ class LoginView extends GetView<AuthController> {
           ),
         ),
 
-        const SizedBox(height: 12),
-
-        // Remember Me & Additional Options Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Obx(
-                  () => Checkbox(
-                    value: controller.rxRememberMe.value,
-                    onChanged: (val) =>
-                        controller.rxRememberMe.value = val ?? false,
-                    activeColor: _blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                const Text(
-                  'Remember Me',
-                  style: TextStyle(
-                    color: _textColorDark,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 28),
+        const SizedBox(height: 24),
 
         // Primary Login Button
         Obx(() {

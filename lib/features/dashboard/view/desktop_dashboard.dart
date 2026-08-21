@@ -961,9 +961,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 );
                               }
                               return Image.asset(
-                                photoUrl.isNotEmpty && photoUrl != 'assets/images/ava_person1.png'
+                                photoUrl.isNotEmpty && photoUrl.startsWith('assets/')
                                     ? photoUrl
-                                    : 'assets/images/ava_person2.png',
+                                    : 'assets/images/ai_image.jpeg',
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   color: const Color(0xFFE2E8F0),

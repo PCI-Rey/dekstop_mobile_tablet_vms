@@ -256,16 +256,23 @@ class DashboardController extends GetxController {
           fetchUpcomingPurpose(filter: 'Today');
           return true;
         } else {
+          final isBlocked = msg.toLowerCase().contains('block') || msg.toLowerCase().contains('blacklist');
           AppSnackbar.error(
-            title: 'Registration Failed',
-            message: msg,
+            title: isBlocked ? 'Visitor Blocked / Blacklisted' : 'Registration Failed',
+            message: isBlocked
+                ? 'Cannot submit registration: One or more visitors are currently blocked or blacklisted in the system.'
+                : msg,
           );
           return false;
         }
       } else if (res is Failure<Map<String, dynamic>>) {
+        final errMsg = res.exception.message;
+        final isBlocked = errMsg.toLowerCase().contains('block') || errMsg.toLowerCase().contains('blacklist');
         AppSnackbar.error(
-          title: 'Registration Error',
-          message: res.exception.message,
+          title: isBlocked ? 'Visitor Blocked / Blacklisted' : 'Registration Error',
+          message: isBlocked
+              ? 'Cannot submit registration: One or more visitors are currently blocked or blacklisted in the system.'
+              : errMsg,
         );
         return false;
       }
