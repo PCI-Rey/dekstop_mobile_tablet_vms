@@ -168,6 +168,7 @@ class DashboardController extends GetxController {
   final rxPraRegVisitorTypes = <Map<String, dynamic>>[].obs;
   final rxPraRegVisitors = <Map<String, dynamic>>[].obs;
   final rxPraRegEmployees = <Map<String, dynamic>>[].obs;
+  final rxPraRegHosts = <Map<String, dynamic>>[].obs;
 
   Future<void> fetchPraRegistrationDependencies() async {
     rxIsPraRegLoading.value = true;
@@ -177,6 +178,7 @@ class DashboardController extends GetxController {
         _dashboardRepository.getInvitationVisitorTypes(),
         _dashboardRepository.getInvitationVisitors(),
         _dashboardRepository.getInvitationEmployees(),
+        _dashboardRepository.getInvitationHosts(),
       ]);
 
       // 1. Sites
@@ -205,6 +207,13 @@ class DashboardController extends GetxController {
       if (empRes is Success<Map<String, dynamic>>) {
         final collection = empRes.data['collection'] as List<dynamic>? ?? [];
         rxPraRegEmployees.assignAll(collection.map((e) => Map<String, dynamic>.from(e as Map)).toList());
+      }
+
+      // 5. Hosts
+      final hostsRes = results[4];
+      if (hostsRes is Success<Map<String, dynamic>>) {
+        final collection = hostsRes.data['collection'] as List<dynamic>? ?? [];
+        rxPraRegHosts.assignAll(collection.map((e) => Map<String, dynamic>.from(e as Map)).toList());
       }
     } catch (e) {
       debugPrint('Error fetching Pra Registration dependencies: $e');

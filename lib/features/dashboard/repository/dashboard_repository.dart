@@ -452,6 +452,13 @@ class DashboardRepository {
     return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor/employee');
   }
 
+  // --- Invitation Hosts (/api/invitation-visitor/host) ---
+  Future<ApiResult<Map<String, dynamic>>> getInvitationHosts() async {
+    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor/host');
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor/host');
+  }
+
   // --- Visitor Type Detail / Form Structure (/api/visitor-type/{id}) ---
   Future<ApiResult<Map<String, dynamic>>> getVisitorTypeDetail(String id) async {
     final cleanId = id.trim();

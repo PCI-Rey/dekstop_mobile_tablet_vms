@@ -9,6 +9,7 @@ import '../../../features/dashboard/binding/dashboard_binding.dart';
 import '../../../features/dashboard/view/dashboard_view.dart';
 import '../../../features/visitor/view/visitor_detail_view.dart';
 import '../../../features/visitor/view/related_visitors_view.dart';
+import '../../../features/profile/binding/profile_binding.dart';
 import '../../../features/profile/view/profile_view.dart';
 import '../../../features/setting/binding/setting_binding.dart';
 import '../../../features/setting/view/configure_view.dart';
@@ -19,8 +20,8 @@ class AppRoutes {
   static const String login = '/login';
   static const String cardTap = '/card-tap';
   static const String dashboard = '/dashboard';
-  static const String visitorDetail = '/visitor/detail';
-  static const String visitorList = '/visitor/list';
+  static const String visitorDetail = '/visitor-detail';
+  static const String visitorList = '/visitor-list';
   static const String profile = '/profile';
   static const String configure = '/configure';
   static const String noInternet = '/no-internet';
@@ -64,7 +65,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.profile,
       page: () => const ProfileView(),
-      binding: AuthBinding(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.configure,

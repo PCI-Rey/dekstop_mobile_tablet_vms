@@ -564,21 +564,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             ],
           ),
 
-          const SizedBox(width: 6),
-
-          // Language Flag (UK Flag Icon Container)
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: const Center(
-              child: Text('🇬🇧', style: TextStyle(fontSize: 11)),
-            ),
-          ),
-
           const SizedBox(width: 8),
 
           // User Profile Avatar with Green Online Status Dot
@@ -2660,10 +2645,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           child: TextField(
                             controller: _visitorSearchController,
                             textAlignVertical: TextAlignVertical.center,
-                            textCapitalization: TextCapitalization.characters,
-                            inputFormatters: [
-                              UpperCaseTextFormatter(),
-                            ],
                             style: GoogleFonts.inter(
                               fontSize: 12.5,
                               color: _textDark,

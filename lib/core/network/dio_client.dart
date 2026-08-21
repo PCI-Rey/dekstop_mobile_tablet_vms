@@ -320,6 +320,32 @@ class DioClient {
         return ApiResult.success(fromJson(mockSearch));
       }
       return ApiResult.success(mockSearch as T);
+    } else if (path.contains('/profile/me')) {
+      final mockProfile = {
+        "status": "success",
+        "status_code": 200,
+        "title": "success",
+        "msg": "Data retrieved successfully",
+        "collection": {
+          "user_id": "85721f6b-a8e5-4b41-af95-dd87fd950030",
+          "organization_name": "Organization SA",
+          "department_name": "",
+          "district_name": "",
+          "group_name": "OperatorVMS",
+          "email": "operator@gmail.com",
+          "username": "",
+          "fullname": "Operator 1",
+          "gender": "Other",
+          "address": "Operator 1",
+          "phone": "",
+          "is_vip": false,
+          "is_email_verified": true
+        }
+      };
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockProfile));
+      }
+      return ApiResult.success(mockProfile as T);
     }
 
     return ApiResult.failure(const ServerException(statusCode: 404, message: 'Resource not found in Demo server.'));
