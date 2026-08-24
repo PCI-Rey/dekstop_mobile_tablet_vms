@@ -4385,11 +4385,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showAccessIssuanceDialog(context, visitor);
       return;
     }
+    if (actionName == 'Walk In' ||
+        actionName == 'Walk-In' ||
+        actionName == 'Walkin') {
+      AddPraRegistrationModal.show(context, isWalkIn: true);
+      return;
+    }
     if (actionName == 'Pra Register' ||
         actionName == 'Pra-Register' ||
         actionName == 'Pre Register' ||
         actionName == 'Fill Form') {
-      AddPraRegistrationModal.show(context);
+      AddPraRegistrationModal.show(context, isWalkIn: false);
       return;
     }
     AppSnackbar.info(

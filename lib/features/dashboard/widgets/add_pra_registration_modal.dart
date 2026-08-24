@@ -41,17 +41,25 @@ class GroupVisitorEntry {
 }
 
 class AddPraRegistrationModal extends StatefulWidget {
-  const AddPraRegistrationModal({super.key});
+  final bool isWalkIn;
 
-  static Future<void> show(BuildContext context) {
+  const AddPraRegistrationModal({
+    super.key,
+    this.isWalkIn = false,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    bool isWalkIn = false,
+  }) {
     return showDialog(
       context: context,
       barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (dialogContext) => const Dialog(
+      builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: AddPraRegistrationModal(),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: AddPraRegistrationModal(isWalkIn: isWalkIn),
       ),
     );
   }
@@ -961,6 +969,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     final success = await controller.submitOperatorPraRegistration(
       payload: payload,
       isGroup: _isGroup == true,
+      isWalkIn: widget.isWalkIn,
     );
 
     if (mounted) {
@@ -1027,7 +1036,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       child: Row(
         children: [
           Text(
-            'Add Pra Registration',
+            widget.isWalkIn ? 'Add Walk In' : 'Add Pra Registration',
             style: GoogleFonts.inter(
               fontSize: 16.5,
               fontWeight: FontWeight.w700,

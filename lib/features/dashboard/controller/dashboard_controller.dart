@@ -236,6 +236,7 @@ class DashboardController extends GetxController {
   Future<bool> submitOperatorPraRegistration({
     required Map<String, dynamic> payload,
     required bool isGroup,
+    bool isWalkIn = false,
   }) async {
     rxIsActionLoading.value = true;
     try {
@@ -246,10 +247,13 @@ class DashboardController extends GetxController {
       if (res is Success<Map<String, dynamic>>) {
         final data = res.data;
         final status = data['status']?.toString() ?? '';
-        final msg = data['msg']?.toString() ?? 'Pra-registration created successfully!';
+        final msg = data['msg']?.toString() ??
+            (isWalkIn
+                ? 'Walk In registration created successfully!'
+                : 'Pra-registration created successfully!');
         if (status == 'success' || data['status_code'] == 200) {
           AppSnackbar.success(
-            title: 'Pra-Registration Success',
+            title: isWalkIn ? 'Walk In Success' : 'Pra-Registration Success',
             message: msg,
           );
           // Refresh upcoming purpose / visitors
