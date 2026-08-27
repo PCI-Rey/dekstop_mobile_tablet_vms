@@ -1,5 +1,10 @@
+#if __has_include(<flutter/dart_project.h>)
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#else
+#include "../flutter/ephemeral/cpp_client_wrapper/include/flutter/dart_project.h"
+#include "../flutter/ephemeral/cpp_client_wrapper/include/flutter/flutter_view_controller.h"
+#endif
 #include <windows.h>
 
 #include "flutter_window.h"

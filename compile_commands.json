@@ -1,0 +1,22 @@
+[
+  {
+    "directory": "c:/dekstop_tablet_vms",
+    "command": "clang++ -std=c++17 -DWIN32 -D_WINDOWS -DUNICODE -D_UNICODE -DNOMINMAX -fms-compatibility -Iwindows/flutter/ephemeral/cpp_client_wrapper/include -Iwindows/flutter/ephemeral -Iwindows/runner -c windows/runner/main.cpp -o windows/runner/main.o",
+    "file": "windows/runner/main.cpp"
+  },
+  {
+    "directory": "c:/dekstop_tablet_vms",
+    "command": "clang++ -std=c++17 -DWIN32 -D_WINDOWS -DUNICODE -D_UNICODE -DNOMINMAX -fms-compatibility -Iwindows/flutter/ephemeral/cpp_client_wrapper/include -Iwindows/flutter/ephemeral -Iwindows/runner -c windows/runner/flutter_window.cpp -o windows/runner/flutter_window.o",
+    "file": "windows/runner/flutter_window.cpp"
+  },
+  {
+    "directory": "c:/dekstop_tablet_vms",
+    "command": "clang++ -std=c++17 -DWIN32 -D_WINDOWS -DUNICODE -D_UNICODE -DNOMINMAX -fms-compatibility -Iwindows/flutter/ephemeral/cpp_client_wrapper/include -Iwindows/flutter/ephemeral -Iwindows/runner -c windows/runner/utils.cpp -o windows/runner/utils.o",
+    "file": "windows/runner/utils.cpp"
+  },
+  {
+    "directory": "c:/dekstop_tablet_vms",
+    "command": "clang++ -std=c++17 -DWIN32 -D_WINDOWS -DUNICODE -D_UNICODE -DNOMINMAX -fms-compatibility -Iwindows/flutter/ephemeral/cpp_client_wrapper/include -Iwindows/flutter/ephemeral -Iwindows/runner -c windows/runner/win32_window.cpp -o windows/runner/win32_window.o",
+    "file": "windows/runner/win32_window.cpp"
+  }
+]

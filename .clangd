@@ -1,0 +1,16 @@
+CompileFlags:
+  Add:
+    - "-Iwindows/flutter/ephemeral/cpp_client_wrapper/include"
+    - "-Iwindows/flutter/ephemeral"
+    - "-Iwindows/runner"
+    - "-DWIN32"
+    - "-D_WINDOWS"
+    - "-D_UNICODE"
+    - "-DUNICODE"
+    - "-DNOMINMAX"
+    - "-std=c++17"
+    - "-fms-compatibility"
+    - "-fms-extensions"
+Diagnostics:
+  Suppress:
+    - "*"
