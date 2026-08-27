@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../controller/dashboard_controller.dart';
 import '../widgets/operator_tour_overlay.dart';
 import '../widgets/add_pra_registration_modal.dart';
+import '../widgets/add_walk_in_modal.dart';
 import 'desktop_overview_analytics.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/config/constants.dart';
@@ -4349,7 +4350,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     if (actionName == 'Walk In' ||
         actionName == 'Walk-In' ||
         actionName == 'Walkin') {
-      AddPraRegistrationModal.show(context, isWalkIn: true);
+      AddWalkInModal.show(context);
       return;
     }
     if (actionName == 'Pra Register' ||

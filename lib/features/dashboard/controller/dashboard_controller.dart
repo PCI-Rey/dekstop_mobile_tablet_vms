@@ -170,8 +170,11 @@ class DashboardController extends GetxController {
   final rxPraRegEmployees = <Map<String, dynamic>>[].obs;
   final rxPraRegHosts = <Map<String, dynamic>>[].obs;
 
-  Future<void> fetchPraRegistrationDependencies() async {
-    rxIsPraRegLoading.value = true;
+  Future<void> fetchPraRegistrationDependencies({bool silent = false}) async {
+    final hasCache = rxPraRegVisitorTypes.isNotEmpty || rxPraRegSites.isNotEmpty;
+    if (!hasCache && !silent) {
+      rxIsPraRegLoading.value = true;
+    }
     try {
       final results = await Future.wait([
         _dashboardRepository.getInvitationSites(),
@@ -293,6 +296,65 @@ class DashboardController extends GetxController {
     }
   }
 
+  Future<String?> uploadCdnFile(List<int> bytes, String filename) async {
+    return await _dashboardRepository.uploadCdnFile(bytes, filename);
+  }
+
+  Future<bool> submitOperatorWalkInRegistration({
+    required Map<String, dynamic> payload,
+    required bool isGroup,
+  }) async {
+    rxIsActionLoading.value = true;
+    try {
+      final res = isGroup
+          ? await _dashboardRepository.submitOperatorNewVisitGroup(payload)
+          : await _dashboardRepository.submitOperatorNewVisit(payload);
+
+      if (res is Success<Map<String, dynamic>>) {
+        final data = res.data;
+        final status = data['status']?.toString() ?? '';
+        final msg = data['msg']?.toString() ?? 'Walk-In invitation created successfully!';
+        if (status == 'success' || data['status_code'] == 200) {
+          AppSnackbar.success(
+            title: 'Invitation Success',
+            message: msg,
+          );
+          fetchUpcomingPurpose(filter: 'Today');
+          return true;
+        } else {
+          final isBlocked = msg.toLowerCase().contains('block') || msg.toLowerCase().contains('blacklist');
+          AppSnackbar.error(
+            title: isBlocked ? 'Visitor Blocked / Blacklisted' : 'Invitation Failed',
+            message: isBlocked
+                ? 'Cannot submit invitation: One or more visitors are currently blocked or blacklisted in the system.'
+                : msg,
+          );
+          return false;
+        }
+      } else if (res is Failure<Map<String, dynamic>>) {
+        final errMsg = res.exception.message;
+        final isBlocked = errMsg.toLowerCase().contains('block') || errMsg.toLowerCase().contains('blacklist');
+        AppSnackbar.error(
+          title: isBlocked ? 'Visitor Blocked / Blacklisted' : 'Invitation Error',
+          message: isBlocked
+              ? 'Cannot submit invitation: One or more visitors are currently blocked or blacklisted in the system.'
+              : errMsg,
+        );
+        return false;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error submitting Walk-In Invitation: $e');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'An unexpected error occurred: $e',
+      );
+      return false;
+    } finally {
+      rxIsActionLoading.value = false;
+    }
+  }
+
   // UI Interactive States
   final rxSearchQuery = ''.obs;
   final rxLiveSearchQuery = ''.obs;
@@ -391,6 +453,7 @@ class DashboardController extends GetxController {
       await fetchUpcomingPurpose(filter: 'Today');
       await fetchLiveVisitors();
       await fetchAvailableCards();
+      fetchPraRegistrationDependencies(silent: true);
 
       // If initial socket timeout occurred, auto-retry smoothly
       if (rxUpcomingPurpose.isEmpty || rxLiveVisitors.isEmpty) {

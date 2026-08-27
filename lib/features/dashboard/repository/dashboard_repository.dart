@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/network/dio_client.dart';
 
@@ -486,6 +488,85 @@ class DashboardRepository {
       data: body,
     );
   }
+
+  // --- Submit Operator Invitation / Walk-In Single (/api/operator-invitation/new-visit) ---
+  Future<ApiResult<Map<String, dynamic>>> submitOperatorNewVisit(
+    Map<String, dynamic> body,
+  ) async {
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/new-visit',
+      data: body,
+    );
+    if (postApi is Success) return postApi;
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/new-visit',
+      data: body,
+    );
+  }
+
+  // --- Submit Operator Invitation / Walk-In Group (/api/operator-invitation/new-visit-group) ---
+  Future<ApiResult<Map<String, dynamic>>> submitOperatorNewVisitGroup(
+    Map<String, dynamic> body,
+  ) async {
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/new-visit-group',
+      data: body,
+    );
+    if (postApi is Success) return postApi;
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/new-visit-group',
+      data: body,
+    );
+  }
+
+  // --- Upload CDN File (Selfie / KTP / Documents) ---
+  Future<String?> uploadCdnFile(List<int> bytes, String filename) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      });
+
+      // 1. Try POST /api/cdn/upload
+      final res1 = await _dioClient.post<Map<String, dynamic>>(
+        '/api/cdn/upload',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      if (res1 is Success<Map<String, dynamic>>) {
+        final d = res1.data;
+        final p = d['path'] ?? d['data']?['path'] ?? d['collection']?['path'] ?? d['url'];
+        if (p != null && p.toString().isNotEmpty) return p.toString();
+      }
+
+      // 2. Try POST /cdn/upload
+      final res2 = await _dioClient.post<Map<String, dynamic>>(
+        '/cdn/upload',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      if (res2 is Success<Map<String, dynamic>>) {
+        final d = res2.data;
+        final p = d['path'] ?? d['data']?['path'] ?? d['collection']?['path'] ?? d['url'];
+        if (p != null && p.toString().isNotEmpty) return p.toString();
+      }
+
+      // 3. Try POST /api/upload
+      final res3 = await _dioClient.post<Map<String, dynamic>>(
+        '/api/upload',
+        data: formData,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      if (res3 is Success<Map<String, dynamic>>) {
+        final d = res3.data;
+        final p = d['path'] ?? d['data']?['path'] ?? d['collection']?['path'] ?? d['url'];
+        if (p != null && p.toString().isNotEmpty) return p.toString();
+      }
+    } catch (e) {
+      debugPrint('Error uploading CDN file: $e');
+    }
+    return null;
+  }
 }
+
 
 

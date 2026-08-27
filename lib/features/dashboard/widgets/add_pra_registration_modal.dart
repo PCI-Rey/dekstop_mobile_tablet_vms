@@ -123,7 +123,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     super.initState();
     _groupCode = _generateGroupCode();
     _initGroupVisitors();
-    controller.fetchPraRegistrationDependencies();
+    controller.fetchPraRegistrationDependencies(silent: true);
   }
 
   void _initGroupVisitors() {
@@ -243,9 +243,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     return [
       {'remarks': 'name', 'long_display_text': 'Full Name', 'mandatory': true, 'field_type': 0},
       {'remarks': 'email', 'long_display_text': 'Email', 'mandatory': true, 'field_type': 2},
-      {'remarks': 'organization', 'long_display_text': 'Instansi/Organization/Company Name', 'mandatory': true, 'field_type': 0},
+      {'remarks': 'organization', 'long_display_text': 'Department / Organization / Company', 'mandatory': true, 'field_type': 0},
       {'remarks': 'phone', 'long_display_text': 'Phone', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'indentity_id', 'long_display_text': 'Identity(KTP)', 'mandatory': true, 'field_type': 0},
+      {'remarks': 'indentity_id', 'long_display_text': 'Identity (KTP)', 'mandatory': true, 'field_type': 0},
     ];
   }
 
@@ -734,7 +734,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           {
             'sort': 2,
             'short_name': 'Organization',
-            'long_display_text': 'Instansi/Organization/Company Name',
+            'long_display_text': 'Department / Organization / Company',
             'field_type': 0,
             'is_primary': true,
             'is_enable': true,
@@ -1015,23 +1015,20 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           _buildStepper(),
           const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
           Expanded(
-            child: Obx(() {
-              if (controller.rxIsPraRegLoading.value) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF004385)),
-                );
-              }
-              switch (_currentStep) {
-                case 1:
-                  return _buildStep1UserType();
-                case 2:
-                  return (_isGroup == true) ? _buildStep2GroupVisitorInfo() : _buildStep2SingleVisitorInfo();
-                case 3:
-                  return _buildStep3PurposeVisit();
-                default:
-                  return const SizedBox.shrink();
-              }
-            }),
+            child: Builder(
+              builder: (context) {
+                switch (_currentStep) {
+                  case 1:
+                    return _buildStep1UserType();
+                  case 2:
+                    return (_isGroup == true) ? _buildStep2GroupVisitorInfo() : _buildStep2SingleVisitorInfo();
+                  case 3:
+                    return _buildStep3PurposeVisit();
+                  default:
+                    return const SizedBox.shrink();
+                }
+              },
+            ),
           ),
           const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
           _buildFooter(),
@@ -1368,7 +1365,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           // Dynamic fields according to pra_form in Visitor Information
           ...fields.map((f) {
             final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-            final label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+            var label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
             final isMandatory = f['mandatory'] == true;
 
             if (remarks == 'is_employee') {
@@ -1443,6 +1440,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               );
             }
 
+            if (remarks == 'organization' || remarks == 'company' || label.toLowerCase().contains('inst')) {
+              label = 'Department / Organization / Company';
+            }
+
             TextEditingController targetCtrl;
             String hintText;
 
@@ -1454,13 +1455,13 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               hintText = 'Example: name@gmail.com';
             } else if (remarks == 'organization' || remarks == 'company') {
               targetCtrl = _singleOrgCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'instansi/organization/company name'}';
+              hintText = 'Enter your department / organization / company';
             } else if (remarks == 'phone') {
               targetCtrl = _singlePhoneCtrl;
               hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
             } else if (remarks == 'indentity_id' || remarks == 'identity_id') {
               targetCtrl = _singleIdentityCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity(ktp)'}';
+              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
             } else {
               _singleExtraControllers.putIfAbsent(remarks, () => TextEditingController());
               targetCtrl = _singleExtraControllers[remarks]!;
@@ -1680,7 +1681,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
                     ...fields.map((f) {
                       final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-                      final label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+                      var label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
                       final isMandatory = f['mandatory'] == true;
 
                       if (remarks == 'is_employee') {
@@ -1755,6 +1756,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         );
                       }
 
+                      if (remarks == 'organization' || remarks == 'company' || label.toLowerCase().contains('inst')) {
+                        label = 'Department / Organization / Company';
+                      }
+
                       TextEditingController targetCtrl;
                       String hintText;
 
@@ -1766,13 +1771,13 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         hintText = 'Example: name@gmail.com';
                       } else if (remarks == 'organization' || remarks == 'company') {
                         targetCtrl = visitor.orgCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'instansi/organization/company name'}';
+                        hintText = 'Enter your department / organization / company';
                       } else if (remarks == 'phone') {
                         targetCtrl = visitor.phoneCtrl;
                         hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
                       } else if (remarks == 'indentity_id' || remarks == 'identity_id') {
                         targetCtrl = visitor.identityCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity(ktp)'}';
+                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
                       } else {
                         visitor.extraControllers.putIfAbsent(remarks, () => TextEditingController());
                         targetCtrl = visitor.extraControllers[remarks]!;
@@ -2019,30 +2024,45 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: controller,
-          onChanged: onChanged,
-          onTap: onTap,
-          style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B)),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF94A3B8)),
-            prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF64748B)),
-            suffixIcon: selectedData != null || controller.text.isNotEmpty
-                ? IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onClear)
-                : const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+        SizedBox(
+          height: 44,
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            onTap: onTap,
+            textAlignVertical: TextAlignVertical.center,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: const Color(0xFF1E293B),
+              fontWeight: FontWeight.w500,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: Colors.white,
+              hintText: hint,
+              hintStyle: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: const Color(0xFF94A3B8),
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF64748B)),
+              suffixIcon: selectedData != null || controller.text.isNotEmpty
+                  ? IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onClear)
+                  : const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+              ),
             ),
           ),
         ),
@@ -3010,34 +3030,27 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     );
   }
 
-  Widget _buildFormFieldLabel(String label, {bool isRequired = false, bool showInfo = false}) {
+  Widget _buildFormFieldLabel(String label, {bool isRequired = true, bool showInfo = false}) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
           style: GoogleFonts.inter(
             fontSize: 12.5,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF334155),
+            color: const Color(0xFF1E293B),
           ),
         ),
-        if (isRequired)
-          Text(
-            ' *',
-            style: GoogleFonts.inter(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFFDC2626),
-            ),
+        const SizedBox(width: 3),
+        Text(
+          '*',
+          style: GoogleFonts.inter(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFFEF4444),
           ),
-        if (showInfo) ...[
-          const SizedBox(width: 4),
-          const Icon(
-            Icons.info_outline_rounded,
-            size: 15,
-            color: Color(0xFF0F62FE),
-          ),
-        ],
+        ),
       ],
     );
   }
@@ -3047,31 +3060,46 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     required String hint,
     ValueChanged<String>? onChanged,
   }) {
-    return TextField(
-      controller: controller,
-      onChanged: (val) {
-        if (onChanged != null) {
-          onChanged(val);
-        } else {
-          setState(() {});
-        }
-      },
-      style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B)),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF94A3B8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+    return SizedBox(
+      height: 44,
+      child: TextField(
+        controller: controller,
+        textAlignVertical: TextAlignVertical.center,
+        onChanged: (val) {
+          if (onChanged != null) {
+            onChanged(val);
+          } else {
+            setState(() {});
+          }
+        },
+        style: GoogleFonts.inter(
+          fontSize: 13,
+          color: const Color(0xFF1E293B),
+          fontWeight: FontWeight.w500,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: Colors.white,
+          hintText: hint,
+          hintStyle: GoogleFonts.inter(
+            fontSize: 12.5,
+            color: const Color(0xFF94A3B8),
+            fontWeight: FontWeight.w400,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+          ),
         ),
       ),
     );
