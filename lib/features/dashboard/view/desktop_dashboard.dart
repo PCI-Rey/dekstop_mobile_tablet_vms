@@ -2368,8 +2368,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     flex: 2,
                     child: _buildActionButton(
                       label: 'Scan QR',
-                      icon: Icons.qr_code_scanner_rounded,
-                      bgColor: const Color(0xFF004385),
+                      icon: Icons.qr_code_2_rounded,
+                      bgColor: const Color(0xFF005696),
                       onTap: () => _handleAction('Scan QR'),
                     ),
                   ),
@@ -2378,7 +2378,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     child: _buildActionButton(
                       label: 'Parking',
                       icon: Icons.local_parking_rounded,
-                      bgColor: const Color(0xFF00ACC1),
+                      bgColor: const Color(0xFF00A3B8),
                       onTap: () => _handleAction('Parking'),
                     ),
                   ),
@@ -2386,8 +2386,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   Expanded(
                     child: _buildActionButton(
                       label: 'Open',
-                      icon: Icons.door_sliding_outlined,
-                      bgColor: const Color(0xFFB71C1C),
+                      icon: Icons.meeting_room_outlined,
+                      bgColor: const Color(0xFFA62626),
                       onTap: () => _handleAction('Open Door'),
                     ),
                   ),
@@ -2402,7 +2402,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     child: _buildActionButton(
                       label: 'Pra Register',
                       icon: Icons.person_add_alt_1_outlined,
-                      bgColor: const Color(0xFF004385),
+                      bgColor: const Color(0xFF005696),
                       onTap: () => _handleAction('Pra Register'),
                     ),
                   ),
@@ -2410,8 +2410,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   Expanded(
                     child: _buildActionButton(
                       label: 'Walk In',
-                      icon: Icons.directions_walk_rounded,
-                      bgColor: const Color(0xFF1565C0),
+                      icon: Icons.person_add_alt_1_outlined,
+                      bgColor: const Color(0xFF005696),
                       onTap: () => _handleAction('Walk In'),
                     ),
                   ),
@@ -2420,7 +2420,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     child: _buildActionButton(
                       label: 'Extend',
                       icon: Icons.access_time_rounded,
-                      bgColor: const Color(0xFFFBC02D),
+                      bgColor: const Color(0xFFF5B82A),
                       onTap: () => _handleAction('Extend'),
                     ),
                   ),
@@ -2428,8 +2428,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   Expanded(
                     child: _buildActionButton(
                       label: 'Arrival',
-                      icon: Icons.alternate_email_rounded,
-                      bgColor: const Color(0xFF00897B),
+                      icon: Icons.task_alt_rounded,
+                      bgColor: const Color(0xFF00B074),
                       onTap: () => _handleAction('Arrival'),
                     ),
                   ),
@@ -2437,105 +2437,102 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
               const SizedBox(height: 4),
 
-              // Row 3: Checkin, Checkout, Print (KEPT!), Blacklist
+              // Row 3: Checkin, Checkout, Print, Blacklist
               Row(
                 children: [
                   Expanded(
                     child: _buildActionButton(
-                      label: 'Checkin',
+                      label: 'Check In',
                       icon: Icons.login_rounded,
-                      bgColor: const Color(0xFF2E7D32),
+                      bgColor: const Color(0xFF18B854),
                       onTap: () => _handleAction('Check In'),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: _buildActionButton(
-                      label: 'Checkout',
+                      label: 'Check Out',
                       icon: Icons.logout_rounded,
-                      bgColor: const Color(0xFFD32F2F),
+                      bgColor: const Color(0xFFE52929),
                       onTap: () => _handleAction('Check Out'),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  // Printer Action Button (Strictly Preserved)
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Print',
-                      icon: Icons.print_rounded,
-                      bgColor: const Color(0xFF455A64),
-                      onTap: () => _handlePrintAction(),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Blacklist',
-                      icon: Icons.block_rounded,
-                      bgColor: const Color(0xFF212121),
-                      onTap: () => _handleAction('Blacklist'),
-                    ),
-                  ),
+                  // const SizedBox(width: 4),
+                  // // Printer Action Button (Strictly Preserved)
+                  // Expanded(
+                  //   child: _buildActionButton(
+                  //     label: 'Print',
+                  //     icon: Icons.print_rounded,
+                  //     bgColor: const Color(0xFF005696),
+                  //     onTap: () => _handlePrintAction(),
+                  //   ),
+                  // ),
+                  // const SizedBox(width: 4),
+                  // Expanded(
+                  //   child: _buildActionButton(
+                  //     label: 'Blacklist',
+                  //     icon: Icons.block_rounded,
+                  //     bgColor: const Color(0xFF005696),
+                  //     onTap: () => _handleAction('Blacklist'),
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 4),
 
-              // Row 4: Card Issuance, Card Return, Enable Edit, Edit Form
+              // Row 4: Card Issue, Card Return, Enable Edit, Edit Form
               Row(
                 children: [
                   Expanded(
                     child: _buildActionButton(
-                      label: 'Card Issuance',
-                      icon: Icons.credit_card_rounded,
-                      bgColor: const Color(0xFF7B1FA2),
-                      onTap: () => _handleAction('Card Issuance'),
+                      label: 'Card Issue',
+                      icon: Icons.style_outlined,
+                      bgColor: const Color(0xFF005696),
+                      onTap: () => _handleAction('Card Issue'),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: _buildActionButton(
                       label: 'Card Return',
-                      icon: Icons.keyboard_return_rounded,
-                      bgColor: const Color(0xFF1E88E5),
+                      icon: Icons.style_outlined,
+                      bgColor: const Color(0xFF005696),
                       onTap: () => _handleAction('Card Return'),
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Enable Edit',
-                      icon: Icons.edit_note_rounded,
-                      bgColor: const Color(0xFF0D47A1),
-                      onTap: () => _handleAction('Enable Edit'),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Edit Form',
-                      icon: Icons.edit_rounded,
-                      bgColor: const Color(0xFF1976D2),
-                      onTap: () => _handleAction('Edit Form'),
-                    ),
-                  ),
+                  // const SizedBox(width: 4),
+                  // Expanded(
+                  //   child: _buildActionButton(
+                  //     label: 'Enable Edit',
+                  //     icon: Icons.edit_note_rounded,
+                  //     bgColor: const Color(0xFF005696),
+                  //     onTap: () => _handleAction('Enable Edit'),
+                  //   ),
+                  // ),
+                  // const SizedBox(width: 4),
+                  // Expanded(
+                  //   child: _buildActionButton(
+                  //     label: 'Edit Form',
+                  //     icon: Icons.edit_rounded,
+                  //     bgColor: const Color(0xFF005696),
+                  //     onTap: () => _handleAction('Edit Form'),
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 4),
 
-              // Row 5: Access Issuance (Double width matching Scan QR)
+              // Row 5: Access Alocation (Full width stretching to right edge)
               Row(
                 children: [
                   Expanded(
-                    flex: 2,
                     child: _buildActionButton(
-                      label: 'Access Issuance',
-                      icon: Icons.vpn_key_rounded,
-                      bgColor: const Color(0xFFF57C00),
-                      onTap: () => _handleAction('Access Issuance'),
+                      label: 'Access Alocation',
+                      icon: Icons.lock_rounded,
+                      bgColor: const Color(0xFFFF8A00),
+                      onTap: () => _handleAction('Access Alocation'),
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  const Spacer(flex: 2),
                 ],
               ),
             ],
@@ -2791,13 +2788,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           final list = activeTab == 0
                               ? controller.rxLiveVisitors
                               : controller.rxRelatedVisitors;
-                          final total = list.isNotEmpty ? (list.length / 10).ceil() : 1;
+                          final total = list.isNotEmpty ? (list.length / 10).ceil() : 0;
                           final current = activeTab == 0
                               ? controller.rxLiveCurrentPage.value
                               : controller.rxRelatedCurrentPage.value;
-                          final safeCurrent = current > total ? total : (current < 1 ? 1 : current);
-                          final hasPrev = safeCurrent > 1;
-                          final hasNext = safeCurrent < total;
+                          final safeCurrent = list.isEmpty
+                              ? 0
+                              : (current > total ? total : (current < 1 ? 1 : current));
+                          final hasPrev = list.isNotEmpty && safeCurrent > 1;
+                          final hasNext = list.isNotEmpty && safeCurrent < total;
 
                           return Row(
                             mainAxisSize: MainAxisSize.min,
@@ -3159,14 +3158,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               Colors.white,
                               () => _handleAction('Card Issuance'),
                             ),
-                            const SizedBox(width: 6),
-                            _buildFeedPillButton(
-                              'Print',
-                              Icons.print_rounded,
-                              const Color(0xFF64748B),
-                              Colors.white,
-                              () => _handlePrintAction(),
-                            ),
+                            // const SizedBox(width: 6),
+                            // _buildFeedPillButton(
+                            //   'Print',
+                            //   Icons.print_rounded,
+                            //   const Color(0xFF64748B),
+                            //   Colors.white,
+                            //   () => _handlePrintAction(),
+                            // ),
                           ],
                         );
                       }),
@@ -3551,238 +3550,200 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         children: [
           // ── 1. Host Information Card (Keyed for Tour Step 7) ──────────────
           Expanded(
-            flex: 9,
+            flex: 6,
             child: _buildCardContainer(
               key: _keyHostInfo,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Host Information',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F2B48),
-                  ),
-                ),
-
-                // Avatar + Detailed Host info
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Circular Avatar with CDN Face Image
-                    Builder(
-                      builder: (context) {
-                        final hostFace = (host?['faceimage'] ??
-                                host?['host_faceimage'] ??
-                                host?['avatar'] ??
-                                host?['photo'] ??
-                                '')
-                            .toString()
-                            .trim();
-
-                        return Container(
-                          width: 58,
-                          height: 58,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: (hostFace.isNotEmpty &&
-                                  hostFace != '-' &&
-                                  hostFace != 'null' &&
-                                  !hostFace.startsWith('assets/'))
-                              ? Image.network(
-                                  AppConstants.getCdnImageUrl(hostFace),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 34,
-                                      color: Color(0xFF003082),
-                                    ),
-                                  ),
-                                )
-                              : const Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 34,
-                                    color: Color(0xFF003082),
-                                  ),
-                                ),
-                        );
-                      },
+                children: [
+                  Text(
+                    'Host Information',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F2B48),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (host != null &&
-                              (host['name'] != null || host['host_name'] != null)) ...[
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    host['name'] ?? host['host_name'] ?? 'Host Name',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF1E293B),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Avatar + Detailed Host info
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Circular Avatar with CDN Face Image
+                        Builder(
+                          builder: (context) {
+                            final hostFace = (host?['faceimage'] ??
+                                    host?['host_faceimage'] ??
+                                    host?['avatar'] ??
+                                    host?['photo'] ??
+                                    '')
+                                .toString()
+                                .trim();
+
+                            return Container(
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: (hostFace.isNotEmpty &&
+                                      hostFace != '-' &&
+                                      hostFace != 'null' &&
+                                      !hostFace.startsWith('assets/'))
+                                  ? Image.network(
+                                      AppConstants.getCdnImageUrl(hostFace),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Center(
+                                        child: Icon(
+                                          Icons.person,
+                                          size: 34,
+                                          color: Color(0xFF003082),
+                                        ),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 34,
+                                        color: Color(0xFF003082),
+                                      ),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF00D696),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    host['status'] ?? host['host_status'] ?? 'Available',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (host != null &&
+                                  (host['name'] != null || host['host_name'] != null)) ...[
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        host['name'] ?? host['host_name'] ?? 'Host Name',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 9,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF00D696),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        host['status'] ?? host['host_status'] ?? 'Available',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              host['organization'] ??
-                                  host['host_organization_name'] ??
-                                  host['host_dept'] ??
-                                  'Organization SPU',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1E293B),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ] else ...[
-                            Text(
-                              '-',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.phone_rounded,
-                                size: 13.5,
-                                color: Color(0xFF1E293B),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1E293B),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.mail_rounded,
-                                size: 13.5,
-                                color: Color(0xFF1E293B),
-                              ),
-                              const SizedBox(width: 5),
-                              Expanded(
-                                child: Text(
-                                  ' :  ${host?['email'] ?? host?['host_email'] ?? "-"}',
+                                const SizedBox(height: 2),
+                                Text(
+                                  host['organization'] ??
+                                      host['host_organization_name'] ??
+                                      host['host_dept'] ??
+                                      'Organization SPU',
                                   style: GoogleFonts.inter(
-                                    fontSize: 11.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: const Color(0xFF1E293B),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
+                              ] else ...[
+                                Text(
+                                  '-',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                              const SizedBox(height: 3),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.phone_rounded,
+                                    size: 13.5,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.mail_rounded,
+                                    size: 13.5,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      ' :  ${host?['email'] ?? host?['host_email'] ?? "-"}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF1E293B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const Divider(height: 8, thickness: 1, color: Color(0xFFECEFF1)),
-
-                // 3 Action Buttons: Call (Dark Blue), Chat (Mint Emerald), Email (Sky Blue)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildHostActionButton(
-                        label: 'Call',
-                        icon: Icons.phone_rounded,
-                        bgColor: const Color(0xFF00529C),
-                        onTap: () => _handleContactAction(
-                          'Calling host ${host?['name'] ?? host?['host_name'] ?? ""}...',
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildHostActionButton(
-                        label: 'Chat',
-                        icon: Icons.chat_bubble_outline_rounded,
-                        bgColor: const Color(0xFF00D696),
-                        onTap: () => _handleContactAction(
-                          'Opening WhatsApp chat with host...',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildHostActionButton(
-                        label: 'Email',
-                        icon: Icons.mail_rounded,
-                        bgColor: const Color(0xFF38B6FF),
-                        onTap: () => _handleContactAction(
-                          'Composing email to ${visitor?['host_email'] ?? ""}...',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
 
         const SizedBox(height: 5),
 
         // ── 2. Live Occupancy Card (Keyed for Tour Step 8) ─────────────────
         Expanded(
-          flex: 7,
+          flex: 6,
           child: _buildCardContainer(
             key: _keyLiveOccupancy,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -3925,7 +3886,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         label,
@@ -3937,7 +3898,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 4),
                                       Text(
                                         count,
                                         style: GoogleFonts.inter(
@@ -4067,6 +4027,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   });
 }
 
+  // ignore: unused_element
   Widget _buildHostActionButton({
     required String label,
     required IconData icon,
@@ -4357,7 +4318,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showReturnCardDialog(context, visitor);
       return;
     }
-    if (actionName == 'Card Issuance' || actionName == 'Choose Card') {
+    if (actionName == 'Card Issuance' || actionName == 'Choose Card' || actionName == 'Card Issue') {
       if (visitor == null) {
         _showChangeCardDialog(context);
         return;
@@ -4373,7 +4334,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showConfirmationActionDialog(context, action: 'Unblock', question: 'Do you want to unblock this visitor?');
       return;
     }
-    if (actionName == 'Access Issuance') {
+    if (actionName == 'Access Issuance' || actionName == 'Access Alocation' || actionName == 'Access Allocation') {
       if (visitor == null) {
         _showScanQrDialog(
           onVisitorLoaded: (loadedVisitor) {
@@ -7711,7 +7672,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       setModalState(() => isSubmitting = false);
                                       if (success && dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();
-                                        _showExtendSuccessDialog(context, periodVal);
                                       }
                                     },
                               child: isSubmitting
@@ -7748,6 +7708,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+  // ignore: unused_element
   void _showExtendSuccessDialog(BuildContext context, int minutes) {
     showDialog(
       context: context,
@@ -8582,6 +8543,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+  // ignore: unused_element
   void _handlePrintAction() {
     AppSnackbar.success(
       title: 'Print Badge',
@@ -8589,6 +8551,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+  // ignore: unused_element
   void _handleContactAction(String message) {
     AppSnackbar.info(title: 'Host Contact', message: message);
   }

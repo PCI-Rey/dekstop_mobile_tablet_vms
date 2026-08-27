@@ -296,12 +296,12 @@ class DashboardController extends GetxController {
   // UI Interactive States
   final rxSearchQuery = ''.obs;
   final rxLiveSearchQuery = ''.obs;
-  final rxLiveCurrentPage = 1.obs;
-  final rxLiveTotalPages = 1.obs;
+  final rxLiveCurrentPage = 0.obs;
+  final rxLiveTotalPages = 0.obs;
 
   final rxRelatedSearchQuery = ''.obs;
-  final rxRelatedCurrentPage = 1.obs;
-  final rxRelatedTotalPages = 1.obs;
+  final rxRelatedCurrentPage = 0.obs;
+  final rxRelatedTotalPages = 0.obs;
 
   final rxFeedTabIndex = 0.obs; // 0 for Live Visitors, 1 for Related Visitors
   final rxSelectedTab =
@@ -518,21 +518,29 @@ class DashboardController extends GetxController {
           rxLiveVisitors.assignAll(mappedList);
         }
 
-        final liveTotal = rxLiveVisitors.isNotEmpty ? (rxLiveVisitors.length / 10).ceil() : 1;
+        final liveTotal = rxLiveVisitors.isNotEmpty ? (rxLiveVisitors.length / 10).ceil() : 0;
         rxLiveTotalPages.value = liveTotal;
-        if (rxLiveCurrentPage.value > liveTotal) {
-          rxLiveCurrentPage.value = liveTotal;
-        }
-        if (rxLiveCurrentPage.value < 1 && rxLiveVisitors.isNotEmpty) {
-          rxLiveCurrentPage.value = 1;
+        if (liveTotal == 0) {
+          rxLiveCurrentPage.value = 0;
+        } else {
+          if (rxLiveCurrentPage.value > liveTotal) {
+            rxLiveCurrentPage.value = liveTotal;
+          }
+          if (rxLiveCurrentPage.value < 1) {
+            rxLiveCurrentPage.value = 1;
+          }
         }
       } else {
         rxLiveVisitors.clear();
         rxAllLiveVisitors.clear();
+        rxLiveTotalPages.value = 0;
+        rxLiveCurrentPage.value = 0;
       }
     } else {
       rxLiveVisitors.clear();
       rxAllLiveVisitors.clear();
+      rxLiveTotalPages.value = 0;
+      rxLiveCurrentPage.value = 0;
     }
   }
 
@@ -666,15 +674,19 @@ class DashboardController extends GetxController {
     }
 
     rxRelatedVisitors.assignAll(list);
-    final total = list.isNotEmpty ? (list.length / 10).ceil() : 1;
+    final total = list.isNotEmpty ? (list.length / 10).ceil() : 0;
     rxRelatedTotalPages.value = total;
     rxTotalPages.value = total;
 
-    if (rxRelatedCurrentPage.value > total) {
-      rxRelatedCurrentPage.value = total;
-    }
-    if (rxRelatedCurrentPage.value < 1 && list.isNotEmpty) {
-      rxRelatedCurrentPage.value = 1;
+    if (total == 0) {
+      rxRelatedCurrentPage.value = 0;
+    } else {
+      if (rxRelatedCurrentPage.value > total) {
+        rxRelatedCurrentPage.value = total;
+      }
+      if (rxRelatedCurrentPage.value < 1) {
+        rxRelatedCurrentPage.value = 1;
+      }
     }
     rxCurrentPage.value = rxRelatedCurrentPage.value;
   }
@@ -693,13 +705,13 @@ class DashboardController extends GetxController {
         }).toList();
         rxLiveVisitors.assignAll(filtered);
       }
-      final total = rxLiveVisitors.isNotEmpty ? (rxLiveVisitors.length / 10).ceil() : 1;
+      final total = rxLiveVisitors.isNotEmpty ? (rxLiveVisitors.length / 10).ceil() : 0;
       rxLiveTotalPages.value = total;
-      rxLiveCurrentPage.value = 1;
+      rxLiveCurrentPage.value = total > 0 ? 1 : 0;
     } else {
       rxRelatedSearchQuery.value = query;
       applyFiltersAndPagination();
-      rxRelatedCurrentPage.value = 1;
+      rxRelatedCurrentPage.value = rxRelatedTotalPages.value > 0 ? 1 : 0;
     }
   }
 
@@ -719,14 +731,14 @@ class DashboardController extends GetxController {
     rxTimeline.clear();
     rxSearchQuery.value = '';
     rxLiveSearchQuery.value = '';
-    rxLiveCurrentPage.value = 1;
-    rxLiveTotalPages.value = 1;
+    rxLiveCurrentPage.value = 0;
+    rxLiveTotalPages.value = 0;
     rxRelatedSearchQuery.value = '';
-    rxRelatedCurrentPage.value = 1;
-    rxRelatedTotalPages.value = 1;
+    rxRelatedCurrentPage.value = 0;
+    rxRelatedTotalPages.value = 0;
     rxActiveFilter.value = 'All';
-    rxCurrentPage.value = 1;
-    rxTotalPages.value = 1;
+    rxCurrentPage.value = 0;
+    rxTotalPages.value = 0;
     applyFiltersAndPagination();
   }
 

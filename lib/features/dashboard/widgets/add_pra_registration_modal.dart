@@ -16,7 +16,7 @@ class GroupVisitorEntry {
   final TextEditingController identityCtrl = TextEditingController();
   final Map<String, TextEditingController> extraControllers = {};
   String? role;
-  bool isEmployee = false;
+  bool? isEmployee;
   bool isSearchOpen = false;
   Map<String, dynamic>? selectedData;
 
@@ -91,7 +91,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   final TextEditingController _singleIdentityCtrl = TextEditingController();
   final Map<String, TextEditingController> _singleExtraControllers = {};
   String? _singleRole;
-  bool _singleIsEmployee = false;
+  bool? _singleIsEmployee;
   bool _singleIsSearchOpen = false;
   Map<String, dynamic>? _singleSelectedData;
 
@@ -174,11 +174,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         _visitorTypeDetail = detail;
         _isLoadingVisitorTypeDetail = false;
 
-        // Determine if is_employee exists in pra_form for this visitor type
-        final hasEmp = _hasIsEmployeeField();
-        _singleIsEmployee = hasEmp;
+        // Do not auto-select employee; let user explicitly select Yes or No
+        _singleIsEmployee = null;
         for (final v in _groupVisitors) {
-          v.isEmployee = hasEmp;
+          v.isEmployee = null;
         }
 
         _singleRole = null;
@@ -221,21 +220,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     return 'Visitor';
   }
 
-  bool _hasIsEmployeeField() {
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
-    if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
-      for (var s in sectionsRaw) {
-        final sec = Map<String, dynamic>.from(s as Map);
-        final praForm = sec['pra_form'] as List<dynamic>? ?? [];
-        for (var f in praForm) {
-          final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-          if (remarks == 'is_employee') return true;
-        }
-      }
-      return false;
-    }
-    return false;
-  }
+
 
   List<Map<String, dynamic>> _getVisitorInfoPraFormFields() {
     final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
@@ -301,6 +286,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           final isMandatory = f['mandatory'] == true;
           if (!isMandatory) continue;
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
+          if (remarks == 'is_employee' && v.isEmployee == null) return false;
           if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) return false;
           if (remarks == 'email' && v.emailCtrl.text.trim().isEmpty) return false;
           if (remarks == 'phone' && v.phoneCtrl.text.trim().isEmpty) return false;
@@ -328,6 +314,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         final isMandatory = f['mandatory'] == true;
         if (!isMandatory) continue;
         final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
+        if (remarks == 'is_employee' && _singleIsEmployee == null) return false;
         if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) return false;
         if (remarks == 'email' && _singleEmailCtrl.text.trim().isEmpty) return false;
         if (remarks == 'phone' && _singlePhoneCtrl.text.trim().isEmpty) return false;
@@ -444,7 +431,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   void _addGroupVisitor() {
     setState(() {
       final entry = GroupVisitorEntry();
-      entry.isEmployee = _hasIsEmployeeField();
+      entry.isEmployee = null;
       entry.role = null;
       _groupVisitors.add(entry);
     });
@@ -469,6 +456,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       }
       setState(() => _currentStep = 2);
     } else if (_currentStep == 2) {
+      final fields = _getVisitorInfoPraFormFields();
+      final isEmpField = fields.firstWhereOrNull(
+        (f) => (f['remarks'] ?? '').toString().toLowerCase().trim() == 'is_employee',
+      );
+
       if (_isGroup == true) {
         if (_groupNameController.text.trim().isEmpty) {
           AppSnackbar.warning(
@@ -476,6 +468,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             message: 'Please enter a Group Name for this group visit.',
           );
           return;
+        }
+        if (isEmpField != null && isEmpField['mandatory'] == true) {
+          for (int i = 0; i < _groupVisitors.length; i++) {
+            if (_groupVisitors[i].isEmployee == null) {
+              AppSnackbar.warning(
+                title: 'Employee Status Required',
+                message: 'Please specify whether Visitor #${i + 1} is an Employee (Yes / No).',
+              );
+              return;
+            }
+          }
         }
         for (int i = 0; i < _groupVisitors.length; i++) {
           if (!_groupVisitors[i].isValid) {
@@ -487,6 +490,13 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           }
         }
       } else {
+        if (isEmpField != null && isEmpField['mandatory'] == true && _singleIsEmployee == null) {
+          AppSnackbar.warning(
+            title: 'Employee Status Required',
+            message: 'Please specify whether you are an Employee (Yes / No).',
+          );
+          return;
+        }
         if (_singleFullNameCtrl.text.trim().isEmpty) {
           AppSnackbar.warning(
             title: 'Full Name Required',
@@ -890,7 +900,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     if (_isGroup == true) {
       // Group Mode
       final dataVisitors = _groupVisitors.map((v) {
-        final memberEmployeeId = v.isEmployee
+        final memberEmployeeId = (v.isEmployee == true)
             ? (v.selectedData?['id'] ?? v.selectedData?['employee_id'] ?? '').toString()
             : '';
         return {
@@ -900,7 +910,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             phone: v.phoneCtrl.text.trim(),
             org: v.orgCtrl.text.trim(),
             identity: v.identityCtrl.text.trim(),
-            isEmployee: v.isEmployee,
+            isEmployee: v.isEmployee == true,
             role: v.role,
             employeeId: memberEmployeeId,
             extraCtrls: v.extraControllers,
@@ -916,7 +926,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       final groupObject = {
         'visitor_type': visitorTypeId,
         'is_group': true,
-        'type_registered': 1,
+        'type_registered': 0,
         'tz': 'Asia/Jakarta',
         if (siteId.isNotEmpty) 'registered_site': siteId,
         'group_code': _groupCode,
@@ -931,7 +941,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       };
     } else {
       // Single Mode
-      final singleEmployeeId = _singleIsEmployee
+      final singleEmployeeId = (_singleIsEmployee == true)
           ? (_singleSelectedData?['id'] ?? _singleSelectedData?['employee_id'] ?? '').toString()
           : '';
 
@@ -941,7 +951,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         phone: _singlePhoneCtrl.text.trim(),
         org: _singleOrgCtrl.text.trim(),
         identity: _singleIdentityCtrl.text.trim(),
-        isEmployee: _singleIsEmployee,
+        isEmployee: _singleIsEmployee == true,
         role: _singleRole,
         employeeId: singleEmployeeId,
         extraCtrls: _singleExtraControllers,
@@ -1321,7 +1331,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     final fields = _getVisitorInfoPraFormFields();
     final employees = controller.rxPraRegEmployees;
     final visitors = controller.rxPraRegVisitors;
-    final searchList = _singleIsEmployee ? employees : visitors;
+    final searchList = _singleIsEmployee == true ? employees : visitors;
     final searchQuery = _singleSearchCtrl.text.trim().toLowerCase();
 
     final filtered = searchList.where((it) {
@@ -1341,12 +1351,12 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         children: [
           // Top Search Bar (Search Employee / Search Visitor)
           _buildSearchInput(
-            hint: _singleIsEmployee ? 'Search Employee' : 'Search Visitor',
+            hint: _singleIsEmployee == true ? 'Search Employee' : 'Search Visitor',
             controller: _singleSearchCtrl,
             isSearchOpen: _singleIsSearchOpen,
             selectedData: _singleSelectedData,
             filteredItems: filtered,
-            isEmployeeMode: _singleIsEmployee,
+            isEmployeeMode: _singleIsEmployee == true,
             onTap: () => setState(() => _singleIsSearchOpen = true),
             onChanged: (val) => setState(() => _singleIsSearchOpen = true),
             onClear: _clearSingle,
@@ -1373,27 +1383,31 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                       children: [
                         _buildRadioOption(
                           label: 'Yes',
-                          isSelected: _singleIsEmployee,
+                          isSelected: _singleIsEmployee == true,
                           onTap: () {
-                            if (!_singleIsEmployee) {
-                              setState(() {
+                            setState(() {
+                              if (_singleIsEmployee == true) {
+                                _singleIsEmployee = null;
+                              } else {
                                 _singleIsEmployee = true;
-                                _clearSingle();
-                              });
-                            }
+                              }
+                              _clearSingle();
+                            });
                           },
                         ),
                         const SizedBox(width: 24),
                         _buildRadioOption(
                           label: 'No',
-                          isSelected: !_singleIsEmployee,
+                          isSelected: _singleIsEmployee == false,
                           onTap: () {
-                            if (_singleIsEmployee) {
-                              setState(() {
+                            setState(() {
+                              if (_singleIsEmployee == false) {
+                                _singleIsEmployee = null;
+                              } else {
                                 _singleIsEmployee = false;
-                                _clearSingle();
-                              });
-                            }
+                              }
+                              _clearSingle();
+                            });
                           },
                         ),
                       ],
@@ -1590,7 +1604,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             separatorBuilder: (context, idx) => const SizedBox(height: 14),
             itemBuilder: (context, idx) {
               final visitor = _groupVisitors[idx];
-              final searchList = visitor.isEmployee ? employees : visitors;
+              final searchList = visitor.isEmployee == true ? employees : visitors;
               final searchQuery = visitor.searchCtrl.text.trim().toLowerCase();
               final filtered = searchList.where((it) {
                 if (searchQuery.isEmpty) return true;
@@ -1650,12 +1664,12 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
                     // Search Bar
                     _buildSearchInput(
-                      hint: visitor.isEmployee ? 'Search Employee' : 'Search Visitor',
+                      hint: visitor.isEmployee == true ? 'Search Employee' : 'Search Visitor',
                       controller: visitor.searchCtrl,
                       isSearchOpen: visitor.isSearchOpen,
                       selectedData: visitor.selectedData,
                       filteredItems: filtered,
-                      isEmployeeMode: visitor.isEmployee,
+                      isEmployeeMode: visitor.isEmployee == true,
                       onTap: () => setState(() => visitor.isSearchOpen = true),
                       onChanged: (val) => setState(() => visitor.isSearchOpen = true),
                       onClear: () => _clearGroup(idx),
@@ -1681,27 +1695,31 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                 children: [
                                   _buildRadioOption(
                                     label: 'Yes',
-                                    isSelected: visitor.isEmployee,
+                                    isSelected: visitor.isEmployee == true,
                                     onTap: () {
-                                      if (!visitor.isEmployee) {
-                                        setState(() {
+                                      setState(() {
+                                        if (visitor.isEmployee == true) {
+                                          visitor.isEmployee = null;
+                                        } else {
                                           visitor.isEmployee = true;
-                                          _clearGroup(idx);
-                                        });
-                                      }
+                                        }
+                                        _clearGroup(idx);
+                                      });
                                     },
                                   ),
                                   const SizedBox(width: 24),
                                   _buildRadioOption(
                                     label: 'No',
-                                    isSelected: !visitor.isEmployee,
+                                    isSelected: visitor.isEmployee == false,
                                     onTap: () {
-                                      if (visitor.isEmployee) {
-                                        setState(() {
+                                      setState(() {
+                                        if (visitor.isEmployee == false) {
+                                          visitor.isEmployee = null;
+                                        } else {
                                           visitor.isEmployee = false;
-                                          _clearGroup(idx);
-                                        });
-                                      }
+                                        }
+                                        _clearGroup(idx);
+                                      });
                                     },
                                   ),
                                 ],
