@@ -308,9 +308,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     return [
       {'remarks': 'site_place', 'long_display_text': 'Destination', 'mandatory': true, 'field_type': 3},
       {'remarks': 'host', 'long_display_text': 'PIC Host', 'mandatory': true, 'field_type': 3},
-      {'remarks': 'agenda', 'long_display_text': 'Agenda', 'mandatory': false, 'field_type': 0},
-      {'remarks': 'visitor_period_start', 'long_display_text': 'Visit Start', 'mandatory': false, 'field_type': 9},
-      {'remarks': 'visitor_period_end', 'long_display_text': 'Visit End', 'mandatory': false, 'field_type': 9},
+      {'remarks': 'agenda', 'long_display_text': 'Agenda', 'mandatory': true, 'field_type': 0},
+      {'remarks': 'visitor_period_start', 'long_display_text': 'Visit Start', 'mandatory': true, 'field_type': 9},
+      {'remarks': 'visitor_period_end', 'long_display_text': 'Visit End', 'mandatory': true, 'field_type': 9},
     ];
   }
 
@@ -427,8 +427,6 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       if (_groupVisitors.isEmpty) return false;
       for (final v in _groupVisitors) {
         for (final f in fields) {
-          final isMandatory = f['mandatory'] == true;
-          if (!isMandatory) continue;
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
           if (remarks == 'is_employee' && v.isEmployee == null) return false;
           if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) return false;
@@ -455,8 +453,6 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       return true;
     } else {
       for (final f in fields) {
-        final isMandatory = f['mandatory'] == true;
-        if (!isMandatory) continue;
         final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
         if (remarks == 'is_employee' && _singleIsEmployee == null) return false;
         if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) return false;
@@ -485,9 +481,18 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
   bool get _isStep3Valid {
     final fields = _getPurposeVisitPraFormFields();
+    if (fields.isEmpty) {
+      if (_selectedDestination == null) return false;
+      if (_selectedPicHost == null) return false;
+      if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
+      if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
+      if (_visitStart == null) return false;
+      if (_visitEnd == null) return false;
+      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
+      return true;
+    }
+
     for (final f in fields) {
-      final isMandatory = f['mandatory'] == true;
-      if (!isMandatory) continue;
       final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
       if ((remarks == 'site_place' || remarks == 'destination') && _selectedDestination == null) return false;
       if ((remarks == 'host' || remarks == 'pic_host') && _selectedPicHost == null) return false;
@@ -497,13 +502,61 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       }
       if (remarks == 'visitor_period_start' && _visitStart == null) return false;
       if (remarks == 'visitor_period_end' && _visitEnd == null) return false;
+      if (remarks != 'site_place' &&
+          remarks != 'destination' &&
+          remarks != 'host' &&
+          remarks != 'pic_host' &&
+          remarks != 'agenda' &&
+          remarks != 'visitor_period_start' &&
+          remarks != 'visitor_period_end') {
+        if (_purposeExtraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+      }
+    }
+    if (_visitStart != null && _visitEnd != null) {
+      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
     }
     return true;
   }
 
-  bool get _isStep4Valid => true;
-  bool get _isStep5Valid => true;
-  bool get _isStep6Valid => true;
+  bool get _isStep4Valid {
+    if (_isGroup == true) {
+      for (final v in _groupVisitors) {
+        if (v.isDriving == true) {
+          if (v.vehicleType == null || v.vehicleType!.isEmpty) return false;
+          if (v.vehiclePlateCtrl.text.trim().isEmpty) return false;
+        }
+      }
+      return true;
+    } else {
+      if (_singleIsDriving == true) {
+        if (_singleVehicleType == null || _singleVehicleType!.isEmpty) return false;
+        if (_singleVehiclePlateCtrl.text.trim().isEmpty) return false;
+      }
+      return true;
+    }
+  }
+
+  bool get _isStep5Valid {
+    if (_isGroup == true) {
+      for (final v in _groupVisitors) {
+        if (v.selfieImage == null) return false;
+      }
+      return true;
+    } else {
+      return _singleSelfieImage != null;
+    }
+  }
+
+  bool get _isStep6Valid {
+    if (_isGroup == true) {
+      for (final v in _groupVisitors) {
+        if (v.ktpImage == null) return false;
+      }
+      return true;
+    } else {
+      return _singleKtpImage != null;
+    }
+  }
 
   bool get _isCurrentStepValid {
     if (_currentStep == 0) return _isStep0Valid;

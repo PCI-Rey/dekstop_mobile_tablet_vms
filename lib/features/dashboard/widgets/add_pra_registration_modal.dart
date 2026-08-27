@@ -270,9 +270,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     return [
       {'remarks': 'site_place', 'long_display_text': 'Destination', 'mandatory': true, 'field_type': 3},
       {'remarks': 'host', 'long_display_text': 'PIC Host', 'mandatory': true, 'field_type': 3},
-      {'remarks': 'agenda', 'long_display_text': 'Agenda', 'mandatory': false, 'field_type': 0},
-      {'remarks': 'visitor_period_start', 'long_display_text': 'Visit Start', 'mandatory': false, 'field_type': 9},
-      {'remarks': 'visitor_period_end', 'long_display_text': 'Visit End', 'mandatory': false, 'field_type': 9},
+      {'remarks': 'agenda', 'long_display_text': 'Agenda', 'mandatory': true, 'field_type': 0},
+      {'remarks': 'visitor_period_start', 'long_display_text': 'Visit Start', 'mandatory': true, 'field_type': 9},
+      {'remarks': 'visitor_period_end', 'long_display_text': 'Visit End', 'mandatory': true, 'field_type': 9},
     ];
   }
 
@@ -283,8 +283,6 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       if (_groupVisitors.isEmpty) return false;
       for (final v in _groupVisitors) {
         for (final f in fields) {
-          final isMandatory = f['mandatory'] == true;
-          if (!isMandatory) continue;
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
           if (remarks == 'is_employee' && v.isEmployee == null) return false;
           if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) return false;
@@ -311,8 +309,6 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       return true;
     } else {
       for (final f in fields) {
-        final isMandatory = f['mandatory'] == true;
-        if (!isMandatory) continue;
         final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
         if (remarks == 'is_employee' && _singleIsEmployee == null) return false;
         if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) return false;
@@ -341,12 +337,21 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
   bool get _isStep3Valid {
     final fields = _getPurposeVisitPraFormFields();
+    if (fields.isEmpty) {
+      if (_selectedDestination == null) return false;
+      if (_selectedPicHost == null) return false;
+      if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
+      if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
+      if (_visitStart == null) return false;
+      if (_visitEnd == null) return false;
+      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
+      return true;
+    }
+
     for (final f in fields) {
-      final isMandatory = f['mandatory'] == true;
-      if (!isMandatory) continue;
       final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
       if ((remarks == 'site_place' || remarks == 'destination') && _selectedDestination == null) return false;
-      if (remarks == 'host' && _selectedPicHost == null) return false;
+      if ((remarks == 'host' || remarks == 'pic_host') && _selectedPicHost == null) return false;
       if (remarks == 'agenda') {
         if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
         if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
@@ -356,6 +361,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       if (remarks != 'site_place' &&
           remarks != 'destination' &&
           remarks != 'host' &&
+          remarks != 'pic_host' &&
           remarks != 'agenda' &&
           remarks != 'visitor_period_start' &&
           remarks != 'visitor_period_end') {
