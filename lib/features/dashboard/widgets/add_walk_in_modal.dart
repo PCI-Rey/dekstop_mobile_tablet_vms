@@ -331,6 +331,32 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // ─────────────────────────────────────────────────────────────────────────
   // Autofill helpers for Search Visitor / Employee
   // ─────────────────────────────────────────────────────────────────────────
+  String _extractOrganizationName(dynamic rawOrg, [dynamic rawCompany]) {
+    if (rawOrg is Map) {
+      final name = rawOrg['name'] ?? rawOrg['code'];
+      if (name != null && name.toString().trim().isNotEmpty) {
+        return name.toString().trim();
+      }
+    } else if (rawOrg is String && rawOrg.trim().isNotEmpty) {
+      if (rawOrg.startsWith('{') && rawOrg.contains('name:')) {
+        final match = RegExp(r'name:\s*([^,}]+)').firstMatch(rawOrg);
+        if (match != null) return match.group(1)?.trim() ?? rawOrg.trim();
+      }
+      return rawOrg.trim();
+    }
+
+    if (rawCompany is Map) {
+      final name = rawCompany['name'] ?? rawCompany['code'];
+      if (name != null && name.toString().trim().isNotEmpty) {
+        return name.toString().trim();
+      }
+    } else if (rawCompany is String && rawCompany.trim().isNotEmpty) {
+      return rawCompany.trim();
+    }
+
+    return '';
+  }
+
   void _onSingleSelect(Map<String, dynamic> item) {
     setState(() {
       _singleSelectedData = item;
@@ -339,7 +365,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       _singleFullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
       _singleEmailCtrl.text = (item['email'] ?? '').toString();
       _singlePhoneCtrl.text = (item['phone'] ?? '').toString();
-      _singleOrgCtrl.text = (item['organization'] ?? item['company'] ?? item['Organization']?['name'] ?? '').toString();
+      _singleOrgCtrl.text = _extractOrganizationName(item['Organization'] ?? item['organization'], item['company']);
       _singleIdentityCtrl.text = (item['identity_id'] ?? item['indentity_id'] ?? '').toString();
     });
   }
@@ -369,7 +395,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       v.fullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
       v.emailCtrl.text = (item['email'] ?? '').toString();
       v.phoneCtrl.text = (item['phone'] ?? '').toString();
-      v.orgCtrl.text = (item['organization'] ?? item['company'] ?? item['Organization']?['name'] ?? '').toString();
+      v.orgCtrl.text = _extractOrganizationName(item['Organization'] ?? item['organization'], item['company']);
       v.identityCtrl.text = (item['identity_id'] ?? item['indentity_id'] ?? '').toString();
     });
   }
@@ -427,6 +453,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       if (_groupVisitors.isEmpty) return false;
       for (final v in _groupVisitors) {
         for (final f in fields) {
+          final isMandatory = f['mandatory'] == true;
+          if (!isMandatory) continue;
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
           if (remarks == 'is_employee' && v.isEmployee == null) return false;
           if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) return false;
@@ -453,6 +481,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       return true;
     } else {
       for (final f in fields) {
+        final isMandatory = f['mandatory'] == true;
+        if (!isMandatory) continue;
         final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
         if (remarks == 'is_employee' && _singleIsEmployee == null) return false;
         if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) return false;
@@ -493,6 +523,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     }
 
     for (final f in fields) {
+      final isMandatory = f['mandatory'] == true;
+      if (!isMandatory) continue;
       final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
       if ((remarks == 'site_place' || remarks == 'destination') && _selectedDestination == null) return false;
       if ((remarks == 'host' || remarks == 'pic_host') && _selectedPicHost == null) return false;
@@ -3192,7 +3224,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     );
   }
 
-  Widget _buildFormFieldLabel(String label, {bool isRequired = true, bool showInfo = false}) {
+  Widget _buildFormFieldLabel(String label, {bool isRequired = false, bool showInfo = false}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -3204,15 +3236,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             color: const Color(0xFF1E293B),
           ),
         ),
-        const SizedBox(width: 3),
-        Text(
-          '*',
-          style: GoogleFonts.inter(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFFEF4444),
+        if (isRequired) ...[
+          const SizedBox(width: 3),
+          Text(
+            '*',
+            style: GoogleFonts.inter(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFFEF4444),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -3583,7 +3617,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 final name = (it['name'] ?? it['visitor_name'] ?? 'User').toString();
                 final email = (it['email'] ?? '-').toString();
                 final phone = (it['phone'] ?? '-').toString();
-                final org = (it['Organization']?['name'] ?? it['organization'] ?? it['company'] ?? '').toString();
+                final org = _extractOrganizationName(it['Organization'] ?? it['organization'], it['company']);
 
                 return InkWell(
                   onTap: () => onSelect(it),

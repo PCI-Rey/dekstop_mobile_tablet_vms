@@ -2121,6 +2121,25 @@ class DashboardController extends GetxController {
     Map<String, dynamic> primaryHost = {};
     if (hostsList.isNotEmpty) {
       primaryHost = Map<String, dynamic>.from(hostsList[0] as Map);
+    } else {
+      final hostId = (item['host'] ?? '').toString().trim();
+      final itemHostName = (item['host_name'] ?? '').toString().trim();
+      if (hostId.isNotEmpty && hostId != '-' && hostId != '00000000-0000-0000-0000-000000000000') {
+        final match = rxPraRegHosts.firstWhereOrNull(
+          (h) => (h['id'] ?? '').toString().trim().toLowerCase() == hostId.toLowerCase(),
+        ) ?? rxPraRegEmployees.firstWhereOrNull(
+          (e) => (e['id'] ?? '').toString().trim().toLowerCase() == hostId.toLowerCase(),
+        );
+        if (match != null) primaryHost = match;
+      }
+      if (primaryHost.isEmpty && itemHostName.isNotEmpty && itemHostName != '-') {
+        final match = rxPraRegHosts.firstWhereOrNull(
+          (h) => (h['name'] ?? '').toString().trim().toLowerCase() == itemHostName.toLowerCase(),
+        ) ?? rxPraRegEmployees.firstWhereOrNull(
+          (e) => (e['name'] ?? '').toString().trim().toLowerCase() == itemHostName.toLowerCase(),
+        );
+        if (match != null) primaryHost = match;
+      }
     }
 
     final rawCards = (item['card'] as List?) ?? (item['cards'] as List?) ?? [];
@@ -2256,7 +2275,10 @@ class DashboardController extends GetxController {
     );
     final hostPhone = sanitize(primaryHost['phone'] ?? item['host_phone']);
     final hostEmail = sanitize(primaryHost['email'] ?? item['host_email']);
-    final hostFaceImage = sanitize(primaryHost['faceimage'], fallback: '');
+    final hostFaceImage = sanitize(
+      primaryHost['faceimage'] ?? primaryHost['photo'] ?? primaryHost['avatar'] ?? item['host_faceimage'] ?? item['host_photo'],
+      fallback: '',
+    );
 
     final rawVisitorId = (item['visitor_id'] ?? item['visitor']?['id'] ?? item['visitor']?['visitor_id'] ?? '').toString().trim();
     final isBlacklistedInSet = rawVisitorId.isNotEmpty && rxBlacklistedVisitorIds.contains(rawVisitorId);
@@ -2363,7 +2385,7 @@ class DashboardController extends GetxController {
         .toString()
         .trim();
 
-    final hostOrg = (visitor['host_organization_name'] ??
+    String hostOrg = (visitor['host_organization_name'] ??
             visitor['host_organization'] ??
             visitor['host_dept'] ??
             '')
@@ -2389,29 +2411,52 @@ class DashboardController extends GetxController {
       }
     }
 
-    // 2. Search across all related visitors and live visitors for someone matching hostName
-    if (hostName.isNotEmpty && hostName != '-') {
-      final matchingHost = rxAllRelatedVisitors.firstWhereOrNull(
+    // 2. Search across rxPraRegHosts, rxPraRegEmployees, and visitors for someone matching host ID or hostName
+    final hostId = (visitor['host'] ?? visitor['raw']?['host'] ?? '').toString().trim();
+
+    Map<String, dynamic>? matchingHost;
+    if (hostId.isNotEmpty && hostId != '-' && hostId != '00000000-0000-0000-0000-000000000000') {
+      matchingHost = rxPraRegHosts.firstWhereOrNull(
+        (h) => (h['id'] ?? '').toString().trim().toLowerCase() == hostId.toLowerCase(),
+      ) ?? rxPraRegEmployees.firstWhereOrNull(
+        (e) => (e['id'] ?? '').toString().trim().toLowerCase() == hostId.toLowerCase(),
+      );
+    }
+
+    if (matchingHost == null && hostName.isNotEmpty && hostName != '-') {
+      matchingHost = rxPraRegHosts.firstWhereOrNull(
+        (h) => (h['name'] ?? '').toString().trim().toLowerCase() == hostName.toLowerCase(),
+      ) ?? rxPraRegEmployees.firstWhereOrNull(
+        (e) => (e['name'] ?? '').toString().trim().toLowerCase() == hostName.toLowerCase(),
+      ) ?? rxAllRelatedVisitors.firstWhereOrNull(
         (v) => (v['name'] ?? v['visitor_name'] ?? '').toString().trim().toLowerCase() == hostName.toLowerCase(),
       ) ?? rxAllLiveVisitors.firstWhereOrNull(
         (v) => (v['name'] ?? v['visitor_name'] ?? '').toString().trim().toLowerCase() == hostName.toLowerCase(),
       );
+    }
 
-      if (matchingHost != null) {
-        if (hostPhone.isEmpty || hostPhone == '-') {
-          hostPhone = (matchingHost['phone'] ?? matchingHost['visitor_phone'] ?? '').toString().trim();
-        }
-        if (hostEmail.isEmpty || hostEmail == '-') {
-          hostEmail = (matchingHost['email'] ?? matchingHost['visitor_email'] ?? '').toString().trim();
-        }
-        if (hostFaceImage.isEmpty || hostFaceImage == '-') {
-          hostFaceImage = (matchingHost['faceimage'] ??
-                  matchingHost['photo'] ??
-                  matchingHost['avatar'] ??
-                  matchingHost['selfie_image'] ??
-                  '')
-              .toString()
-              .trim();
+    if (matchingHost != null) {
+      if (hostPhone.isEmpty || hostPhone == '-') {
+        hostPhone = (matchingHost['phone'] ?? matchingHost['visitor_phone'] ?? '').toString().trim();
+      }
+      if (hostEmail.isEmpty || hostEmail == '-') {
+        hostEmail = (matchingHost['email'] ?? matchingHost['visitor_email'] ?? '').toString().trim();
+      }
+      if (hostFaceImage.isEmpty || hostFaceImage == '-') {
+        hostFaceImage = (matchingHost['faceimage'] ??
+                matchingHost['photo'] ??
+                matchingHost['avatar'] ??
+                matchingHost['selfie_image'] ??
+                '')
+            .toString()
+            .trim();
+      }
+      if (hostOrg.isEmpty || hostOrg == '-') {
+        final rawOrg = matchingHost['Organization'] ?? matchingHost['organization'];
+        if (rawOrg is Map) {
+          hostOrg = (rawOrg['name'] ?? rawOrg['code'] ?? '').toString().trim();
+        } else if (rawOrg is String && rawOrg.isNotEmpty) {
+          hostOrg = rawOrg.trim();
         }
       }
     }
