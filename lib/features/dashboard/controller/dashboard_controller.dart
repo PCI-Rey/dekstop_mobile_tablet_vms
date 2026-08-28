@@ -359,6 +359,78 @@ class DashboardController extends GetxController {
     }
   }
 
+  // --- Fetch Detail Invitations Form ---
+  Future<Map<String, dynamic>?> fetchDetailInvitationsForm(String trxId) async {
+    try {
+      final res = await _dashboardRepository.getDetailInvitationsForm(trxId);
+      if (res is Success<Map<String, dynamic>>) {
+        final collection = res.data['collection'];
+        if (collection is Map<String, dynamic>) {
+          return collection;
+        } else if (res.data['data'] is Map<String, dynamic>) {
+          return res.data['data'] as Map<String, dynamic>;
+        }
+        return res.data;
+      }
+    } catch (e) {
+      debugPrint('Error fetching detail invitations form: $e');
+    }
+    return null;
+  }
+
+  // --- Submit Complete Pra Registration (PUT /api/operator-invitation/submit-complete-pra) ---
+  Future<bool> submitCompletePraRegistration({
+    required Map<String, dynamic> payload,
+  }) async {
+    rxIsActionLoading.value = true;
+    try {
+      final res = await _dashboardRepository.submitCompletePraRegistration(payload);
+      if (res is Success<Map<String, dynamic>>) {
+        final data = res.data;
+        final status = (data['status'] ?? '').toString();
+        final msg = (data['msg'] ?? data['message'] ?? 'Pra-Registration form completed successfully!').toString();
+
+        if (status == 'success' || data['status_code'] == 200 || status == 'fiil_form') {
+          AppSnackbar.success(
+            title: 'Form Submitted',
+            message: msg,
+          );
+          fetchUpcomingPurpose(filter: 'Today');
+          return true;
+        } else {
+          final isBlocked = msg.toLowerCase().contains('block') || msg.toLowerCase().contains('blacklist');
+          AppSnackbar.error(
+            title: isBlocked ? 'Visitor Blocked / Blacklisted' : 'Submission Failed',
+            message: isBlocked
+                ? 'Cannot complete form: Visitor is currently blocked or blacklisted in the system.'
+                : msg,
+          );
+          return false;
+        }
+      } else if (res is Failure<Map<String, dynamic>>) {
+        final errMsg = res.exception.message;
+        final isBlocked = errMsg.toLowerCase().contains('block') || errMsg.toLowerCase().contains('blacklist');
+        AppSnackbar.error(
+          title: isBlocked ? 'Visitor Blocked / Blacklisted' : 'Submission Error',
+          message: isBlocked
+              ? 'Cannot complete form: Visitor is currently blocked or blacklisted in the system.'
+              : errMsg,
+        );
+        return false;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error submitting complete pra registration: $e');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'An unexpected error occurred: $e',
+      );
+      return false;
+    } finally {
+      rxIsActionLoading.value = false;
+    }
+  }
+
   // UI Interactive States
   final rxSearchQuery = ''.obs;
   final rxLiveSearchQuery = ''.obs;
@@ -1499,20 +1571,17 @@ class DashboardController extends GetxController {
 
     if (lowerAction == 'checkin') {
       final isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
-      final isPraregisterDone = visitor['is_praregister_done'] == true;
-      final approvalStatus = (visitor['approval_status'] ?? '').toString().toLowerCase();
+      final isPraregisterDone = visitor['is_praregister_done'] == true ||
+          visitor['raw']?['is_praregister_done'] == true ||
+          visitor['is_complete_preregister'] == true ||
+          visitor['raw']?['is_complete_preregister'] == true ||
+          visitor['is_praregist_done'] == true ||
+          visitor['is_filled'] == true;
 
-      if (!isHost && (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone)) {
+      if (!isHost && !isPraregisterDone && (rawStatus.contains('preregis') || rawStatus.contains('praregis'))) {
         AppSnackbar.warning(
           title: 'Registration Form Required',
           message: 'Please complete the registration form first. Visitor will be automatically checked in upon form completion.',
-        );
-        return false;
-      }
-      if (!isHost && (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait'))) {
-        AppSnackbar.warning(
-          title: 'Awaiting Host Approval',
-          message: 'This visitor is awaiting confirmation from the host. Please wait for approval.',
         );
         return false;
       }
@@ -2175,26 +2244,73 @@ class DashboardController extends GetxController {
       return s;
     }
 
+    final qPages = (item['question_page'] as List?) ??
+        (item['visitor_question_page'] as List?) ??
+        (item['visitor']?['question_page'] as List?) ??
+        (item['data_visitor'] is List && (item['data_visitor'] as List).isNotEmpty && (item['data_visitor'] as List)[0] is Map
+            ? ((item['data_visitor'] as List)[0]['question_page'] as List?)
+            : null) ??
+        [];
+    String? qName, qEmail, qPhone, qOrg, qIdentity;
+    if (qPages.isNotEmpty) {
+      for (final p in qPages) {
+        if (p is! Map) continue;
+        final forms = (p['form'] as List?) ?? [];
+        for (final f in forms) {
+          if (f is! Map) continue;
+          final r = (f['remarks'] ?? '').toString().toLowerCase().trim();
+          final ans = (f['answer_text'] ?? '').toString().trim();
+          if (ans.isNotEmpty && ans != 'null' && ans != '-') {
+            if (r == 'name' || r == 'full_name' || r == 'fullname') qName = ans;
+            if (r == 'email') qEmail = ans;
+            if (r == 'phone') qPhone = ans;
+            if (r == 'organization' || r == 'company') qOrg = ans;
+            if (r == 'identity_id' || r == 'indentity_id') qIdentity = ans;
+          }
+        }
+      }
+    }
+
     final visitorName = sanitize(
-      item['visitor_name'] ??
+      qName ??
+          item['visitor_name'] ??
           item['visitor']?['name'] ??
           item['visitor']?['employee']?['name'] ??
+          item['filled_by_name'] ??
           item['name'],
       fallback: 'Visitor',
     );
     final visitorOrg = sanitize(
-      item['visitor_organization_name'] ??
+      qOrg ??
+          item['visitor_organization_name'] ??
+          item['visitor']?['organization'] ??
+          item['visitor']?['organization_name'] ??
+          item['visitor']?['company'] ??
           item['organization'] ??
           item['company'] ??
           item['host_organization_name'],
     );
     final visitorEmail = sanitize(
-      item['visitor_email'] ?? item['visitor']?['email'] ?? item['email'],
+      qEmail ??
+          item['visitor_email'] ??
+          item['visitor']?['email'] ??
+          item['visitor_email_address'] ??
+          item['filled_by_email'] ??
+          item['email'],
     );
-    final visitorPhone = sanitize(item['visitor_phone'] ?? item['phone']);
+    final visitorPhone = sanitize(
+      qPhone ??
+          item['visitor_phone'] ??
+          item['visitor']?['phone'] ??
+          item['visitor_phone_number'] ??
+          item['filled_by_phone'] ??
+          item['phone'],
+    );
     final visitorIdentityId = sanitize(
-      item['visitor_identity_id'] ??
+      qIdentity ??
+          item['visitor_identity_id'] ??
           item['visitor']?['employee']?['identity_id'] ??
+          item['visitor']?['identity_id'] ??
           item['id_number'] ??
           item['visitor_number'] ??
           item['identity_id'],

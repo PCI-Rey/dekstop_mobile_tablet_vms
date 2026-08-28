@@ -516,6 +516,35 @@ class DashboardRepository {
     );
   }
 
+  // --- Detail Invitations Form (/api/invitation/detail-invitations-form/{trxId}) ---
+  Future<ApiResult<Map<String, dynamic>>> getDetailInvitationsForm(
+    String trxId,
+  ) async {
+    final cleanId = trxId.trim();
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation/detail-invitations-form/$cleanId',
+    );
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/invitation/detail-invitations-form/$cleanId',
+    );
+  }
+
+  // --- Submit Complete Pra Registration (PUT /api/operator-invitation/submit-complete-pra) ---
+  Future<ApiResult<Map<String, dynamic>>> submitCompletePraRegistration(
+    Map<String, dynamic> body,
+  ) async {
+    final putApi = await _dioClient.put<Map<String, dynamic>>(
+      '/api/operator-invitation/submit-complete-pra',
+      data: body,
+    );
+    if (putApi is Success) return putApi;
+    return await _dioClient.put<Map<String, dynamic>>(
+      '/operator-invitation/submit-complete-pra',
+      data: body,
+    );
+  }
+
   // --- Upload CDN File (Selfie / KTP / Documents) ---
   Future<String?> uploadCdnFile(
     List<int> bytes,

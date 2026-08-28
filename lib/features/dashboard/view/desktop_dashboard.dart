@@ -10,6 +10,7 @@ import '../controller/dashboard_controller.dart';
 import '../widgets/operator_tour_overlay.dart';
 import '../widgets/add_pra_registration_modal.dart';
 import '../widgets/add_walk_in_modal.dart';
+import '../widgets/fill_pra_registration_modal.dart';
 import 'desktop_overview_analytics.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/config/constants.dart';
@@ -1256,6 +1257,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   rawStatus == 'block' ||
                   rawStatus == 'blacklist';
               final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
+              final bool isPraregisterDone = visitor['is_praregister_done'] == true ||
+                  visitor['raw']?['is_praregister_done'] == true ||
+                  visitor['is_complete_preregister'] == true ||
+                  visitor['raw']?['is_complete_preregister'] == true ||
+                  rawStatus.contains('waiting') ||
+                  rawStatus.contains('available') ||
+                  rawStatus.contains('done');
 
               // 1. If visitor is blocked / blacklisted (is_block == true): show Unblock button
               if (isBlocked) {
@@ -1382,8 +1390,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ),
                 );
               }
-              // 4. If Host (is_host == true) OR visitor is Available / Waiting: show Check In + Block buttons
-              else if (isHost || rawStatus.contains('available') || rawStatus.contains('waiting')) {
+              // 4. If Host (is_host == true) OR visitor is Available / Waiting / isPraregisterDone: show Check In + Block buttons
+              else if (isHost || isPraregisterDone || rawStatus.contains('available') || rawStatus.contains('waiting')) {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1443,7 +1451,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ],
                 );
               }
-              // 5. Regular visitor with Preregis / Praregis or default: show ONLY the Fill Form button
+              // 5. Regular visitor with Preregis / Praregis and not done: show ONLY the Fill Form button
               else {
                 return Align(
                   alignment: Alignment.center,
@@ -4267,9 +4275,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
         return;
       }
-      final isPraregisterDone = visitor['is_praregister_done'] == true;
-      final approvalStatus = (visitor['approval_status'] ?? '').toString().toLowerCase();
-      final isAvailable = rawStatus.contains('available') || approvalStatus == 'approved';
+      final isPraregisterDone = visitor['is_praregister_done'] == true ||
+          visitor['raw']?['is_praregister_done'] == true ||
+          visitor['is_complete_preregister'] == true ||
+          visitor['raw']?['is_complete_preregister'] == true ||
+          rawStatus.contains('waiting') ||
+          rawStatus.contains('available') ||
+          rawStatus.contains('done');
+      final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
 
       // Rule 1: Blocked visitor
       if (isBlocked) {
@@ -4281,10 +4294,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return;
       }
 
-      final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
-
-      // Rule 2: Preregis / Form incomplete (only if not Available / Approved and not Host)
-      if (!isHost && !isAvailable && (rawStatus.contains('preregis') || rawStatus.contains('praregis') || !isPraregisterDone)) {
+      // Rule 2: Preregis / Form incomplete (only if not yet completed)
+      if (!isHost && !isPraregisterDone && (rawStatus.contains('preregis') || rawStatus.contains('praregis'))) {
         _showWarningNoticeDialog(
           context,
           title: 'Registration Form Required',
@@ -4293,17 +4304,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return;
       }
 
-      // Rule 3: Waiting / Pending host approval (only if still pending/waiting and not Host)
-      if (!isHost && !isAvailable && (rawStatus.contains('waiting') || approvalStatus.contains('pending') || approvalStatus.contains('wait'))) {
-        _showWarningNoticeDialog(
-          context,
-          title: 'Awaiting Host Approval',
-          message: 'This visitor is currently awaiting confirmation from the host. Please wait for host approval before checking in.',
-        );
-        return;
-      }
-
-      // Rule 4: Already checked in
+      // Rule 3: Already checked in
       if (rawStatus.contains('checkin') || rawStatus == 'in') {
         _showWarningNoticeDialog(
           context,
@@ -4447,10 +4448,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       AddWalkInModal.show(context);
       return;
     }
+    if (actionName == 'Fill Form') {
+      if (visitor == null) {
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first to fill the form.',
+        );
+        return;
+      }
+      FillPraRegistrationModal.show(context, visitor: visitor);
+      return;
+    }
     if (actionName == 'Pra Register' ||
         actionName == 'Pra-Register' ||
-        actionName == 'Pre Register' ||
-        actionName == 'Fill Form') {
+        actionName == 'Pre Register') {
       AddPraRegistrationModal.show(context, isWalkIn: false);
       return;
     }
