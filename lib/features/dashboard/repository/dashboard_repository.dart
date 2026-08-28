@@ -493,13 +493,8 @@ class DashboardRepository {
   Future<ApiResult<Map<String, dynamic>>> submitOperatorNewVisit(
     Map<String, dynamic> body,
   ) async {
-    final postApi = await _dioClient.post<Map<String, dynamic>>(
-      '/api/operator-invitation/new-visit',
-      data: body,
-    );
-    if (postApi is Success) return postApi;
     return await _dioClient.post<Map<String, dynamic>>(
-      '/operator-invitation/new-visit',
+      '/api/operator-invitation/new-visit',
       data: body,
     );
   }
@@ -508,13 +503,8 @@ class DashboardRepository {
   Future<ApiResult<Map<String, dynamic>>> submitOperatorNewVisitGroup(
     Map<String, dynamic> body,
   ) async {
-    final postApi = await _dioClient.post<Map<String, dynamic>>(
-      '/api/operator-invitation/new-visit-group',
-      data: body,
-    );
-    if (postApi is Success) return postApi;
     return await _dioClient.post<Map<String, dynamic>>(
-      '/operator-invitation/new-visit-group',
+      '/api/operator-invitation/new-visit-group',
       data: body,
     );
   }

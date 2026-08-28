@@ -442,7 +442,6 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
   bool get _isStep1Valid {
     if (_selectedVisitorType == null || _isGroup == null) return false;
-    if (_isGroup == true && _groupNameController.text.trim().isEmpty) return false;
     return true;
   }
 
@@ -568,27 +567,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     }
   }
 
-  bool get _isStep5Valid {
-    if (_isGroup == true) {
-      for (final v in _groupVisitors) {
-        if (v.selfieImage == null) return false;
-      }
-      return true;
-    } else {
-      return _singleSelfieImage != null;
-    }
-  }
+  bool get _isStep5Valid => true;
 
-  bool get _isStep6Valid {
-    if (_isGroup == true) {
-      for (final v in _groupVisitors) {
-        if (v.ktpImage == null) return false;
-      }
-      return true;
-    } else {
-      return _singleKtpImage != null;
-    }
-  }
+  bool get _isStep6Valid => true;
 
   bool get _isCurrentStepValid {
     if (_currentStep == 0) return _isStep0Valid;
@@ -988,7 +969,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             height: 32,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF004385),
+              color: Color(0xFFCBD5E1),
             ),
             child: Center(
               child: Text(
@@ -1006,8 +987,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             'User Type',
             style: GoogleFonts.inter(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF004385),
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF64748B),
             ),
           ),
           const SizedBox(height: 28),
@@ -2235,26 +2216,54 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 final hasImage = (isKtp ? v.ktpImage : v.selfieImage) != null;
 
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (hasImage) ...[
-                          const Icon(Icons.check_circle, size: 14, color: Colors.green),
-                          const SizedBox(width: 4),
+                  padding: const EdgeInsets.only(right: 10.0),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedGroupMemberIndex = idx),
+                    borderRadius: BorderRadius.circular(8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF004385) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF004385).withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            hasImage
+                                ? Icons.check_circle_rounded
+                                : (isSelected ? Icons.person_rounded : Icons.person_outline_rounded),
+                            size: 16,
+                            color: hasImage
+                                ? const Color(0xFF10B981)
+                                : (isSelected ? Colors.white : const Color(0xFF64748B)),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            name,
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                            ),
+                          ),
                         ],
-                        Text(name),
-                      ],
+                      ),
                     ),
-                    selected: isSelected,
-                    selectedColor: const Color(0xFF004385),
-                    labelStyle: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? Colors.white : const Color(0xFF1E293B),
-                    ),
-                    onSelected: (_) => setState(() => _selectedGroupMemberIndex = idx),
                   ),
                 );
               }),
@@ -2982,7 +2991,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
       if (_isGroup == true) {
         // Group Mode -> POST /api/operator-invitation/new-visit-group
-        final List<Map<String, dynamic>> listGroup = [];
+        final List<Map<String, dynamic>> dataVisitors = [];
 
         final primaryVisitor = _groupVisitors.isNotEmpty ? _groupVisitors.first : null;
         final primaryName = primaryVisitor?.fullNameCtrl.text.trim() ?? '';
@@ -3016,28 +3025,32 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             ktpImage: v.ktpImage,
           );
 
-          listGroup.add({
-            'visitor_type': visitorTypeId,
-            'is_group': true,
-            'type_registered': 1,
-            'tz': 'Asia/Jakarta',
-            if (siteId.isNotEmpty) 'registered_site': siteId,
-            'group_code': _groupCode,
-            'group_name': _groupNameController.text.trim(),
-            'is_self_registered': isSelf,
-            'filled_by_name': primaryName,
-            'filled_by_email': primaryEmail,
-            'filled_by_phone': primaryPhone,
-            'filled_by_relationship': isSelf ? 'Self' : 'Other',
-            'filled_by_relationship_name': isSelf ? 'Self' : 'Other',
-            'data_visitor': [
-              {'question_page': memberQuestionPages}
-            ],
+          dataVisitors.add({
+            'question_page': memberQuestionPages,
           });
         }
 
+        final groupObject = {
+          'visitor_type': visitorTypeId,
+          'is_group': true,
+          'type_registered': 1,
+          'tz': 'Asia/Jakarta',
+          if (siteId.isNotEmpty) 'registered_site': siteId,
+          'group_code': _groupCode,
+          'group_name': _groupNameController.text.trim(),
+          'is_self_registered': isSelf,
+          'filled_by_name': primaryName,
+          'filled_by_email': primaryEmail,
+          'filled_by_phone': primaryPhone,
+          'filled_by_relationship': isSelf ? 'Self' : 'Other',
+          'filled_by_relationship_name': isSelf ? 'Self' : 'Other',
+          'flow': 'Invitation',
+          'visitor_role': _groupVisitors.first.role ?? resolvedRole,
+          'data_visitor': dataVisitors,
+        };
+
         payload = {
-          'list_group': listGroup,
+          'list_group': [groupObject],
         };
       } else {
         // Single Mode -> POST /api/operator-invitation/new-visit
