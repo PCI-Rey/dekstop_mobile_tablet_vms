@@ -4,6 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import '../controller/dashboard_controller.dart';
 import '../../../core/shared/routes/app_pages.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/shared/widgets/app_snackbar.dart';
 import '../../scan/view/mobile_scanner_view.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -582,9 +583,9 @@ class MobileDashboard extends GetView<DashboardController> {
                 } else if (label.contains('Out')) {
                   controller.executeAction('check_out');
                 } else {
-                  Get.snackbar(
-                    'Action Integration',
-                    'Menjalankan aksi $label...',
+                  AppSnackbar.info(
+                    title: 'Action Triggered',
+                    message: 'Executing action for $label...',
                   );
                 }
               },
@@ -1428,9 +1429,9 @@ class MobileDashboard extends GetView<DashboardController> {
                                       SizedBox(
                                         width: double.infinity,
                                         child: OutlinedButton.icon(
-                                          onPressed: () => Get.snackbar(
-                                            'Print',
-                                            'Mencetak QR code...',
+                                          onPressed: () => AppSnackbar.info(
+                                            title: 'Print QR',
+                                            message: 'Sending QR code print job to printer...',
                                           ),
                                           icon: const Icon(
                                             Icons.print_outlined,
@@ -1900,8 +1901,10 @@ class MobileDashboard extends GetView<DashboardController> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.phone_outlined, size: 16),
-                    onPressed: () =>
-                        Get.snackbar('Host', 'Menghubungi host...'),
+                    onPressed: () => AppSnackbar.info(
+                      title: 'Host Contact',
+                      message: 'Calling host person...',
+                    ),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -1909,8 +1912,10 @@ class MobileDashboard extends GetView<DashboardController> {
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.message_outlined, size: 16),
-                    onPressed: () =>
-                        Get.snackbar('Host', 'Mengirim pesan ke host...'),
+                    onPressed: () => AppSnackbar.info(
+                      title: 'Host Message',
+                      message: 'Sending message to host...',
+                    ),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -2013,12 +2018,9 @@ class MobileDashboard extends GetView<DashboardController> {
     );
 
     if (scannedValue != null && scannedValue.isNotEmpty) {
-      Get.snackbar(
-        'Scan QR Berhasil',
-        'Payload QR: $scannedValue',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
+      AppSnackbar.success(
+        title: 'Scan QR Success',
+        message: 'QR Code: $scannedValue',
       );
 
       // Auto-trigger search in DashboardController
@@ -2269,12 +2271,9 @@ class MobileDashboard extends GetView<DashboardController> {
     controller.clearSelectedItems();
     controller.rxSelectMultiple.value = false;
 
-    Get.snackbar(
-      'Bulk Action Success',
-      'Berhasil memproses $action untuk tamu: ${names.join(', ')}',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
+    AppSnackbar.success(
+      title: 'Bulk Action Complete',
+      message: 'Processed $action for visitors: ${names.join(', ')}',
     );
   }
 }

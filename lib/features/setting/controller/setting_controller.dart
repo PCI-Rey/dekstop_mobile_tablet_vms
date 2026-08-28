@@ -8,6 +8,7 @@ import 'package:printing/printing.dart';
 import '../../../core/config/constants.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/shared/routes/app_pages.dart';
+import '../../../core/shared/widgets/app_snackbar.dart';
 
 class SettingController extends GetxController {
   final StorageService _storageService;
@@ -78,7 +79,10 @@ class SettingController extends GetxController {
 
     final inputUrl = serverUrlController.text.trim();
     if (inputUrl.isEmpty) {
-      Get.snackbar('error_title'.tr, 'Server URL wajib diisi');
+      AppSnackbar.warning(
+        title: 'Validation Error',
+        message: 'Server URL is required.',
+      );
       rxIsTestingConnection.value = false;
       return;
     }
@@ -96,38 +100,30 @@ class SettingController extends GetxController {
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
         rxConnectionTestResult.value = true;
-        Get.snackbar(
-          'connected'.tr,
-          'connection_success'.tr,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+        AppSnackbar.success(
+          title: 'Connected',
+          message: 'Server connection verified successfully.',
         );
       } else {
         rxConnectionTestResult.value = false;
-        Get.snackbar(
-          'error_title'.tr,
-          'connection_failed'.tr,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
+        AppSnackbar.error(
+          title: 'Connection Failed',
+          message: 'Unable to reach server endpoint (HTTP ${response.statusCode}).',
         );
       }
     } catch (_) {
       if (inputUrl.contains('example.com') || inputUrl.contains('localhost')) {
         await Future.delayed(const Duration(milliseconds: 1000));
         rxConnectionTestResult.value = true;
-        Get.snackbar(
-          'connected'.tr,
-          '${'connection_success'.tr} (Simulated Offline Mode)',
-          backgroundColor: Colors.green[600],
-          colorText: Colors.white,
+        AppSnackbar.success(
+          title: 'Connected',
+          message: 'Server connected successfully (Simulated Offline Mode).',
         );
       } else {
         rxConnectionTestResult.value = false;
-        Get.snackbar(
-          'error_title'.tr,
-          'connection_failed'.tr,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
+        AppSnackbar.error(
+          title: 'Connection Failed',
+          message: 'Failed to connect to the specified server URL.',
         );
       }
     } finally {
@@ -139,11 +135,9 @@ class SettingController extends GetxController {
   Future<void> saveServerConfig() async {
     final inputUrl = serverUrlController.text.trim();
     await _storageService.saveServerUrl(inputUrl);
-    Get.snackbar(
-      'confirm'.tr,
-      'success_save'.tr,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
+    AppSnackbar.success(
+      title: 'Configuration Saved',
+      message: 'Server configuration updated successfully.',
     );
   }
 
@@ -215,11 +209,9 @@ class SettingController extends GetxController {
 
   Future<void> testPrint() async {
     if (rxSelectedPrinter.value == null) {
-      Get.snackbar(
-        'error_title'.tr,
-        'empty_printer_title'.tr,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
+      AppSnackbar.error(
+        title: 'Printer Error',
+        message: 'Please select a printer first.',
       );
       return;
     }
@@ -234,11 +226,9 @@ class SettingController extends GetxController {
       connectionDetails = 'via Bluetooth Wireless';
     }
 
-    Get.snackbar(
-      'test_print'.tr,
-      'Mengirim dokumen tes ke ${rxSelectedPrinter.value} $connectionDetails...',
-      backgroundColor: Colors.blueAccent,
-      colorText: Colors.white,
+    AppSnackbar.info(
+      title: 'Test Print',
+      message: 'Sending test document to ${rxSelectedPrinter.value} $connectionDetails...',
     );
 
     try {
@@ -336,11 +326,9 @@ class SettingController extends GetxController {
       'rotation': rxRotation.value,
       'mirror': rxIsMirror.value,
     });
-    Get.snackbar(
-      'confirm'.tr,
-      'success_save'.tr,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
+    AppSnackbar.success(
+      title: 'Configuration Saved',
+      message: 'Camera settings saved successfully.',
     );
   }
 
@@ -349,7 +337,7 @@ class SettingController extends GetxController {
     _showResetConfirmDialog(
       title: 'reset_config'.tr,
       desc:
-          'Apakah Anda yakin ingin menyetel ulang konfigurasi server, printer, dan kamera?',
+          'Are you sure you want to reset server, printer, and camera configurations?',
       onConfirm: () async {
         await _storageService.saveServerUrl(AppConstants.defaultServerUrl);
         await _storageService.clearTokens();
@@ -358,7 +346,10 @@ class SettingController extends GetxController {
         await _storageService.saveCameraConfig({});
         await _loadAllConfigurations();
         Get.back();
-        Get.snackbar('confirm'.tr, 'Konfigurasi telah disetel ulang.');
+        AppSnackbar.success(
+          title: 'Reset Complete',
+          message: 'System configurations have been reset to default.',
+        );
       },
     );
   }
@@ -366,11 +357,14 @@ class SettingController extends GetxController {
   void confirmClearCache() {
     _showResetConfirmDialog(
       title: 'clear_cache'.tr,
-      desc: 'Bersihkan cache gambar dan riwayat log lokal?',
+      desc: 'Clear local image cache and historical logs?',
       onConfirm: () async {
         await Future.delayed(const Duration(milliseconds: 500));
         Get.back();
-        Get.snackbar('confirm'.tr, 'Cache berhasil dibersihkan.');
+        AppSnackbar.success(
+          title: 'Cache Cleared',
+          message: 'Local cache cleared successfully.',
+        );
       },
     );
   }

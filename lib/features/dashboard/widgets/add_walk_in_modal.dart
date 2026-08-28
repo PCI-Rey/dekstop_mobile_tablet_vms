@@ -2539,13 +2539,25 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     // Upload Selfie Image to CDN if present
     String? uploadedSelfiePath;
     if (selfieImage != null && selfieImage.bytes != null) {
-      uploadedSelfiePath = await controller.uploadCdnFile(selfieImage.bytes!, selfieImage.name);
+      debugPrint('==> Uploading Selfie Image (${selfieImage.name}, ${selfieImage.bytes!.length} bytes)...');
+      uploadedSelfiePath = await controller.uploadCdnFile(
+        selfieImage.bytes!,
+        selfieImage.name,
+        path: 'face',
+      );
+      debugPrint('==> Uploaded Selfie Result: $uploadedSelfiePath');
     }
 
     // Upload KTP Image to CDN if present
     String? uploadedKtpPath;
     if (ktpImage != null && ktpImage.bytes != null) {
-      uploadedKtpPath = await controller.uploadCdnFile(ktpImage.bytes!, ktpImage.name);
+      debugPrint('==> Uploading KTP Image (${ktpImage.name}, ${ktpImage.bytes!.length} bytes)...');
+      uploadedKtpPath = await controller.uploadCdnFile(
+        ktpImage.bytes!,
+        ktpImage.name,
+        path: 'face',
+      );
+      debugPrint('==> Uploaded KTP Result: $uploadedKtpPath');
     }
 
     final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;

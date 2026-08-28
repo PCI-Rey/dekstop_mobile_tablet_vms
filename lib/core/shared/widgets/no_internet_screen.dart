@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'app_snackbar.dart';
 
 class NoInternetScreen extends StatefulWidget {
   final VoidCallback? onRetry;
@@ -30,14 +31,9 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
         Get.back(); // If opened as a page, return
       }
     } else {
-      Get.snackbar(
-        'connection_failed'.tr,
-        'no_internet_desc'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 8,
+      AppSnackbar.error(
+        title: 'Connection Failed',
+        message: 'No internet connection detected. Please verify your network.',
       );
     }
 
@@ -113,11 +109,9 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
                       onPressed: () {
                         // In real production, use AppSettings.openWIFISettings()
                         // Here we simulate opening settings
-                        Get.snackbar(
-                          'System Setting',
-                          'Membuka pengaturan jaringan sistem...',
-                          snackPosition: SnackPosition.BOTTOM,
-                          margin: const EdgeInsets.all(16),
+                        AppSnackbar.info(
+                          title: 'System Setting',
+                          message: 'Membuka pengaturan jaringan sistem...',
                         );
                       },
                       icon: const Icon(Icons.settings),

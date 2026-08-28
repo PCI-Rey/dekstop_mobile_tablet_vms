@@ -296,8 +296,12 @@ class DashboardController extends GetxController {
     }
   }
 
-  Future<String?> uploadCdnFile(List<int> bytes, String filename) async {
-    return await _dashboardRepository.uploadCdnFile(bytes, filename);
+  Future<String?> uploadCdnFile(
+    List<int> bytes,
+    String filename, {
+    String path = 'face',
+  }) async {
+    return await _dashboardRepository.uploadCdnFile(bytes, filename, path: path);
   }
 
   Future<bool> submitOperatorWalkInRegistration({
@@ -2259,14 +2263,34 @@ class DashboardController extends GetxController {
 
     final photo =
         (item['selfie_image'] ??
+                item['face_image'] ??
                 item['visitor_face'] ??
                 item['faceimage'] ??
                 item['visitor']?['faceimage'] ??
+                item['visitor']?['face_image'] ??
                 item['avatar'] ??
                 item['photo'] ??
                 '')
             .toString()
             .trim();
+
+    final identityImage = (item['identity_image'] ??
+            item['indentity_image'] ??
+            item['identity_file'] ??
+            item['ktp_image'] ??
+            item['ktp_file'] ??
+            item['id_card_image'] ??
+            item['identity_url'] ??
+            item['visitor']?['indentity_image'] ??
+            item['visitor']?['identity_image'] ??
+            item['visitor']?['ktp_image'] ??
+            item['visitor']?['id_card_image'] ??
+            item['document_image'] ??
+            item['file_identity'] ??
+            item['identity_doc'] ??
+            '')
+        .toString()
+        .trim();
 
     final hostName = sanitize(primaryHost['name'] ?? item['host_name']);
     final hostOrg = sanitize(
@@ -2332,6 +2356,9 @@ class DashboardController extends GetxController {
       'photo': photo,
       'faceimage': photo,
       'selfie_image': photo,
+      'identity_image': identityImage,
+      'ktp_image': identityImage,
+      'id_card_image': identityImage,
       'host_name': hostName,
       'host_dept': hostOrg,
       'host_organization_name': hostOrg,

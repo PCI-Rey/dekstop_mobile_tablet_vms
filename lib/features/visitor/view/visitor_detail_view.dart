@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../dashboard/controller/dashboard_controller.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../../core/shared/widgets/app_snackbar.dart';
 
 class VisitorDetailView extends StatelessWidget {
   const VisitorDetailView({super.key});
@@ -100,7 +101,7 @@ class VisitorDetailView extends StatelessWidget {
                           _buildActionBtn('Check In', Icons.login, Colors.green, () => controller.executeAction('check_in')),
                           _buildActionBtn('Check Out', Icons.logout, Colors.red, () => controller.executeAction('check_out')),
                           _buildActionBtn('Badge', Icons.badge, Colors.blue, () {
-                            Get.snackbar('Printer', 'Mencetak badge pengunjung...');
+                            AppSnackbar.info(title: 'Printer', message: 'Printing visitor badge...');
                           }),
                         ],
                       ),

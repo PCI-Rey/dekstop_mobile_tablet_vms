@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../dashboard/controller/dashboard_controller.dart';
+import '../../../core/shared/widgets/app_snackbar.dart';
 
 class RelatedVisitorsView extends StatelessWidget {
   const RelatedVisitorsView({super.key});
@@ -331,12 +332,12 @@ class RelatedVisitorsView extends StatelessWidget {
                   }),
                   _buildSheetActionItem(Icons.credit_card, 'Issue Card', Colors.purple, () {
                     Get.back();
-                    Get.snackbar('Issue Card', 'Kartu berhasil didaftarkan...');
+                    AppSnackbar.success(title: 'Issue Card', message: 'Card issued successfully.');
                   }),
                 ],
                 _buildSheetActionItem(Icons.print, 'Print Badge', Colors.blue, () {
                   Get.back();
-                  Get.snackbar('Cetak', 'Mengirim perintah cetak badge...');
+                  AppSnackbar.info(title: 'Print Badge', message: 'Sending badge print job to printer...');
                 }),
                 _buildSheetActionItem(Icons.door_back_door, 'Open Door', Colors.deepOrange, () {
                   Get.back();
@@ -391,7 +392,7 @@ class RelatedVisitorsView extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${controller.rxSelectedItems.length} Tamu Terpilih',
+                  '${controller.rxSelectedItems.length} Visitors Selected',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                 ),
                 const Text(
@@ -474,12 +475,9 @@ class RelatedVisitorsView extends StatelessWidget {
     controller.clearSelectedItems();
     controller.rxSelectMultiple.value = false;
     
-    Get.snackbar(
-      'Bulk Action Success',
-      'Berhasil memproses $action untuk tamu: ${names.join(', ')}',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
+    AppSnackbar.success(
+      title: 'Bulk Action Complete',
+      message: 'Processed $action for visitors: ${names.join(', ')}',
     );
   }
 

@@ -43,9 +43,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   late Timer _clockTimer;
   DateTime _currentTime = DateTime.now();
 
-  // Fullscreen state
-  bool _isFullScreen = false;
-
   // Active Top Navigation Tab (0: Dashboard Overview Analytics, 1: Operator View)
   int _selectedTopNavTab = 1;
 
@@ -53,11 +50,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   bool _isTourActive = false;
   int _tourStep = 0;
 
-  // Visitor Site Dropdown Overlay
-  OverlayEntry? _visitorSiteOverlay;
-  final LayerLink _visitorSiteLayerLink = LayerLink();
-  bool _isVisitorSiteMenuOpen = false;
-  String _selectedVisitorSiteMenu = 'List Visitor';
 
   // Site Dropdown Overlay (SPU, Gedung SINERGI, Resident)
   OverlayEntry? _siteOverlay;
@@ -117,29 +109,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   void dispose() {
     _closeBulkActionMenu();
     _closeSiteMenu();
-    _closeVisitorSiteMenu();
-    if (_isFullScreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
     _clockTimer.cancel();
     _livePageController.dispose();
     _relatedPageController.dispose();
     _visitorSearchController.dispose();
     _topSearchController.dispose();
     super.dispose();
-  }
-
-  void _toggleFullScreen() {
-    setState(() {
-      _isFullScreen = !_isFullScreen;
-    });
-    if (_isFullScreen) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-      AppSnackbar.info(title: 'Fullscreen Mode', message: 'Fullscreen active');
-    } else {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      AppSnackbar.info(title: 'Normal Mode', message: 'Normal view active');
-    }
   }
 
   List<TourStep> _buildTourSteps() {
@@ -269,8 +244,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           SafeArea(
             child: Column(
               children: [
-                // ── 1. Top Navigation Bar (Hidden when _isFullScreen) ─────────
-                if (!_isFullScreen) _buildTopNavBar(),
+                // ── 1. Top Navigation Bar ────────────────────────────────────
+                _buildTopNavBar(),
 
                 // ── 2. View Switcher (Dashboard Overview Analytics vs Operator View) ──
                 if (_selectedTopNavTab == 0)
@@ -806,53 +781,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
           const SizedBox(width: 6),
 
-          // 4. Visitor Site Action Dropdown Button (Blue)
-          CompositedTransformTarget(
-            link: _visitorSiteLayerLink,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _toggleVisitorSiteMenu,
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  height: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF003082),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.person_outline_rounded,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'Visitor Site',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        _isVisitorSiteMenuOpen
-                            ? Icons.arrow_drop_up
-                            : Icons.arrow_drop_down,
-                        size: 16,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           const SizedBox(width: 6),
 
           // 5. Info Icon Button (Triggers Guided Tour)
@@ -880,29 +808,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             ),
           ),
 
-          const SizedBox(width: 6),
-
-          // 6. Fullscreen Icon Button (Toggles Fullscreen & hides/shows top navigation)
-          Container(
-            height: 30,
-            width: 30,
-            decoration: BoxDecoration(
-              color: const Color(0xFF003082),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              tooltip: _isFullScreen ? 'Exit Fullscreen' : 'Enter Fullscreen',
-              icon: Icon(
-                _isFullScreen
-                    ? Icons.fullscreen_exit_rounded
-                    : Icons.fullscreen_rounded,
-                size: 19,
-                color: Colors.white,
-              ),
-              onPressed: _toggleFullScreen,
-            ),
-          ),
         ],
       ),
     );
@@ -929,72 +834,117 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                // Visitor Photo with Rounded Frame & Face Detection Reticle
+                // Visitor Photo with Rounded Frame, Face Detection Reticle, and Clickable Preview
                 Expanded(
                   flex: 3,
-                  child: AspectRatio(
-                    aspectRatio: 3 / 4,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Builder(
-                            builder: (context) {
-                              final photoUrl = (visitor?['photo'] ??
-                                      visitor?['avatar'] ??
-                                      visitor?['faceimage'] ??
-                                      '')
-                                  .toString();
-                              if (photoUrl.startsWith('/') ||
-                                  photoUrl.startsWith('http')) {
-                                return Image.network(
-                                  AppConstants.getCdnImageUrl(photoUrl),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: const Color(0xFFE2E8F0),
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 44,
-                                      color: _textMuted,
-                                    ),
-                                  ),
-                                );
-                              }
-                              return Image.asset(
-                                photoUrl.isNotEmpty && photoUrl.startsWith('assets/')
-                                    ? photoUrl
-                                    : 'assets/images/ai_image.jpeg',
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: const Color(0xFFE2E8F0),
-                                  child: const Icon(
-                                    Icons.person,
-                                    size: 44,
-                                    color: _textMuted,
-                                  ),
-                                ),
+                  child: Builder(
+                    builder: (context) {
+                      final selfieUrl = (visitor?['selfie_image'] ??
+                              visitor?['visitor_face'] ??
+                              visitor?['faceimage'] ??
+                              visitor?['face_image'] ??
+                              visitor?['photo'] ??
+                              visitor?['avatar'] ??
+                              visitor?['visitor']?['faceimage'] ??
+                              visitor?['visitor']?['face_image'] ??
+                              visitor?['raw']?['selfie_image'] ??
+                              visitor?['raw']?['face_image'] ??
+                              '')
+                          .toString()
+                          .trim();
+
+                      final hasSelfie = selfieUrl.isNotEmpty &&
+                          selfieUrl != '-' &&
+                          selfieUrl != 'null' &&
+                          (selfieUrl.startsWith('/') || selfieUrl.startsWith('http'));
+
+                      final cdnUrl = hasSelfie ? AppConstants.getCdnImageUrl(selfieUrl) : '';
+                      final visitorName = (visitor?['visitor_name'] ?? visitor?['name'] ?? '').toString().trim();
+
+                      return AspectRatio(
+                        aspectRatio: 3 / 4,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              _showProfileImagePreview(
+                                context,
+                                imageUrl: hasSelfie ? cdnUrl : 'assets/images/ai_image.jpeg',
+                                isAsset: !hasSelfie,
+                                visitorName: visitorName,
                               );
                             },
-                          ),
-                          // Green Face Detection Target Overlay (Only when visitor != null)
-                          if (visitor != null)
-                            Center(
-                              child: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: const Color(0xFF00E676),
-                                    width: 1.5,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  if (hasSelfie)
+                                    Image.network(
+                                      cdnUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Image.asset(
+                                        'assets/images/ai_image.jpeg',
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  else
+                                    Image.asset(
+                                      'assets/images/ai_image.jpeg',
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: const Color(0xFFF1F5F9),
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.person,
+                                            size: 44,
+                                            color: Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                  // Green Face Detection Target Overlay (Only when visitor != null)
+                                  if (visitor != null)
+                                    Center(
+                                      child: Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: const Color(0xFF00E676),
+                                            width: 1.5,
+                                          ),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                      ),
+                                    ),
+
+                                  // Fullscreen Preview Indicator icon at bottom-right
+                                  Positioned(
+                                    right: 6,
+                                    bottom: 6,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.5),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.fullscreen_rounded,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
+                                ],
                               ),
                             ),
-                        ],
-                      ),
-                    ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
 
@@ -3339,9 +3289,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       final isSelected = isMultipleMode
           ? keys.any((k) => selectedSet.contains(k))
           : (selectedId.isNotEmpty && keys.contains(selectedId));
-      final faceImg = (item['faceimage'] ??
+      final faceImg = (item['selfie_image'] ??
               item['photo'] ??
               item['avatar'] ??
+              item['faceimage'] ??
+              item['face_image'] ??
+              item['visitor_face'] ??
               item['host_faceimage'] ??
               '')
           .toString();
@@ -3935,33 +3888,163 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Identity Image',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F2B48),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Identity Image',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F2B48),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'No Identity Image',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF64748B),
+                  child: Builder(
+                    builder: (context) {
+                      final rawKtpImg = (visitor?['identity_image'] ??
+                              visitor?['indentity_image'] ??
+                              visitor?['ktp_image'] ??
+                              visitor?['id_card_image'] ??
+                              visitor?['identity_file'] ??
+                              visitor?['document_image'] ??
+                              visitor?['visitor']?['indentity_image'] ??
+                              visitor?['visitor']?['identity_image'] ??
+                              visitor?['raw']?['identity_image'] ??
+                              visitor?['raw']?['indentity_image'] ??
+                              visitor?['raw']?['ktp_image'] ??
+                              visitor?['raw']?['identity_file'] ??
+                              '')
+                          .toString()
+                          .trim();
+
+                      final rawSelfieImg = (visitor?['selfie_image'] ??
+                              visitor?['visitor_face'] ??
+                              visitor?['faceimage'] ??
+                              visitor?['face_image'] ??
+                              visitor?['avatar'] ??
+                              visitor?['photo'] ??
+                              visitor?['visitor']?['face_image'] ??
+                              visitor?['visitor']?['faceimage'] ??
+                              visitor?['raw']?['selfie_image'] ??
+                              visitor?['raw']?['face_image'] ??
+                              '')
+                          .toString()
+                          .trim();
+
+                      // Identity image prioritizes KTP image, and falls back to Selfie image if only selfie was uploaded
+                      String resolvedImg = '';
+                      if (rawKtpImg.isNotEmpty &&
+                          rawKtpImg != '-' &&
+                          rawKtpImg != 'null' &&
+                          !rawKtpImg.startsWith('assets/')) {
+                        resolvedImg = rawKtpImg;
+                      } else if (rawSelfieImg.isNotEmpty &&
+                          rawSelfieImg != '-' &&
+                          rawSelfieImg != 'null' &&
+                          !rawSelfieImg.startsWith('assets/')) {
+                        resolvedImg = rawSelfieImg;
+                      }
+
+                      final hasImg = resolvedImg.isNotEmpty;
+
+                      if (!hasImg) {
+                        return Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.badge_outlined,
+                                  size: 26,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'No Identity Image',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      final cdnUrl = AppConstants.getCdnImageUrl(resolvedImg);
+
+                      return InkWell(
+                        onTap: () => _showIdentityImagePreview(context, cdnUrl),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                cdnUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.broken_image_rounded,
+                                        size: 26,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Failed to load image',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          color: const Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 6,
+                                bottom: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.fullscreen_rounded,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -4026,7 +4109,167 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       ],
     );
   });
-}
+  }
+
+  void _showIdentityImagePreview(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: Container(
+          width: 540,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
+                child: Row(
+                  children: [
+                    const Icon(Icons.badge_rounded, color: Color(0xFF004385), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Identity Document Preview',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.of(dialogCtx).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const SizedBox(
+                      height: 200,
+                      child: Center(child: Text('Failed to load preview')),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showProfileImagePreview(
+    BuildContext context, {
+    required String imageUrl,
+    required bool isAsset,
+    required String visitorName,
+  }) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: Container(
+          width: 500,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
+                child: Row(
+                  children: [
+                    const Icon(Icons.account_circle_rounded, color: Color(0xFF004385), size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        visitorName.isNotEmpty && visitorName != '-'
+                            ? '$visitorName - Profile Photo'
+                            : 'Visitor Profile Photo',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.of(dialogCtx).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 480),
+                    child: isAsset
+                        ? Image.asset(
+                            imageUrl.isNotEmpty ? imageUrl : 'assets/images/ai_image.jpeg',
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const SizedBox(
+                              height: 200,
+                              child: Center(child: Text('No image available')),
+                            ),
+                          )
+                        : Image.network(
+                            imageUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              'assets/images/ai_image.jpeg',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   // ignore: unused_element
   Widget _buildHostActionButton({
@@ -8557,138 +8800,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     AppSnackbar.info(title: 'Host Contact', message: message);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Custom Floating Visitor Site Dropdown Menu
-  // ─────────────────────────────────────────────────────────────────────────
-  void _toggleVisitorSiteMenu() {
-    if (_visitorSiteOverlay != null) {
-      _closeVisitorSiteMenu();
-      return;
-    }
-
-    setState(() {
-      _isVisitorSiteMenuOpen = true;
-    });
-
-    final overlay = Overlay.of(context);
-    _visitorSiteOverlay = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          // Dismiss on tap outside
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: _closeVisitorSiteMenu,
-            ),
-          ),
-          // Sleek Floating dropdown menu
-          Positioned(
-            width: 145,
-            child: CompositedTransformFollower(
-              link: _visitorSiteLayerLink,
-              showWhenUnlinked: false,
-              offset: const Offset(0, 33),
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x1F000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 5,
-                    horizontal: 4,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildVisitorSiteMenuItem(
-                        title: 'List Visitor',
-                        isSelected: _selectedVisitorSiteMenu == 'List Visitor',
-                        onTap: () {
-                          setState(() {
-                            _selectedVisitorSiteMenu = 'List Visitor';
-                          });
-                          _closeVisitorSiteMenu();
-                        },
-                      ),
-                      const SizedBox(height: 2),
-                      _buildVisitorSiteMenuItem(
-                        title: 'Blacklist Visitor',
-                        isSelected:
-                            _selectedVisitorSiteMenu == 'Blacklist Visitor',
-                        onTap: () {
-                          setState(() {
-                            _selectedVisitorSiteMenu = 'Blacklist Visitor';
-                          });
-                          _closeVisitorSiteMenu();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlay.insert(_visitorSiteOverlay!);
-  }
-
-  void _closeVisitorSiteMenu() {
-    if (_visitorSiteOverlay != null) {
-      _visitorSiteOverlay?.remove();
-      _visitorSiteOverlay = null;
-      if (mounted) {
-        setState(() {
-          _isVisitorSiteMenuOpen = false;
-        });
-      }
-    }
-  }
-
-  Widget _buildVisitorSiteMenuItem({
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        hoverColor: const Color(0xFFF1F5F9),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFEBF3FC) : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 12.5,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF003082)
-                  : const Color(0xFF334155),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // Custom Floating Site Selector Dropdown Menu (SPU, Gedung SINERGI, Resident)

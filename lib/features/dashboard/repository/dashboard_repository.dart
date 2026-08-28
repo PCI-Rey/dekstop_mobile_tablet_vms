@@ -53,7 +53,9 @@ class DashboardRepository {
     return getApiDt;
   }
 
-  Future<ApiResult<Map<String, dynamic>>> getVisitorsByTransactionId(String transactionId) async {
+  Future<ApiResult<Map<String, dynamic>>> getVisitorsByTransactionId(
+    String transactionId,
+  ) async {
     final cleanId = transactionId.trim();
 
     // 1. Try GET /api/visitor/transaction/{transaction_visitor_id}/visitors
@@ -82,22 +84,14 @@ class DashboardRepository {
     // 1. Try GET /api/operator-invitation/invitation-related-visitor/{id}
     final getApiRelated = await _dioClient.get<Map<String, dynamic>>(
       '/api/operator-invitation/invitation-related-visitor/$cleanId',
-      queryParameters: {
-        'start': start,
-        'length': length,
-        'draw': draw,
-      },
+      queryParameters: {'start': start, 'length': length, 'draw': draw},
     );
     if (getApiRelated is Success) return getApiRelated;
 
     // 2. Try GET /operator-invitation/invitation-related-visitor/{id}
     final getRelated = await _dioClient.get<Map<String, dynamic>>(
       '/operator-invitation/invitation-related-visitor/$cleanId',
-      queryParameters: {
-        'start': start,
-        'length': length,
-        'draw': draw,
-      },
+      queryParameters: {'start': start, 'length': length, 'draw': draw},
     );
     if (getRelated is Success) return getRelated;
 
@@ -119,29 +113,22 @@ class DashboardRepository {
     // 1. Try POST /api/operator-invitation/action/{trxid}
     final postApi = await _dioClient.post<Map<String, dynamic>>(
       '/api/operator-invitation/action/$cleanId',
-      data: {
-        'action': action,
-        'reason': reason,
-      },
+      data: {'action': action, 'reason': reason},
     );
     if (postApi is Success) return postApi;
 
     // 2. Try POST /operator-invitation/action/{trxid}
     final postDirect = await _dioClient.post<Map<String, dynamic>>(
       '/operator-invitation/action/$cleanId',
-      data: {
-        'action': action,
-        'reason': reason,
-      },
+      data: {'action': action, 'reason': reason},
     );
     if (postDirect is Success) return postDirect;
 
     return postApi;
   }
 
-  Future<ApiResult<Map<String, dynamic>>> performMultipleOperatorInvitationAction(
-    Map<String, dynamic> payload,
-  ) async {
+  Future<ApiResult<Map<String, dynamic>>>
+  performMultipleOperatorInvitationAction(Map<String, dynamic> payload) async {
     // 1. Try POST /api/operator-invitation/multiple-action
     final postApi = await _dioClient.post<Map<String, dynamic>>(
       '/api/operator-invitation/multiple-action',
@@ -159,13 +146,13 @@ class DashboardRepository {
     return postApi;
   }
 
-  Future<ApiResult<Map<String, dynamic>>> performVisitorAction(String id, String action) async {
+  Future<ApiResult<Map<String, dynamic>>> performVisitorAction(
+    String id,
+    String action,
+  ) async {
     return await _dioClient.post<Map<String, dynamic>>(
       '/visitor/action',
-      data: {
-        'id': id,
-        'action': action,
-      },
+      data: {'id': id, 'action': action},
     );
   }
 
@@ -201,9 +188,7 @@ class DashboardRepository {
     // 3. Fallback: GET /api/operator-invitation/search
     final getApiSearch = await _dioClient.get<Map<String, dynamic>>(
       '/api/operator-invitation/search',
-      queryParameters: {
-        'code': cleanCode,
-      },
+      queryParameters: {'code': cleanCode},
     );
     if (getApiSearch is Success) {
       return getApiSearch;
@@ -215,9 +200,7 @@ class DashboardRepository {
   Future<ApiResult<Map<String, dynamic>>> getUpcomingPurpose({
     String filter = 'Today',
   }) async {
-    final queryParams = <String, dynamic>{
-      'all-visitor-type': 'true',
-    };
+    final queryParams = <String, dynamic>{'all-visitor-type': 'true'};
 
     final now = DateTime.now();
     if (filter.toLowerCase() == 'today') {
@@ -264,7 +247,10 @@ class DashboardRepository {
     int length = 10,
     String? search,
   }) async {
-    final hasSpecificType = !allVisitorType && visitorTypeId.isNotEmpty && visitorTypeId.toLowerCase() != 'all';
+    final hasSpecificType =
+        !allVisitorType &&
+        visitorTypeId.isNotEmpty &&
+        visitorTypeId.toLowerCase() != 'all';
     final queryParams = <String, dynamic>{
       'today': 'true',
       if (hasSpecificType) 'visitor-type': visitorTypeId,
@@ -299,11 +285,7 @@ class DashboardRepository {
     required int period,
     bool applyToAll = false,
   }) async {
-    final body = {
-      'id': id,
-      'period': period,
-      'apply_to_all': applyToAll,
-    };
+    final body = {'id': id, 'period': period, 'apply_to_all': applyToAll};
 
     // 1. Try POST /api/operator-invitation/extend-period
     final postApi = await _dioClient.post<Map<String, dynamic>>(
@@ -428,43 +410,63 @@ class DashboardRepository {
 
   // --- Invitation Sites (/api/invitation-site) ---
   Future<ApiResult<Map<String, dynamic>>> getInvitationSites() async {
-    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-site');
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation-site',
+    );
     if (getApi is Success) return getApi;
     return await _dioClient.get<Map<String, dynamic>>('/invitation-site');
   }
 
   // --- Invitation Visitor Types (/api/invitation-visitor-type) ---
   Future<ApiResult<Map<String, dynamic>>> getInvitationVisitorTypes() async {
-    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor-type');
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation-visitor-type',
+    );
     if (getApi is Success) return getApi;
-    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor-type');
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/invitation-visitor-type',
+    );
   }
 
   // --- Invitation Visitors (/api/invitation-visitor) ---
   Future<ApiResult<Map<String, dynamic>>> getInvitationVisitors() async {
-    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor');
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation-visitor',
+    );
     if (getApi is Success) return getApi;
     return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor');
   }
 
   // --- Invitation Employees (/api/invitation-visitor/employee) ---
   Future<ApiResult<Map<String, dynamic>>> getInvitationEmployees() async {
-    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor/employee');
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation-visitor/employee',
+    );
     if (getApi is Success) return getApi;
-    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor/employee');
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/invitation-visitor/employee',
+    );
   }
 
   // --- Invitation Hosts (/api/invitation-visitor/host) ---
   Future<ApiResult<Map<String, dynamic>>> getInvitationHosts() async {
-    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/invitation-visitor/host');
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation-visitor/host',
+    );
     if (getApi is Success) return getApi;
-    return await _dioClient.get<Map<String, dynamic>>('/invitation-visitor/host');
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/invitation-visitor/host',
+    );
   }
 
   // --- Visitor Type Detail / Form Structure (/api/visitor-type/{id}) ---
-  Future<ApiResult<Map<String, dynamic>>> getVisitorTypeDetail(String id) async {
+  Future<ApiResult<Map<String, dynamic>>> getVisitorTypeDetail(
+    String id,
+  ) async {
     final cleanId = id.trim();
-    final getApi = await _dioClient.get<Map<String, dynamic>>('/api/visitor-type/$cleanId');
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/visitor-type/$cleanId',
+    );
     if (getApi is Success) return getApi;
     return await _dioClient.get<Map<String, dynamic>>('/visitor-type/$cleanId');
   }
@@ -510,46 +512,50 @@ class DashboardRepository {
   }
 
   // --- Upload CDN File (Selfie / KTP / Documents) ---
-  Future<String?> uploadCdnFile(List<int> bytes, String filename) async {
+  Future<String?> uploadCdnFile(
+    List<int> bytes,
+    String filename, {
+    String path = 'face',
+  }) async {
     try {
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(bytes, filename: filename),
+        'file_name': filename,
+        'path': path,
       });
 
-      // 1. Try POST /api/cdn/upload
-      final res1 = await _dioClient.post<Map<String, dynamic>>(
-        '/api/cdn/upload',
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-      if (res1 is Success<Map<String, dynamic>>) {
-        final d = res1.data;
-        final p = d['path'] ?? d['data']?['path'] ?? d['collection']?['path'] ?? d['url'];
-        if (p != null && p.toString().isNotEmpty) return p.toString();
-      }
-
-      // 2. Try POST /cdn/upload
-      final res2 = await _dioClient.post<Map<String, dynamic>>(
+      final res = await _dioClient.post<dynamic>(
         '/cdn/upload',
         data: formData,
-        options: Options(contentType: 'multipart/form-data'),
       );
-      if (res2 is Success<Map<String, dynamic>>) {
-        final d = res2.data;
-        final p = d['path'] ?? d['data']?['path'] ?? d['collection']?['path'] ?? d['url'];
-        if (p != null && p.toString().isNotEmpty) return p.toString();
-      }
 
-      // 3. Try POST /api/upload
-      final res3 = await _dioClient.post<Map<String, dynamic>>(
-        '/api/upload',
-        data: formData,
-        options: Options(contentType: 'multipart/form-data'),
-      );
-      if (res3 is Success<Map<String, dynamic>>) {
-        final d = res3.data;
-        final p = d['path'] ?? d['data']?['path'] ?? d['collection']?['path'] ?? d['url'];
-        if (p != null && p.toString().isNotEmpty) return p.toString();
+      if (res is Success) {
+        final dynamic data = res.data;
+        debugPrint('==> Upload SUCCESS on /cdn/upload: $data');
+        if (data is String && data.isNotEmpty) {
+          return data;
+        } else if (data is Map) {
+          final p =
+              data['collection']?['file_url'] ??
+              data['collection']?['path'] ??
+              data['collection']?['file_path'] ??
+              data['collection']?['url'] ??
+              data['collection'] ??
+              data['file_url'] ??
+              data['path'] ??
+              data['url'] ??
+              data['file_path'] ??
+              data['data']?['file_url'] ??
+              data['data']?['path'] ??
+              data['data']?['url'] ??
+              data['data'];
+          if (p != null && p is String && p.isNotEmpty) {
+            return p;
+          }
+        }
+      } else if (res is Failure) {
+        final msg = res.exception.message;
+        debugPrint('==> Upload failure on /cdn/upload: $msg');
       }
     } catch (e) {
       debugPrint('Error uploading CDN file: $e');
@@ -557,6 +563,3 @@ class DashboardRepository {
     return null;
   }
 }
-
-
-

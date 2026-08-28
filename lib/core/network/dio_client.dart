@@ -13,8 +13,8 @@ class DioClient {
     _dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
+      contentType: 'application/json',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
     ));
@@ -110,11 +110,26 @@ class DioClient {
         }
 
         final activeDio = await dio;
+        Options reqOptions = options ?? Options();
+        if (data is FormData) {
+          activeDio.options.headers.remove('Content-Type');
+          activeDio.options.headers.remove('content-type');
+          final customHeaders = Map<String, dynamic>.from(reqOptions.headers ?? {});
+          customHeaders.remove('Content-Type');
+          customHeaders.remove('content-type');
+          reqOptions = reqOptions.copyWith(
+            headers: customHeaders,
+            contentType: null,
+          );
+        } else {
+          activeDio.options.contentType = 'application/json';
+        }
+
         final response = await activeDio.post(
           path,
           data: data,
           queryParameters: queryParameters,
-          options: options,
+          options: reqOptions,
         );
 
         if (fromJson != null) {
@@ -171,11 +186,26 @@ class DioClient {
         }
 
         final activeDio = await dio;
+        Options reqOptions = options ?? Options();
+        if (data is FormData) {
+          activeDio.options.headers.remove('Content-Type');
+          activeDio.options.headers.remove('content-type');
+          final customHeaders = Map<String, dynamic>.from(reqOptions.headers ?? {});
+          customHeaders.remove('Content-Type');
+          customHeaders.remove('content-type');
+          reqOptions = reqOptions.copyWith(
+            headers: customHeaders,
+            contentType: null,
+          );
+        } else {
+          activeDio.options.contentType = 'application/json';
+        }
+
         final response = await activeDio.put(
           path,
           data: data,
           queryParameters: queryParameters,
-          options: options,
+          options: reqOptions,
         );
 
         if (fromJson != null) {
