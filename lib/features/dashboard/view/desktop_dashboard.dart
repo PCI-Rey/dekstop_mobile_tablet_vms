@@ -84,6 +84,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   final PageController _livePageController = PageController();
   final PageController _relatedPageController = PageController();
   String _selectedSite = 'SPU';
+  String _selectedLanguage = 'EN';
   String? _selectedBulkAction;
 
   // Design Tokens (from AGENTS.md)
@@ -119,12 +120,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
   List<TourStep> _buildTourSteps() {
     return [
-      // Step 1 of 10: Top Search & Clear
+      // Step 1 of 10: Clear Button
       TourStep(
         targetKey: _keySearchClear,
         description:
-            'Use Search to find visitors by invitation code or keywords. Click Clear to reset the results to their initial state.',
-        arrowOnTop: true,
+            'Click Clear to reset all search filters and return the dashboard to its initial state.',
+        arrowOnTop: false,
         bubbleWidth: 320,
       ),
       // Step 2 of 10: Visitor Profile Card
@@ -201,7 +202,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     ];
   }
 
-  String _formatHeaderClock(DateTime time) {
+  String _formatHeaderDate(DateTime time) {
     const days = [
       'Monday',
       'Tuesday',
@@ -225,13 +226,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       'November',
       'December',
     ];
-
     final dayName = days[time.weekday - 1];
     final monthName = months[time.month - 1];
+    return '$dayName, $monthName ${time.day}, ${time.year}';
+  }
+
+  String _formatHeaderTime(DateTime time) {
     final h = time.hour.toString().padLeft(2, '0');
     final m = time.minute.toString().padLeft(2, '0');
-
-    return '$dayName, $monthName ${time.day}, ${time.year} $h:$m GMT+7';
+    return '$h:$m GMT+7';
   }
 
   @override
@@ -259,10 +262,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     ),
                   )
                 else ...[
-                  // ── 2. Secondary Action Toolbar (Search, Clear, Site, Fullscreen) ──
-                  _buildSecondaryToolbar(),
-
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
 
                   // ── 3. Main 3-Column Dashboard Body (Zero Scroll Fit) ─────────
                   Expanded(
@@ -485,27 +485,118 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
           const Spacer(),
 
-          // Date & Time Live Clock
+          // SPU Site Dropdown Button
+          CompositedTransformTarget(
+            link: _siteLayerLink,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _toggleSiteMenu,
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  height: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _isSiteMenuOpen
+                          ? const Color(0xFF003082)
+                          : const Color(0xFFCBD5E1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        _selectedSite,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: _textDark,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _isSiteMenuOpen
+                            ? Icons.arrow_drop_up
+                            : Icons.arrow_drop_down,
+                        size: 16,
+                        color: _textMuted,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 6),
+
+          // Info Icon Button (Triggers Guided Tour)
+          Container(
+            height: 28,
+            width: 28,
+            decoration: BoxDecoration(
+              color: const Color(0xFF003082),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              tooltip: 'Operator Guided Tour',
+              icon: const Icon(
+                Icons.info_outline_rounded,
+                size: 15,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isTourActive = true;
+                  _tourStep = 0;
+                });
+              },
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // Date & Time Live Clock (2 lines)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(
                 Icons.calendar_today_outlined,
                 size: 13,
                 color: _textMuted,
               ),
-              const SizedBox(width: 6),
-              Text(
-                _formatHeaderClock(_currentTime),
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: _textDark,
-                ),
+              const SizedBox(width: 5),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _formatHeaderDate(_currentTime),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: _textDark,
+                    ),
+                  ),
+                  Text(
+                    _formatHeaderTime(_currentTime),
+                    style: GoogleFonts.inter(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w500,
+                      color: _textMuted,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
 
           // Notification Bell with Red Indicator Dot
           Stack(
@@ -515,7 +606,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 icon: const Icon(
                   Icons.notifications_none_rounded,
-                  size: 19,
+                  size: 18,
                   color: _textDark,
                 ),
                 onPressed: () {
@@ -526,8 +617,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 },
               ),
               Positioned(
-                top: 5,
-                right: 5,
+                top: 4,
+                right: 4,
                 child: Container(
                   width: 5,
                   height: 5,
@@ -539,6 +630,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
             ],
           ),
+
+          const SizedBox(width: 6),
+
+          // Language Selector Dropdown (EN / ID)
+          _buildLanguageDropdown(),
 
           const SizedBox(width: 8),
 
@@ -580,235 +676,94 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 2. Secondary Action Toolbar (Search, Clear, SPU Dropdown, Visitor Site)
+  // Language Selector Dropdown (EN / ID)
   // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildSecondaryToolbar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 3.0),
-      color: _bgSlate,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // 1. Search Bar + Clear Button (Keyed for Tour Step 1)
-          Expanded(
-            child: Row(
-              key: _keySearchClear,
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Center(
-                      child: TextField(
-                        controller: _topSearchController,
-                        textAlignVertical: TextAlignVertical.center,
-                        textCapitalization: TextCapitalization.characters,
-                        inputFormatters: [
-                          UpperCaseTextFormatter(),
-                        ],
-                        style: GoogleFonts.inter(
-                          fontSize: 11.5,
-                          color: _textDark,
-                        ),
-                        decoration: InputDecoration(
-                          hintText:
-                              'Search Visitor / Code (e.g. 15Y1H5-QR5FHL)',
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 11.5,
-                            color: _textMuted,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            size: 15,
-                            color: _textMuted,
-                          ),
-                          prefixIconConstraints: const BoxConstraints(
-                            minWidth: 32,
-                            minHeight: 30,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.only(right: 8),
-                          suffixIcon: _topSearchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(
-                                    Icons.clear_rounded,
-                                    size: 14,
-                                    color: _textMuted,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(
-                                    minWidth: 26,
-                                    minHeight: 30,
-                                  ),
-                                  onPressed: () {
-                                    _topSearchController.clear();
-                                    controller.resetDashboardToInitialState();
-                                    setState(() {});
-                                  },
-                                )
-                              : null,
-                          suffixIconConstraints: const BoxConstraints(
-                            minWidth: 26,
-                            minHeight: 30,
-                          ),
-                        ),
-                        onChanged: (val) => setState(() {}),
-                        onSubmitted: (val) async {
-                          final query = val.trim().toUpperCase();
-                          if (query.isNotEmpty) {
-                            final success = await controller
-                                .searchInvitationCode(query);
-                            if (success) {
-                              AppSnackbar.success(
-                                title: 'Success',
-                                message: 'Data retrieved successfully',
-                              );
-                            } else {
-                              AppSnackbar.error(
-                                title: 'Search Failed',
-                                message:
-                                    'No visitor data found for: $query',
-                              );
-                            }
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                // Clear Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      _topSearchController.clear();
-                      controller.resetDashboardToInitialState();
-                      setState(() {});
-                    },
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      height: 30,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: _redDanger.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.close_rounded,
-                            size: 13,
-                            color: _redDanger,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Clear',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: _redDanger,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // 3. SPU Site Dropdown Button
-          CompositedTransformTarget(
-            link: _siteLayerLink,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _toggleSiteMenu,
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  height: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: _isSiteMenuOpen
-                          ? const Color(0xFF003082)
-                          : const Color(0xFFE2E8F0),
-                      width: _isSiteMenuOpen ? 1.2 : 1,
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        _selectedSite,
-                        style: GoogleFonts.inter(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: _textDark,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        _isSiteMenuOpen
-                            ? Icons.arrow_drop_up
-                            : Icons.arrow_drop_down,
-                        size: 16,
-                        color: _isSiteMenuOpen
-                            ? const Color(0xFF003082)
-                            : _textMuted,
-                      ),
-                    ],
-                  ),
+  Widget _buildLanguageDropdown() {
+    return PopupMenuButton<String>(
+      tooltip: 'Select Language',
+      offset: const Offset(0, 32),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      onSelected: (lang) {
+        setState(() {
+          _selectedLanguage = lang;
+        });
+        if (lang == 'EN') {
+          Get.updateLocale(const Locale('en'));
+        } else {
+          Get.updateLocale(const Locale('id'));
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'EN',
+          height: 36,
+          child: Row(
+            children: [
+              const Text('🇬🇧', style: TextStyle(fontSize: 14)),
+              const SizedBox(width: 8),
+              Text(
+                'English (EN)',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: _selectedLanguage == 'EN' ? FontWeight.w700 : FontWeight.w500,
+                  color: const Color(0xFF1E293B),
                 ),
               ),
-            ),
+            ],
           ),
-
-          const SizedBox(width: 6),
-
-          const SizedBox(width: 6),
-
-          // 5. Info Icon Button (Triggers Guided Tour)
-          Container(
-            height: 30,
-            width: 30,
-            decoration: BoxDecoration(
-              color: const Color(0xFF003082),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              tooltip: 'Operator Guided Tour',
-              icon: const Icon(
-                Icons.info_outline_rounded,
-                size: 15,
-                color: Colors.white,
+        ),
+        PopupMenuItem(
+          value: 'ID',
+          height: 36,
+          child: Row(
+            children: [
+              const Text('🇮🇩', style: TextStyle(fontSize: 14)),
+              const SizedBox(width: 8),
+              Text(
+                'Indonesia (ID)',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: _selectedLanguage == 'ID' ? FontWeight.w700 : FontWeight.w500,
+                  color: const Color(0xFF1E293B),
+                ),
               ),
-              onPressed: () {
-                setState(() {
-                  _isTourActive = true;
-                  _tourStep = 0;
-                });
-              },
-            ),
+            ],
           ),
-
-        ],
+        ),
+      ],
+      child: Container(
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              _selectedLanguage == 'EN' ? '🇬🇧' : '🇮🇩',
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _selectedLanguage,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _textDark,
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(
+              Icons.arrow_drop_down,
+              size: 15,
+              color: _textMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -827,7 +782,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         children: [
           // ── 1. Top Visitor Profile Card (Keyed for Tour Step 2) ───────────
           Expanded(
-            flex: 10,
+            flex: 6,
             child: _buildCardContainer(
               key: _keyVisitorProfile,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -950,11 +905,27 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                 const SizedBox(width: 12),
 
-                // Visitor Details Table (Clean Typography with Tight Divider & ScaleDown)
+                // Visitor Details Table (Clean Typography with Visitor Type Badge & Detail Rows)
                 Expanded(
                   flex: 7,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
+                      final visitorTypeName = (visitor?['visitor_type_name'] ??
+                              visitor?['visitor_type'] ??
+                              visitor?['type_visitor_name'] ??
+                              visitor?['type_visitor'] ??
+                              visitor?['category'] ??
+                              visitor?['occupancy'] ??
+                              'Visitor')
+                          .toString()
+                          .trim();
+
+                      final visitorName = (visitor?['name'] ??
+                              visitor?['visitor_name'] ??
+                              'Name')
+                          .toString()
+                          .trim();
+
                       return SizedBox(
                         height: constraints.maxHeight,
                         child: FittedBox(
@@ -967,75 +938,90 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (visitor != null) ...[
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          visitor['name'] ?? 'Visitor Name',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF1E293B),
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      const Icon(
-                                        Icons.check_circle_rounded,
-                                        size: 15,
-                                        color: Color(0xFF00D696),
-                                      ),
-                                    ],
+                                Text(
+                                  visitorName.isNotEmpty ? visitorName : 'Name',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1E293B),
                                   ),
-                                ] else ...[
-                                  Text(
-                                    'Name',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF1E293B),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                if (visitor != null &&
+                                    visitorTypeName.isNotEmpty &&
+                                    visitorTypeName != '-') ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 2,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      visitorTypeName,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                    ),
                                   ),
+                                  const SizedBox(height: 4),
                                 ],
                                 const Divider(
-                                  height: 8,
+                                  height: 6,
                                   thickness: 1,
-                                  color: Color(0xFFECEFF1),
+                                  color: Color(0xFFF1F5F9),
                                 ),
+                                const SizedBox(height: 2),
                                 _buildDetailRow(
                                   Icons.apartment_rounded,
                                   'Organization',
-                                  visitor?['company'] ?? visitor?['org'] ?? '-',
+                                  visitor?['organization'] ??
+                                      visitor?['company'] ??
+                                      visitor?['org'] ??
+                                      visitor?['visitor_organization_name'] ??
+                                      '-',
                                 ),
                                 _buildDetailRow(
                                   Icons.email_outlined,
                                   'Email',
-                                  visitor?['email'] ?? '-',
+                                  visitor?['email'] ??
+                                      visitor?['visitor_email'] ??
+                                      '-',
                                 ),
                                 _buildDetailRow(
                                   Icons.phone_outlined,
                                   'Phone',
-                                  visitor?['phone'] ?? '-',
+                                  visitor?['phone'] ??
+                                      visitor?['visitor_phone'] ??
+                                      '-',
                                 ),
                                 _buildDetailRow(
                                   Icons.credit_card_outlined,
-                                  'Identity ID',
-                                  visitor?['id_card_no'] ?? visitor?['id'] ?? '-',
+                                  'Citizenship ID',
+                                  visitor?['id_card_no'] ??
+                                      visitor?['identity_id'] ??
+                                      visitor?['id_number'] ??
+                                      visitor?['nik'] ??
+                                      visitor?['id'] ??
+                                      '-',
                                 ),
                                 _buildDetailRow(
                                   Icons.transgender_rounded,
                                   'Gender',
-                                  visitor?['gender'] ?? '-',
+                                  visitor?['gender'] ??
+                                      visitor?['visitor_gender'] ??
+                                      '-',
                                 ),
                                 _buildDetailRow(
                                   Icons.person_outline_rounded,
-                                  'Occupancy',
-                                  visitor?['occupancy'] ?? '-',
+                                  'Visitor Type',
+                                  visitorTypeName,
                                 ),
                               ],
                             ),
@@ -1060,7 +1046,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             child: Column(
               children: [
                 Expanded(
-                  flex: 11,
+                  flex: 13,
                   child: _buildCardContainer(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -1101,11 +1087,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ),
                 const SizedBox(height: 5),
                 Expanded(
-                  flex: 9,
+                  flex: 7,
                   child: _buildCardContainer(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 14,
+                      vertical: 8,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1113,12 +1099,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         Text(
                           'Visitor QR Code',
                           style: GoogleFonts.inter(
-                            fontSize: 13,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF0F2B48),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Expanded(
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -1153,8 +1139,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         child: Tooltip(
                                           message: 'Click to enlarge QR Code',
                                           child: Container(
-                                            width: 94,
-                                            height: 94,
+                                            width: 96,
+                                            height: 96,
                                             padding: const EdgeInsets.all(5),
                                             decoration: BoxDecoration(
                                               color: Colors.white,
@@ -1175,7 +1161,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                               data: qrData,
                                               version: QrVersions.auto,
                                               padding: EdgeInsets.zero,
-                                              size: 84.0,
+                                              size: 86.0,
                                             ),
                                           ),
                                         ),
@@ -1184,8 +1170,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   }
 
                                   return Container(
-                                    width: 94,
-                                    height: 94,
+                                    width: 96,
+                                    height: 96,
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF8FAFC),
                                       borderRadius: BorderRadius.circular(10),
@@ -1221,30 +1207,26 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                               // Right: Invitation / Check In / Out Time Fields
                               Expanded(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _buildQrDetailField(
-                                        'Invitation Code',
-                                        visitor?['invitation_code'] ?? '-',
-                                        isCopyable: true,
-                                      ),
-                                      const SizedBox(height: 3),
-                                      _buildQrDetailField(
-                                        'Check In Time',
-                                        visitor?['check_in'] ?? '-',
-                                      ),
-                                      const SizedBox(height: 3),
-                                      _buildQrDetailField(
-                                        'Check Out Time',
-                                        visitor?['check_out'] ?? '-',
-                                      ),
-                                    ],
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildQrDetailField(
+                                      'Invitation Code',
+                                      visitor?['invitation_code'] ?? '-',
+                                      isCopyable: true,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildQrDetailField(
+                                      'Check In Time',
+                                      visitor?['check_in'] ?? '-',
+                                    ),
+                                    const SizedBox(height: 6),
+                                    _buildQrDetailField(
+                                      'Check Out Time',
+                                      visitor?['check_out'] ?? '-',
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -1279,7 +1261,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           ),
           const SizedBox(width: 5),
           SizedBox(
-            width: 82,
+            width: 90,
             child: Text(
               label,
               maxLines: 1,
@@ -2079,11 +2061,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         Text(
           label,
           style: GoogleFonts.inter(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             color: const Color(0xFF1E293B),
           ),
         ),
+        const SizedBox(height: 1),
         Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -2093,8 +2076,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w400,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
                 color: const Color(0xFF64748B),
               ),
             ),
@@ -2518,7 +2501,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           setState(() {});
                         },
                       ),
-                      const SizedBox(width: 24),
+                      const SizedBox(width: 14),
                       _buildVisitorListTab(
                         1,
                         'Related Visitors ($relatedCount)',
@@ -2530,6 +2513,54 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         },
                       ),
                       const Spacer(),
+
+                      // Clear Button (Keyed for Tour Step 1)
+                      Material(
+                        key: _keySearchClear,
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            _topSearchController.clear();
+                            _visitorSearchController.clear();
+                            controller.resetDashboardToInitialState();
+                            setState(() {});
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            height: 26,
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _redDanger.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.close_rounded,
+                                  size: 12,
+                                  color: _redDanger,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Clear',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: _redDanger,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+
                       // Refresh Button Box on the far right of the tab bar
                       Material(
                         color: Colors.transparent,
@@ -2539,8 +2570,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           },
                           borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            height: 28,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            height: 26,
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(6),
@@ -2554,14 +2585,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               children: [
                                 const Icon(
                                   Icons.refresh_rounded,
-                                  size: 14,
+                                  size: 13,
                                   color: Color(0xFF003082),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 3),
                                 Text(
                                   'Refresh',
                                   style: GoogleFonts.inter(
-                                    fontSize: 11,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF003082),
                                   ),
@@ -3579,40 +3610,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             children: [
                               if (host != null &&
                                   (host['name'] != null || host['host_name'] != null)) ...[
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        host['name'] ?? host['host_name'] ?? 'Host Name',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF1E293B),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 9,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF00D696),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        host['status'] ?? host['host_status'] ?? 'Available',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  host['name'] ?? host['host_name'] ?? 'Host Name',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 2),
                                 Text(

@@ -260,7 +260,12 @@ class DashboardRepository {
       'show-checkout': 'false',
       'show-block': 'false',
       'show-expired': 'false',
-      if (search != null && search.isNotEmpty) 'search[value]': search,
+      if (search != null && search.isNotEmpty) ...{
+        'search[value]': search,
+        'search': search,
+        'visitor_name': search,
+        'name': search,
+      },
     };
 
     // 1. Try GET /api/operator-invitation/upcoming-visitor

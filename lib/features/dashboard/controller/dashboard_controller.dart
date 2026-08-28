@@ -698,7 +698,19 @@ class DashboardController extends GetxController {
         if (targetSearch.trim().isNotEmpty) {
           final query = targetSearch.trim().toLowerCase();
           mappedList = mappedList.where((item) {
-            final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '').toString().toLowerCase();
+            final name = (item['visitor_name'] ??
+                    item['name'] ??
+                    item['full_name'] ??
+                    item['visitor_full_name'] ??
+                    item['guest_name'] ??
+                    item['visitor']?['name'] ??
+                    item['visitor']?['visitor_name'] ??
+                    item['visitor']?['full_name'] ??
+                    item['raw']?['name'] ??
+                    item['raw']?['visitor_name'] ??
+                    '')
+                .toString()
+                .toLowerCase();
             return name.contains(query);
           }).toList();
           apiTotal = mappedList.length;
