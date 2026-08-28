@@ -3921,32 +3921,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           .toString()
                           .trim();
 
-                      final rawSelfieImg = (visitor?['selfie_image'] ??
-                              visitor?['visitor_face'] ??
-                              visitor?['faceimage'] ??
-                              visitor?['face_image'] ??
-                              visitor?['avatar'] ??
-                              visitor?['photo'] ??
-                              visitor?['visitor']?['face_image'] ??
-                              visitor?['visitor']?['faceimage'] ??
-                              visitor?['raw']?['selfie_image'] ??
-                              visitor?['raw']?['face_image'] ??
-                              '')
-                          .toString()
-                          .trim();
-
-                      // Identity image prioritizes KTP image, and falls back to Selfie image if only selfie was uploaded
+                      // Identity image strictly displays KTP / Identity Document ONLY (no selfie fallback)
                       String resolvedImg = '';
                       if (rawKtpImg.isNotEmpty &&
                           rawKtpImg != '-' &&
                           rawKtpImg != 'null' &&
                           !rawKtpImg.startsWith('assets/')) {
                         resolvedImg = rawKtpImg;
-                      } else if (rawSelfieImg.isNotEmpty &&
-                          rawSelfieImg != '-' &&
-                          rawSelfieImg != 'null' &&
-                          !rawSelfieImg.startsWith('assets/')) {
-                        resolvedImg = rawSelfieImg;
                       }
 
                       final hasImg = resolvedImg.isNotEmpty;
@@ -3985,9 +3966,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       }
 
                       final cdnUrl = AppConstants.getCdnImageUrl(resolvedImg);
+                      final visitorName = (visitor?['visitor_name'] ?? visitor?['name'] ?? '').toString().trim();
 
                       return InkWell(
-                        onTap: () => _showIdentityImagePreview(context, cdnUrl),
+                        onTap: () => _showIdentityImagePreview(
+                          context,
+                          cdnUrl,
+                          visitorName: visitorName,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           width: double.infinity,
@@ -4111,7 +4097,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   });
   }
 
-  void _showIdentityImagePreview(BuildContext context, String imageUrl) {
+  void _showIdentityImagePreview(
+    BuildContext context,
+    String imageUrl, {
+    String visitorName = '',
+  }) {
     showDialog(
       context: context,
       builder: (dialogCtx) => Dialog(
@@ -4138,17 +4128,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.badge_rounded, color: Color(0xFF004385), size: 20),
+                    const Icon(Icons.badge_rounded, color: Color(0xFF004385), size: 22),
                     const SizedBox(width: 8),
-                    Text(
-                      'Identity Document Preview',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
+                    Expanded(
+                      child: Text(
+                        visitorName.isNotEmpty && visitorName != '-'
+                            ? '$visitorName - Identity Image'
+                            : 'Identity Document Preview',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
                       onPressed: () => Navigator.of(dialogCtx).pop(),

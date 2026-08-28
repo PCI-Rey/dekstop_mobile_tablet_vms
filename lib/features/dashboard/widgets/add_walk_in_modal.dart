@@ -163,15 +163,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   String? _singleVehicleType;
   final TextEditingController _singleVehiclePlateCtrl = TextEditingController();
 
-  final List<DropdownMenuItemData<String>> _vehicleTypeOptions = [
-    DropdownMenuItemData(value: 'car', label: 'Car'),
-    DropdownMenuItemData(value: 'private_car', label: 'Private Car'),
-    DropdownMenuItemData(value: 'motor', label: 'Motorcycle'),
-    DropdownMenuItemData(value: 'bus', label: 'Bus'),
-    DropdownMenuItemData(value: 'truck', label: 'Truck'),
-    DropdownMenuItemData(value: 'Bicycle', label: 'Bicycle'),
-    DropdownMenuItemData(value: 'Other', label: 'Other'),
-  ];
+
 
   // --- Step 5 & 6 State: Documents ---
   UploadedFileData? _singleSelfieImage;
@@ -325,6 +317,48 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           .toList();
       if (roles.isNotEmpty) return roles;
     }
+    return [];
+  }
+
+  List<DropdownMenuItemData<String>> _getVehicleTypeOptions() {
+    final sectionsRaw = (_visitorTypeDetail?['section_page_visitor_types'] ??
+            _selectedVisitorType?['section_page_visitor_types']) as List<dynamic>?;
+    if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
+      for (final s in sectionsRaw) {
+        if (s is! Map) continue;
+        final sec = Map<String, dynamic>.from(s);
+        final forms = [
+          ...((sec['visit_form'] as List<dynamic>?) ?? []),
+          ...((sec['pra_form'] as List<dynamic>?) ?? []),
+        ];
+        for (final f in forms) {
+          if (f is! Map) continue;
+          final field = Map<String, dynamic>.from(f);
+          final remarks = (field['remarks'] ?? '').toString().toLowerCase().trim();
+          final shortName = (field['short_name'] ?? '').toString().toLowerCase().trim();
+          if (remarks == 'vehicle_type' || shortName.contains('vehicle type')) {
+            final multipleOptions = field['multiple_option_fields'] as List<dynamic>?;
+            if (multipleOptions != null && multipleOptions.isNotEmpty) {
+              return multipleOptions.map((opt) {
+                final optMap = Map<String, dynamic>.from(opt as Map);
+                final val = (optMap['value'] ?? optMap['name'] ?? '').toString();
+                final name = (optMap['name'] ?? optMap['value'] ?? '').toString();
+                final displayLabel = name.isNotEmpty
+                    ? (name.length > 1
+                        ? '${name[0].toUpperCase()}${name.substring(1)}'
+                        : name.toUpperCase())
+                    : val;
+                return DropdownMenuItemData<String>(
+                  value: val,
+                  label: displayLabel,
+                );
+              }).toList();
+            }
+          }
+        }
+      }
+    }
+
     return [];
   }
 
@@ -800,11 +834,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       setState(() {
         _visitorTypeDetail = detail;
         _isLoadingVisitorTypeDetail = false;
-        _singleIsEmployee = null;
+        _singleIsEmployee = false;
         _singleRole = null;
+        _singleVehicleType = null;
         for (final v in _groupVisitors) {
           v.isEmployee = null;
           v.role = null;
+          v.vehicleType = null;
         }
         _clearSingle();
       });
@@ -1378,6 +1414,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             filteredItems: filtered,
             isEmployeeMode: _singleIsEmployee == true,
             onTap: () => setState(() => _singleIsSearchOpen = true),
+            onToggleOpen: () => setState(() => _singleIsSearchOpen = !_singleIsSearchOpen),
             onChanged: (val) => setState(() => _singleIsSearchOpen = true),
             onClear: _clearSingle,
             onSelect: _onSingleSelect,
@@ -1407,7 +1444,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           onTap: () {
                             setState(() {
                               if (_singleIsEmployee == true) {
-                                _singleIsEmployee = null;
+                                _singleIsEmployee = false;
                               } else {
                                 _singleIsEmployee = true;
                               }
@@ -1422,7 +1459,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           onTap: () {
                             setState(() {
                               if (_singleIsEmployee == false) {
-                                _singleIsEmployee = null;
+                                _singleIsEmployee = false;
                               } else {
                                 _singleIsEmployee = false;
                               }
@@ -1501,6 +1538,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                   _buildTextInputField(
                     controller: targetCtrl,
                     hint: hintText,
+                    enabled: !(remarks == 'name' && _singleIsEmployee == true),
+                    readOnly: (remarks == 'name' && _singleIsEmployee == true),
                   ),
                 ],
               ),
@@ -1666,7 +1705,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          idx == 0 ? 'Primary Visitor' : 'Visitor #${idx + 1}',
+                          'Visitor ${idx + 1}',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -1695,6 +1734,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                       filteredItems: filtered,
                       isEmployeeMode: visitor.isEmployee == true,
                       onTap: () => setState(() => visitor.isSearchOpen = true),
+                      onToggleOpen: () => setState(() => visitor.isSearchOpen = !visitor.isSearchOpen),
                       onChanged: (val) => setState(() => visitor.isSearchOpen = true),
                       onClear: () => _clearGroup(idx),
                       onSelect: (item) => _onGroupSelect(idx, item),
@@ -2021,13 +2061,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           Row(
             children: [
               _buildRadioOption(
-                label: 'Yes, I am driving',
+                label: 'Driving',
                 isSelected: _singleIsDriving == true,
                 onTap: () => setState(() => _singleIsDriving = true),
               ),
               const SizedBox(width: 24),
               _buildRadioOption(
-                label: 'No vehicle',
+                label: 'No Vehicle',
                 isSelected: _singleIsDriving == false,
                 onTap: () => setState(() => _singleIsDriving = false),
               ),
@@ -2041,7 +2081,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             _buildCleanDropdownField<String>(
               hint: 'Select Vehicle Type',
               selectedValue: _singleVehicleType,
-              items: _vehicleTypeOptions,
+              items: _getVehicleTypeOptions(),
               onSelected: (val) => setState(() => _singleVehicleType = val),
             ),
             const SizedBox(height: 16),
@@ -2082,7 +2122,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               final v = _groupVisitors[idx];
               final name = v.fullNameCtrl.text.trim().isNotEmpty
                   ? v.fullNameCtrl.text.trim()
-                  : 'Visitor #${idx + 1}';
+                  : 'Visitor ${idx + 1}';
 
               return Container(
                 padding: const EdgeInsets.all(16),
@@ -2123,7 +2163,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                       _buildCleanDropdownField<String>(
                         hint: 'Select Vehicle Type',
                         selectedValue: v.vehicleType,
-                        items: _vehicleTypeOptions,
+                        items: _getVehicleTypeOptions(),
                         onSelected: (val) => setState(() => v.vehicleType = val),
                       ),
                       const SizedBox(height: 10),
@@ -2211,7 +2251,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             child: Row(
               children: List.generate(_groupVisitors.length, (idx) {
                 final v = _groupVisitors[idx];
-                final name = v.fullNameCtrl.text.trim().isNotEmpty ? v.fullNameCtrl.text.trim() : 'Visitor #${idx + 1}';
+                final name = v.fullNameCtrl.text.trim().isNotEmpty ? v.fullNameCtrl.text.trim() : 'Visitor ${idx + 1}';
                 final isSelected = _selectedGroupMemberIndex == idx;
                 final hasImage = (isKtp ? v.ktpImage : v.selfieImage) != null;
 
@@ -3280,12 +3320,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     required TextEditingController controller,
     required String hint,
     TextInputType keyboardType = TextInputType.text,
+    bool enabled = true,
+    bool readOnly = false,
     ValueChanged<String>? onChanged,
   }) {
+    final isFieldDisabled = !enabled || readOnly;
     return SizedBox(
       height: 44,
       child: TextField(
         controller: controller,
+        enabled: enabled,
+        readOnly: isFieldDisabled,
         keyboardType: keyboardType,
         textAlignVertical: TextAlignVertical.center,
         onChanged: (val) {
@@ -3297,13 +3342,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         },
         style: GoogleFonts.inter(
           fontSize: 13,
-          color: const Color(0xFF1E293B),
+          color: isFieldDisabled ? const Color(0xFF64748B) : const Color(0xFF1E293B),
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           isDense: true,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: isFieldDisabled ? const Color(0xFFF1F5F9) : Colors.white,
           hintText: hint,
           hintStyle: GoogleFonts.inter(
             fontSize: 12.5,
@@ -3313,15 +3358,22 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            borderSide: BorderSide(color: isFieldDisabled ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            borderSide: BorderSide(color: isFieldDisabled ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+            borderSide: BorderSide(
+              color: isFieldDisabled ? const Color(0xFFE2E8F0) : const Color(0xFF004385),
+              width: isFieldDisabled ? 1.0 : 1.5,
+            ),
           ),
         ),
       ),
@@ -3568,6 +3620,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     required List<Map<String, dynamic>> filteredItems,
     required bool isEmployeeMode,
     required VoidCallback onTap,
+    required VoidCallback onToggleOpen,
     required ValueChanged<String> onChanged,
     required VoidCallback onClear,
     required ValueChanged<Map<String, dynamic>> onSelect,
@@ -3598,9 +3651,34 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 fontWeight: FontWeight.w400,
               ),
               prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF64748B)),
-              suffixIcon: selectedData != null || controller.text.isNotEmpty
-                  ? IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onClear)
-                  : const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selectedData != null || controller.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
+                      tooltip: 'Clear',
+                      onPressed: onClear,
+                      splashRadius: 18,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    ),
+                  IconButton(
+                    icon: Icon(
+                      isSearchOpen
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFF64748B),
+                      size: 22,
+                    ),
+                    tooltip: isSearchOpen ? 'Collapse list' : 'Expand list',
+                    onPressed: onToggleOpen,
+                    splashRadius: 18,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+                ],
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -3785,7 +3863,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     }
 
     int? selectedHour = initialDateTime?.hour;
-    int? selectedMinute = initialDateTime != null ? (initialDateTime.minute ~/ 5) * 5 : null;
+    int? selectedMinute = initialDateTime?.minute;
 
     return showDialog<DateTime>(
       context: context,
@@ -3809,7 +3887,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           if (selectedMinute != null &&
               selectedHour == minDateTime.hour &&
               selectedMinute! <= minDateTime.minute) {
-            selectedMinute = ((minDateTime.minute ~/ 5) + 1) * 5;
+            selectedMinute = minDateTime.minute + 1;
             if (selectedMinute! >= 60) {
               selectedHour = selectedHour! + 1;
               selectedMinute = 0;
@@ -3821,12 +3899,21 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           final h = selectedHour;
           final m = selectedMinute;
           if (h != null && hourScrollController.hasClients) {
-            final targetH = h * 38.0;
+            final targetH = (h * 38.0) - 92.0;
             hourScrollController.jumpTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent));
+          } else if (hourScrollController.hasClients) {
+            if (minDateTime != null && isSameDayAsMin(selectedDate)) {
+              final targetH = minDateTime.hour * 38.0;
+              hourScrollController.jumpTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent));
+            } else {
+              hourScrollController.jumpTo(0.0);
+            }
           }
           if (m != null && minuteScrollController.hasClients) {
-            final targetM = (m ~/ 5) * 38.0;
+            final targetM = (m * 38.0) - 92.0;
             minuteScrollController.jumpTo(targetM.clamp(0.0, minuteScrollController.position.maxScrollExtent));
+          } else if (minuteScrollController.hasClients) {
+            minuteScrollController.jumpTo(0.0);
           }
         });
 
@@ -3952,30 +4039,39 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 ),
                               ),
                               child: CalendarDatePicker(
+                                key: ValueKey('${selectedDate.year}-${selectedDate.month}-${selectedDate.day}'),
                                 initialDate: selectedDate,
                                 firstDate: minDateTime != null
                                     ? DateTime(minDateTime.year, minDateTime.month, minDateTime.day)
                                     : DateTime(2020),
                                 lastDate: DateTime(2035),
                                 onDateChanged: (newDate) {
-                                  setDialogState(() {
-                                    selectedDate = newDate;
-                                    if (selectedHour != null && isSameDayAsMin(newDate)) {
-                                      if (selectedHour! < minDateTime!.hour) {
-                                        selectedHour = minDateTime.hour;
-                                      }
-                                      if (selectedMinute != null &&
-                                          selectedHour == minDateTime.hour &&
-                                          selectedMinute! <= minDateTime.minute) {
-                                        selectedMinute = ((minDateTime.minute ~/ 5) + 1) * 5;
-                                        if (selectedMinute! >= 60) {
-                                          selectedHour = selectedHour! + 1;
-                                          selectedMinute = 0;
+                                    setDialogState(() {
+                                      selectedDate = newDate;
+                                      if (selectedHour != null && isSameDayAsMin(newDate)) {
+                                        if (selectedHour! < minDateTime!.hour) {
+                                          selectedHour = minDateTime.hour;
+                                        }
+                                        if (selectedMinute != null &&
+                                            selectedHour == minDateTime.hour &&
+                                            selectedMinute! <= minDateTime.minute) {
+                                          selectedMinute = minDateTime.minute + 1;
+                                          if (selectedMinute! >= 60) {
+                                            selectedHour = selectedHour! + 1;
+                                            selectedMinute = 0;
+                                          }
                                         }
                                       }
+                                    });
+                                    if (selectedHour == null && hourScrollController.hasClients) {
+                                      if (minDateTime != null && isSameDayAsMin(newDate)) {
+                                        final targetH = minDateTime.hour * 38.0;
+                                        hourScrollController.animateTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent), duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic);
+                                      } else {
+                                        hourScrollController.animateTo(0.0, duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic);
+                                      }
                                     }
-                                  });
-                                },
+                                  },
                               ),
                             ),
                           ),
@@ -4079,7 +4175,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                               child: ListView.builder(
                                                 controller: hourScrollController,
                                                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                                padding: const EdgeInsets.symmetric(vertical: 96, horizontal: 4),
+                                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                                                 itemCount: 24,
                                                 itemBuilder: (ctx, h) {
                                                   final isHourDisabled = isSameDay && h < minDateTime!.hour;
@@ -4098,7 +4194,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                                                   selectedMinute ??= 0;
                                                                   if (isSameDay && h == minDateTime!.hour) {
                                                                     if (selectedMinute! <= minDateTime.minute) {
-                                                                      selectedMinute = ((minDateTime.minute ~/ 5) + 1) * 5;
+                                                                      selectedMinute = minDateTime.minute + 1;
                                                                       if (selectedMinute! >= 60) {
                                                                         selectedHour = h + 1;
                                                                         selectedMinute = 0;
@@ -4108,7 +4204,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                                                 });
                                                                 if (hourScrollController.hasClients) {
                                                                   hourScrollController.animateTo(
-                                                                    (h * 38.0).clamp(0.0, hourScrollController.position.maxScrollExtent),
+                                                                    ((h * 38.0) - 92.0).clamp(0.0, hourScrollController.position.maxScrollExtent),
                                                                     duration: const Duration(milliseconds: 250),
                                                                     curve: Curves.easeOutCubic,
                                                                   );
@@ -4168,10 +4264,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                               child: ListView.builder(
                                                 controller: minuteScrollController,
                                                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                                padding: const EdgeInsets.symmetric(vertical: 96, horizontal: 4),
-                                                itemCount: 12,
-                                                itemBuilder: (ctx, idx) {
-                                                  final m = idx * 5;
+                                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                                itemCount: 60,
+                                                itemBuilder: (ctx, m) {
                                                   final isMinuteDisabled = isSameDay &&
                                                       selectedHour != null &&
                                                       selectedHour == minDateTime!.hour &&
@@ -4192,7 +4287,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                                                 });
                                                                 if (minuteScrollController.hasClients) {
                                                                   minuteScrollController.animateTo(
-                                                                    (idx * 38.0).clamp(0.0, minuteScrollController.position.maxScrollExtent),
+                                                                    ((m * 38.0) - 92.0).clamp(0.0, minuteScrollController.position.maxScrollExtent),
                                                                     duration: const Duration(milliseconds: 250),
                                                                     curve: Curves.easeOutCubic,
                                                                   );
@@ -4261,7 +4356,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                               onPressed: () {
                                 final nowGmt7 = _getGmt7Now();
                                 final targetHour = nowGmt7.hour;
-                                final targetMinute = (nowGmt7.minute ~/ 5) * 5;
+                                final targetMinute = nowGmt7.minute;
 
                                 setDialogState(() {
                                   selectedDate = DateTime(nowGmt7.year, nowGmt7.month, nowGmt7.day);
@@ -4270,7 +4365,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 });
 
                                 if (hourScrollController.hasClients) {
-                                  final targetH = targetHour * 38.0;
+                                  final targetH = (targetHour * 38.0) - 92.0;
                                   hourScrollController.animateTo(
                                     targetH.clamp(0.0, hourScrollController.position.maxScrollExtent),
                                     duration: const Duration(milliseconds: 250),
@@ -4278,7 +4373,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                   );
                                 }
                                 if (minuteScrollController.hasClients) {
-                                  final targetM = (targetMinute ~/ 5) * 38.0;
+                                  final targetM = (targetMinute * 38.0) - 92.0;
                                   minuteScrollController.animateTo(
                                     targetM.clamp(0.0, minuteScrollController.position.maxScrollExtent),
                                     duration: const Duration(milliseconds: 250),
@@ -4286,16 +4381,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                   );
                                 }
                               },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.flash_on_rounded, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Now',
-                                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
-                                  ),
-                                ],
+                              child: Text(
+                                'Today',
+                                style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
                               ),
                             ),
                           const Spacer(),

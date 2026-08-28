@@ -43,15 +43,9 @@ class GroupVisitorEntry {
 class AddPraRegistrationModal extends StatefulWidget {
   final bool isWalkIn;
 
-  const AddPraRegistrationModal({
-    super.key,
-    this.isWalkIn = false,
-  });
+  const AddPraRegistrationModal({super.key, this.isWalkIn = false});
 
-  static Future<void> show(
-    BuildContext context, {
-    bool isWalkIn = false,
-  }) {
+  static Future<void> show(BuildContext context, {bool isWalkIn = false}) {
     return showDialog(
       context: context,
       barrierDismissible: true,
@@ -72,7 +66,8 @@ class AddPraRegistrationModal extends StatefulWidget {
 class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   final DashboardController controller = Get.find<DashboardController>();
 
-  int _currentStep = 1; // 1: User Type, 2: Visitor Information, 3: Purpose Visit
+  int _currentStep =
+      1; // 1: User Type, 2: Visitor Information, 3: Purpose Visit
 
   // --- Step 1 State ---
   Map<String, dynamic>? _selectedVisitorType;
@@ -175,7 +170,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         _isLoadingVisitorTypeDetail = false;
 
         // Do not auto-select employee; let user explicitly select Yes or No
-        _singleIsEmployee = null;
+        _singleIsEmployee = false;
         for (final v in _groupVisitors) {
           v.isEmployee = null;
         }
@@ -191,8 +186,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   }
 
   List<String> _getRolesForSelectedType() {
-    final rolesRaw = (_visitorTypeDetail?['visitor_roles'] ??
-        _selectedVisitorType?['visitor_roles']) as List<dynamic>?;
+    final rolesRaw =
+        (_visitorTypeDetail?['visitor_roles'] ??
+                _selectedVisitorType?['visitor_roles'])
+            as List<dynamic>?;
     if (rolesRaw != null && rolesRaw.isNotEmpty) {
       final roles = rolesRaw
           .map((r) => (r['role'] ?? '').toString())
@@ -208,10 +205,14 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     if (_singleRole != null && _singleRole!.isNotEmpty) {
       return _singleRole!;
     }
-    final rolesRaw = (_visitorTypeDetail?['visitor_roles'] ??
-        _selectedVisitorType?['visitor_roles']) as List<dynamic>?;
+    final rolesRaw =
+        (_visitorTypeDetail?['visitor_roles'] ??
+                _selectedVisitorType?['visitor_roles'])
+            as List<dynamic>?;
     if (rolesRaw != null && rolesRaw.isNotEmpty) {
-      final defaultRole = rolesRaw.firstWhereOrNull((r) => r['is_default'] == true);
+      final defaultRole = rolesRaw.firstWhereOrNull(
+        (r) => r['is_default'] == true,
+      );
       if (defaultRole != null) {
         return (defaultRole['role'] ?? 'Visitor').toString();
       }
@@ -220,10 +221,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     return 'Visitor';
   }
 
-
-
   List<Map<String, dynamic>> _getVisitorInfoPraFormFields() {
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sectionsRaw =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       for (var s in sectionsRaw) {
         final sec = Map<String, dynamic>.from(s as Map);
@@ -241,16 +241,42 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     }
     // Fallback standard fields if detail not yet loaded
     return [
-      {'remarks': 'name', 'long_display_text': 'Full Name', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'email', 'long_display_text': 'Email', 'mandatory': true, 'field_type': 2},
-      {'remarks': 'organization', 'long_display_text': 'Department / Organization / Company', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'phone', 'long_display_text': 'Phone', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'indentity_id', 'long_display_text': 'Identity (KTP)', 'mandatory': true, 'field_type': 0},
+      {
+        'remarks': 'name',
+        'long_display_text': 'Full Name',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'email',
+        'long_display_text': 'Email',
+        'mandatory': true,
+        'field_type': 2,
+      },
+      {
+        'remarks': 'organization',
+        'long_display_text': 'Department / Organization / Company',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'phone',
+        'long_display_text': 'Phone',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'indentity_id',
+        'long_display_text': 'Identity (KTP)',
+        'mandatory': true,
+        'field_type': 0,
+      },
     ];
   }
 
   List<Map<String, dynamic>> _getPurposeVisitPraFormFields() {
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sectionsRaw =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       for (var s in sectionsRaw) {
         final sec = Map<String, dynamic>.from(s as Map);
@@ -268,31 +294,79 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     }
     // Fallback standard purpose fields
     return [
-      {'remarks': 'site_place', 'long_display_text': 'Destination', 'mandatory': true, 'field_type': 3},
-      {'remarks': 'host', 'long_display_text': 'PIC Host', 'mandatory': true, 'field_type': 3},
-      {'remarks': 'agenda', 'long_display_text': 'Agenda', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'visitor_period_start', 'long_display_text': 'Visit Start', 'mandatory': true, 'field_type': 9},
-      {'remarks': 'visitor_period_end', 'long_display_text': 'Visit End', 'mandatory': true, 'field_type': 9},
+      {
+        'remarks': 'site_place',
+        'long_display_text': 'Destination',
+        'mandatory': true,
+        'field_type': 3,
+      },
+      {
+        'remarks': 'host',
+        'long_display_text': 'PIC Host',
+        'mandatory': true,
+        'field_type': 3,
+      },
+      {
+        'remarks': 'agenda',
+        'long_display_text': 'Agenda',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'visitor_period_start',
+        'long_display_text': 'Visit Start',
+        'mandatory': true,
+        'field_type': 9,
+      },
+      {
+        'remarks': 'visitor_period_end',
+        'long_display_text': 'Visit End',
+        'mandatory': true,
+        'field_type': 9,
+      },
     ];
   }
 
   bool get _isStep2Valid {
     final fields = _getVisitorInfoPraFormFields();
     if (_isGroup == true) {
-      if (_groupNameController.text.trim().isEmpty) return false;
-      if (_groupVisitors.isEmpty) return false;
+      if (_groupNameController.text.trim().isEmpty) {
+        return false;
+      }
+      if (_groupVisitors.isEmpty) {
+        return false;
+      }
       for (final v in _groupVisitors) {
         for (final f in fields) {
           final isMandatory = f['mandatory'] == true;
-          if (!isMandatory) continue;
+          if (!isMandatory) {
+            continue;
+          }
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-          if (remarks == 'is_employee' && v.isEmployee == null) return false;
-          if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) return false;
-          if (remarks == 'email' && v.emailCtrl.text.trim().isEmpty) return false;
-          if (remarks == 'phone' && v.phoneCtrl.text.trim().isEmpty) return false;
-          if ((remarks == 'organization' || remarks == 'company') && v.orgCtrl.text.trim().isEmpty) return false;
-          if ((remarks == 'identity_id' || remarks == 'indentity_id') && v.identityCtrl.text.trim().isEmpty) return false;
-          if ((remarks == 'visitor_role' || remarks == 'role') && (v.role == null || v.role!.isEmpty)) return false;
+          if (remarks == 'is_employee' && v.isEmployee == null) {
+            return false;
+          }
+          if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) {
+            return false;
+          }
+          if (remarks == 'email' && v.emailCtrl.text.trim().isEmpty) {
+            return false;
+          }
+          if (remarks == 'phone' && v.phoneCtrl.text.trim().isEmpty) {
+            return false;
+          }
+          if ((remarks == 'organization' || remarks == 'company') &&
+              v.orgCtrl.text.trim().isEmpty) {
+            return false;
+          }
+          if ((remarks == 'identity_id' || remarks == 'indentity_id') &&
+              v.identityCtrl.text.trim().isEmpty) {
+            return false;
+          }
+          if ((remarks == 'visitor_role' || remarks == 'role') &&
+              (v.role == null || v.role!.isEmpty)) {
+            return false;
+          }
           if (remarks != 'name' &&
               remarks != 'email' &&
               remarks != 'phone' &&
@@ -304,7 +378,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               remarks != 'role' &&
               remarks != 'is_employee' &&
               remarks != 'employee') {
-            if (v.extraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+            if (v.extraControllers[remarks]?.text.trim().isEmpty ?? true) {
+              return false;
+            }
           }
         }
       }
@@ -312,15 +388,34 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     } else {
       for (final f in fields) {
         final isMandatory = f['mandatory'] == true;
-        if (!isMandatory) continue;
+        if (!isMandatory) {
+          continue;
+        }
         final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-        if (remarks == 'is_employee' && _singleIsEmployee == null) return false;
-        if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) return false;
-        if (remarks == 'email' && _singleEmailCtrl.text.trim().isEmpty) return false;
-        if (remarks == 'phone' && _singlePhoneCtrl.text.trim().isEmpty) return false;
-        if ((remarks == 'organization' || remarks == 'company') && _singleOrgCtrl.text.trim().isEmpty) return false;
-        if ((remarks == 'identity_id' || remarks == 'indentity_id') && _singleIdentityCtrl.text.trim().isEmpty) return false;
-        if ((remarks == 'visitor_role' || remarks == 'role') && (_singleRole == null || _singleRole!.isEmpty)) return false;
+        if (remarks == 'is_employee' && _singleIsEmployee == null) {
+          return false;
+        }
+        if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) {
+          return false;
+        }
+        if (remarks == 'email' && _singleEmailCtrl.text.trim().isEmpty) {
+          return false;
+        }
+        if (remarks == 'phone' && _singlePhoneCtrl.text.trim().isEmpty) {
+          return false;
+        }
+        if ((remarks == 'organization' || remarks == 'company') &&
+            _singleOrgCtrl.text.trim().isEmpty) {
+          return false;
+        }
+        if ((remarks == 'identity_id' || remarks == 'indentity_id') &&
+            _singleIdentityCtrl.text.trim().isEmpty) {
+          return false;
+        }
+        if ((remarks == 'visitor_role' || remarks == 'role') &&
+            (_singleRole == null || _singleRole!.isEmpty)) {
+          return false;
+        }
         if (remarks != 'name' &&
             remarks != 'email' &&
             remarks != 'phone' &&
@@ -332,7 +427,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             remarks != 'role' &&
             remarks != 'is_employee' &&
             remarks != 'employee') {
-          if (_singleExtraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+          if (_singleExtraControllers[remarks]?.text.trim().isEmpty ?? true) {
+            return false;
+          }
         }
       }
       return true;
@@ -342,28 +439,61 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   bool get _isStep3Valid {
     final fields = _getPurposeVisitPraFormFields();
     if (fields.isEmpty) {
-      if (_selectedDestination == null) return false;
-      if (_selectedPicHost == null) return false;
-      if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
-      if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
-      if (_visitStart == null) return false;
-      if (_visitEnd == null) return false;
-      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
+      if (_selectedDestination == null) {
+        return false;
+      }
+      if (_selectedPicHost == null) {
+        return false;
+      }
+      if (_selectedAgenda == null || _selectedAgenda!.isEmpty) {
+        return false;
+      }
+      if (_selectedAgenda == 'Others' &&
+          _otherAgendaController.text.trim().isEmpty) {
+        return false;
+      }
+      if (_visitStart == null) {
+        return false;
+      }
+      if (_visitEnd == null) {
+        return false;
+      }
+      if (_visitEnd!.isBefore(_visitStart!) ||
+          _visitEnd!.isAtSameMomentAs(_visitStart!)) {
+        return false;
+      }
       return true;
     }
 
     for (final f in fields) {
       final isMandatory = f['mandatory'] == true;
-      if (!isMandatory) continue;
-      final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-      if ((remarks == 'site_place' || remarks == 'destination') && _selectedDestination == null) return false;
-      if ((remarks == 'host' || remarks == 'pic_host') && _selectedPicHost == null) return false;
-      if (remarks == 'agenda') {
-        if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
-        if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
+      if (!isMandatory) {
+        continue;
       }
-      if (remarks == 'visitor_period_start' && _visitStart == null) return false;
-      if (remarks == 'visitor_period_end' && _visitEnd == null) return false;
+      final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
+      if ((remarks == 'site_place' || remarks == 'destination') &&
+          _selectedDestination == null) {
+        return false;
+      }
+      if ((remarks == 'host' || remarks == 'pic_host') &&
+          _selectedPicHost == null) {
+        return false;
+      }
+      if (remarks == 'agenda') {
+        if (_selectedAgenda == null || _selectedAgenda!.isEmpty) {
+          return false;
+        }
+        if (_selectedAgenda == 'Others' &&
+            _otherAgendaController.text.trim().isEmpty) {
+          return false;
+        }
+      }
+      if (remarks == 'visitor_period_start' && _visitStart == null) {
+        return false;
+      }
+      if (remarks == 'visitor_period_end' && _visitEnd == null) {
+        return false;
+      }
       if (remarks != 'site_place' &&
           remarks != 'destination' &&
           remarks != 'host' &&
@@ -371,11 +501,16 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           remarks != 'agenda' &&
           remarks != 'visitor_period_start' &&
           remarks != 'visitor_period_end') {
-        if (_purposeExtraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+        if (_purposeExtraControllers[remarks]?.text.trim().isEmpty ?? true) {
+          return false;
+        }
       }
     }
     if (_visitStart != null && _visitEnd != null) {
-      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
+      if (_visitEnd!.isBefore(_visitStart!) ||
+          _visitEnd!.isAtSameMomentAs(_visitStart!)) {
+        return false;
+      }
     }
     return true;
   }
@@ -409,11 +544,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   void _onSingleSelect(Map<String, dynamic> item) {
     setState(() {
       _singleSelectedData = item;
-      _singleFullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
+      _singleFullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '')
+          .toString();
       _singleEmailCtrl.text = (item['email'] ?? '').toString();
       _singlePhoneCtrl.text = (item['phone'] ?? '').toString();
-      _singleOrgCtrl.text = _extractOrganizationName(item['Organization'] ?? item['organization'], item['company']);
-      _singleIdentityCtrl.text = (item['identity_id'] ?? item['nik'] ?? item['indentity_id'] ?? '').toString();
+      _singleOrgCtrl.text = _extractOrganizationName(
+        item['Organization'] ?? item['organization'],
+        item['company'],
+      );
+      _singleIdentityCtrl.text =
+          (item['identity_id'] ?? item['nik'] ?? item['indentity_id'] ?? '')
+              .toString();
       _singleSearchCtrl.text = _singleFullNameCtrl.text;
       _singleIsSearchOpen = false;
     });
@@ -439,11 +580,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     final entry = _groupVisitors[index];
     setState(() {
       entry.selectedData = item;
-      entry.fullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
+      entry.fullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '')
+          .toString();
       entry.emailCtrl.text = (item['email'] ?? '').toString();
       entry.phoneCtrl.text = (item['phone'] ?? '').toString();
-      entry.orgCtrl.text = _extractOrganizationName(item['Organization'] ?? item['organization'], item['company']);
-      entry.identityCtrl.text = (item['identity_id'] ?? item['nik'] ?? item['indentity_id'] ?? '').toString();
+      entry.orgCtrl.text = _extractOrganizationName(
+        item['Organization'] ?? item['organization'],
+        item['company'],
+      );
+      entry.identityCtrl.text =
+          (item['identity_id'] ?? item['nik'] ?? item['indentity_id'] ?? '')
+              .toString();
       entry.searchCtrl.text = entry.fullNameCtrl.text;
       entry.isSearchOpen = false;
     });
@@ -469,7 +616,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   void _addGroupVisitor() {
     setState(() {
       final entry = GroupVisitorEntry();
-      entry.isEmployee = null;
+      entry.isEmployee = false;
       entry.role = null;
       _groupVisitors.add(entry);
     });
@@ -488,7 +635,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       if (_selectedVisitorType == null || _isGroup == null) {
         AppSnackbar.warning(
           title: 'Selection Required',
-          message: 'Please select both Visitor Type and Status Visitor to continue.',
+          message:
+              'Please select both Visitor Type and Status Visitor to continue.',
         );
         return;
       }
@@ -496,7 +644,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     } else if (_currentStep == 2) {
       final fields = _getVisitorInfoPraFormFields();
       final isEmpField = fields.firstWhereOrNull(
-        (f) => (f['remarks'] ?? '').toString().toLowerCase().trim() == 'is_employee',
+        (f) =>
+            (f['remarks'] ?? '').toString().toLowerCase().trim() ==
+            'is_employee',
       );
 
       if (_isGroup == true) {
@@ -512,7 +662,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             if (_groupVisitors[i].isEmployee == null) {
               AppSnackbar.warning(
                 title: 'Employee Status Required',
-                message: 'Please specify whether Visitor #${i + 1} is an Employee (Yes / No).',
+                message:
+                    'Please specify whether Visitor ${i + 1} is an Employee (Yes / No).',
               );
               return;
             }
@@ -521,14 +672,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         for (int i = 0; i < _groupVisitors.length; i++) {
           if (!_groupVisitors[i].isValid) {
             AppSnackbar.warning(
-              title: 'Incomplete Visitor #${i + 1}',
-              message: 'Please complete all required fields for Visitor #${i + 1}.',
+              title: 'Incomplete Visitor ${i + 1}',
+              message:
+                  'Please complete all required fields for Visitor ${i + 1}.',
             );
             return;
           }
         }
       } else {
-        if (isEmpField != null && isEmpField['mandatory'] == true && _singleIsEmployee == null) {
+        if (isEmpField != null &&
+            isEmpField['mandatory'] == true &&
+            _singleIsEmployee == null) {
           AppSnackbar.warning(
             title: 'Employee Status Required',
             message: 'Please specify whether you are an Employee (Yes / No).',
@@ -561,7 +715,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     const months = [
       'January',
@@ -575,7 +729,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     final dayName = days[dt.weekday - 1];
     final monthName = months[dt.month - 1];
@@ -605,9 +759,14 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         : DateTime.now().toUtc().toIso8601String().substring(0, 19);
     final endIso = end != null
         ? end.toUtc().toIso8601String().substring(0, 19)
-        : DateTime.now().add(const Duration(hours: 2)).toUtc().toIso8601String().substring(0, 19);
+        : DateTime.now()
+              .add(const Duration(hours: 2))
+              .toUtc()
+              .toIso8601String()
+              .substring(0, 19);
 
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sectionsRaw =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
 
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       final List<Map<String, dynamic>> dynamicSections = [];
@@ -617,24 +776,34 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         final secId = (sec['Id'] ?? sec['id'] ?? '').toString();
         final secName = (sec['name'] ?? '').toString();
         final isDoc = sec['is_document'] == true;
-        if (isDoc) continue; // Pra-registration only submits non-document question pages
+        if (isDoc) {
+          continue; // Pra-registration only submits non-document question pages
+        }
 
         final praForm = sec['pra_form'] as List<dynamic>? ?? [];
-        if (praForm.isEmpty) continue; // Strictly use pra_form
+        if (praForm.isEmpty) {
+          continue; // Strictly use pra_form
+        }
 
         final List<Map<String, dynamic>> formFields = [];
 
         for (var f in praForm) {
           final field = Map<String, dynamic>.from(f as Map);
           final isEnable = field['is_enable'] == true;
-          if (!isEnable) continue;
+          if (!isEnable) {
+            continue;
+          }
 
-          final remarks = (field['remarks'] ?? '').toString().toLowerCase().trim();
+          final remarks = (field['remarks'] ?? '')
+              .toString()
+              .toLowerCase()
+              .trim();
           final fieldType = field['field_type'] is int
               ? field['field_type'] as int
               : int.tryParse(field['field_type']?.toString() ?? '0') ?? 0;
 
-          final isDateTimeField = fieldType == 4 ||
+          final isDateTimeField =
+              fieldType == 4 ||
               fieldType == 9 ||
               remarks == 'visitor_period_start' ||
               remarks == 'visitor_period_end';
@@ -659,7 +828,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           } else if (remarks == 'is_employee') {
             final isEmp = isEmployee;
             final target = isEmp ? 'yes' : 'no';
-            final multipleOptions = field['multiple_option_fields'] as List<dynamic>? ?? [];
+            final multipleOptions =
+                field['multiple_option_fields'] as List<dynamic>? ?? [];
             final opt = multipleOptions.firstWhereOrNull(
               (o) =>
                   (o['name'] ?? '').toString().toLowerCase() == target ||
@@ -681,7 +851,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           } else if (remarks == 'site_place' || remarks == 'destination') {
             answerText = siteId;
           } else {
-            answerText = extraCtrls[remarks]?.text.trim() ??
+            answerText =
+                extraCtrls[remarks]?.text.trim() ??
                 (field['answer_text'] ?? '').toString();
           }
 
@@ -930,7 +1101,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         ? _otherAgendaController.text.trim()
         : _selectedAgenda!;
 
-    _visitorTypeDetail ??= await controller.fetchVisitorTypeDetail(visitorTypeId);
+    _visitorTypeDetail ??= await controller.fetchVisitorTypeDetail(
+      visitorTypeId,
+    );
     final resolvedRole = _getDefaultVisitorRole();
 
     Map<String, dynamic> payload;
@@ -939,7 +1112,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       // Group Mode
       final dataVisitors = _groupVisitors.map((v) {
         final memberEmployeeId = (v.isEmployee == true)
-            ? (v.selectedData?['id'] ?? v.selectedData?['employee_id'] ?? '').toString()
+            ? (v.selectedData?['id'] ?? v.selectedData?['employee_id'] ?? '')
+                  .toString()
             : '';
         return {
           'question_page': _buildDynamicQuestionPage(
@@ -980,7 +1154,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     } else {
       // Single Mode
       final singleEmployeeId = (_singleIsEmployee == true)
-          ? (_singleSelectedData?['id'] ?? _singleSelectedData?['employee_id'] ?? '').toString()
+          ? (_singleSelectedData?['id'] ??
+                    _singleSelectedData?['employee_id'] ??
+                    '')
+                .toString()
           : '';
 
       final singleQuestionPage = _buildDynamicQuestionPage(
@@ -1009,7 +1186,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         'visitor_role': _singleRole ?? resolvedRole,
         if (siteId.isNotEmpty) 'registered_site': siteId,
         'data_visitor': [
-          {'question_page': singleQuestionPage}
+          {'question_page': singleQuestionPage},
         ],
       };
     }
@@ -1059,7 +1236,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   case 1:
                     return _buildStep1UserType();
                   case 2:
-                    return (_isGroup == true) ? _buildStep2GroupVisitorInfo() : _buildStep2SingleVisitorInfo();
+                    return (_isGroup == true)
+                        ? _buildStep2GroupVisitorInfo()
+                        : _buildStep2SingleVisitorInfo();
                   case 3:
                     return _buildStep3PurposeVisit();
                   default:
@@ -1092,7 +1271,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+            icon: const Icon(
+              Icons.close_rounded,
+              size: 22,
+              color: Color(0xFF64748B),
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -1175,18 +1358,33 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   Widget _buildStep1UserType() {
     final List<Map<String, dynamic>> visitorTypes =
         controller.rxPraRegVisitorTypes.isNotEmpty
-            ? controller.rxPraRegVisitorTypes
-            : [
-                {'name': 'All Access (VIP)', 'id': '29b12a27-cff3-44dc-be0f-4a743510b836'},
-                {'name': 'CIT', 'id': '0eac503e-d0c9-4ba5-afac-99a0b94e44f3'},
-                {'name': 'General Visitor', 'id': '1e7ab7a0-1fdd-4546-b65f-6a8dcc345148'},
-                {'name': 'Non Remise', 'id': '3e903b97-bb4a-42bb-a840-b2316202ea7d'},
-                {'name': 'Remise', 'id': 'f0bd33a4-427a-4110-ab19-6e423dafa3e5'},
-                {'name': 'Staff', 'id': '2e8a7639-84f9-42ab-8096-304c259245db'},
-                {'name': 'Umum', 'id': 'e0533de1-52a7-4b47-8e80-79239d8f723d'},
-                {'name': 'Utility Maintenance', 'id': 'b3618bd5-b6f0-4329-9cf5-6c853970217d'},
-                {'name': 'Visitor Resident', 'id': '4bd22555-12fc-4aea-84a3-2163fe7dadc7'},
-              ];
+        ? controller.rxPraRegVisitorTypes
+        : [
+            {
+              'name': 'All Access (VIP)',
+              'id': '29b12a27-cff3-44dc-be0f-4a743510b836',
+            },
+            {'name': 'CIT', 'id': '0eac503e-d0c9-4ba5-afac-99a0b94e44f3'},
+            {
+              'name': 'General Visitor',
+              'id': '1e7ab7a0-1fdd-4546-b65f-6a8dcc345148',
+            },
+            {
+              'name': 'Non Remise',
+              'id': '3e903b97-bb4a-42bb-a840-b2316202ea7d',
+            },
+            {'name': 'Remise', 'id': 'f0bd33a4-427a-4110-ab19-6e423dafa3e5'},
+            {'name': 'Staff', 'id': '2e8a7639-84f9-42ab-8096-304c259245db'},
+            {'name': 'Umum', 'id': 'e0533de1-52a7-4b47-8e80-79239d8f723d'},
+            {
+              'name': 'Utility Maintenance',
+              'id': 'b3618bd5-b6f0-4329-9cf5-6c853970217d',
+            },
+            {
+              'name': 'Visitor Resident',
+              'id': '4bd22555-12fc-4aea-84a3-2163fe7dadc7',
+            },
+          ];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -1201,7 +1399,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 const SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF004385)),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF004385),
+                  ),
                 ),
               ],
             ],
@@ -1211,17 +1412,23 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             spacing: 12,
             runSpacing: 12,
             children: visitorTypes.map((type) {
-              final isSelected = _selectedVisitorType != null &&
+              final isSelected =
+                  _selectedVisitorType != null &&
                   _selectedVisitorType!['id'] == type['id'];
               return InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: () => _onVisitorTypeSelected(type),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+                      color: isSelected
+                          ? const Color(0xFF004385)
+                          : const Color(0xFFCBD5E1),
                       width: isSelected ? 1.5 : 1,
                     ),
                     borderRadius: BorderRadius.circular(8),
@@ -1230,17 +1437,25 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
                         size: 18,
-                        color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                        color: isSelected
+                            ? const Color(0xFF004385)
+                            : const Color(0xFF94A3B8),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         type['name']?.toString() ?? '',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? const Color(0xFF004385) : const Color(0xFF1E293B),
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFF004385)
+                              : const Color(0xFF1E293B),
                         ),
                       ),
                     ],
@@ -1256,7 +1471,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           const SizedBox(height: 4),
           Text(
             'Is this visit for one or more than one visitor?',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -1303,7 +1521,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
           border: Border.all(
-            color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+            color: isSelected
+                ? const Color(0xFF004385)
+                : const Color(0xFFCBD5E1),
             width: isSelected ? 1.5 : 1,
           ),
           borderRadius: BorderRadius.circular(10),
@@ -1315,7 +1535,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? const Color(0xFF004385) : const Color(0xFFF1F5F9),
+                color: isSelected
+                    ? const Color(0xFF004385)
+                    : const Color(0xFFF1F5F9),
               ),
               child: Icon(
                 icon,
@@ -1340,18 +1562,27 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: const Color(0xFF64748B),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF94A3B8)),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: Color(0xFF94A3B8),
+            ),
             const SizedBox(width: 8),
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
               size: 20,
-              color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+              color: isSelected
+                  ? const Color(0xFF004385)
+                  : const Color(0xFF94A3B8),
             ),
           ],
         ),
@@ -1371,7 +1602,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
     final filtered = searchList.where((it) {
       if (searchQuery.isEmpty) return true;
-      final name = (it['name'] ?? it['visitor_name'] ?? '').toString().toLowerCase();
+      final name = (it['name'] ?? it['visitor_name'] ?? '')
+          .toString()
+          .toLowerCase();
       final email = (it['email'] ?? '').toString().toLowerCase();
       final phone = (it['phone'] ?? '').toString().toLowerCase();
       return name.contains(searchQuery) ||
@@ -1386,13 +1619,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         children: [
           // Top Search Bar (Search Employee / Search Visitor)
           _buildSearchInput(
-            hint: _singleIsEmployee == true ? 'Search Employee' : 'Search Visitor',
+            hint: _singleIsEmployee == true
+                ? 'Search Employee'
+                : 'Search Visitor',
             controller: _singleSearchCtrl,
             isSearchOpen: _singleIsSearchOpen,
             selectedData: _singleSelectedData,
             filteredItems: filtered,
             isEmployeeMode: _singleIsEmployee == true,
             onTap: () => setState(() => _singleIsSearchOpen = true),
+            onToggleOpen: () =>
+                setState(() => _singleIsSearchOpen = !_singleIsSearchOpen),
             onChanged: (val) => setState(() => _singleIsSearchOpen = true),
             onClear: _clearSingle,
             onSelect: _onSingleSelect,
@@ -1402,8 +1639,12 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
           // Dynamic fields according to pra_form in Visitor Information
           ...fields.map((f) {
-            final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-            var label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+            final remarks = (f['remarks'] ?? '')
+                .toString()
+                .toLowerCase()
+                .trim();
+            var label = (f['long_display_text'] ?? f['short_name'] ?? '')
+                .toString();
             final isMandatory = f['mandatory'] == true;
 
             if (remarks == 'is_employee') {
@@ -1412,7 +1653,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFormFieldLabel(label.isNotEmpty ? label : 'Are you Employee?', isRequired: isMandatory),
+                    _buildFormFieldLabel(
+                      label.isNotEmpty ? label : 'Are you Employee?',
+                      isRequired: isMandatory,
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1422,7 +1666,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                           onTap: () {
                             setState(() {
                               if (_singleIsEmployee == true) {
-                                _singleIsEmployee = null;
+                                _singleIsEmployee = false;
                               } else {
                                 _singleIsEmployee = true;
                               }
@@ -1437,7 +1681,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                           onTap: () {
                             setState(() {
                               if (_singleIsEmployee == false) {
-                                _singleIsEmployee = null;
+                                _singleIsEmployee = false;
                               } else {
                                 _singleIsEmployee = false;
                               }
@@ -1463,7 +1707,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFormFieldLabel(label.isNotEmpty ? label : 'Role', isRequired: isMandatory),
+                    _buildFormFieldLabel(
+                      label.isNotEmpty ? label : 'Role',
+                      isRequired: isMandatory,
+                    ),
                     const SizedBox(height: 6),
                     _buildCleanDropdownField<String>(
                       hint: 'Select ${label.isNotEmpty ? label : 'Role'}',
@@ -1478,7 +1725,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               );
             }
 
-            if (remarks == 'organization' || remarks == 'company' || label.toLowerCase().contains('inst')) {
+            if (remarks == 'organization' ||
+                remarks == 'company' ||
+                label.toLowerCase().contains('inst')) {
               label = 'Department / Organization / Company';
             }
 
@@ -1487,7 +1736,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
             if (remarks == 'name') {
               targetCtrl = _singleFullNameCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
             } else if (remarks == 'email') {
               targetCtrl = _singleEmailCtrl;
               hintText = 'Example: name@gmail.com';
@@ -1496,14 +1746,20 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               hintText = 'Enter your department / organization / company';
             } else if (remarks == 'phone') {
               targetCtrl = _singlePhoneCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
             } else if (remarks == 'indentity_id' || remarks == 'identity_id') {
               targetCtrl = _singleIdentityCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
             } else {
-              _singleExtraControllers.putIfAbsent(remarks, () => TextEditingController());
+              _singleExtraControllers.putIfAbsent(
+                remarks,
+                () => TextEditingController(),
+              );
               targetCtrl = _singleExtraControllers[remarks]!;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
             }
 
             return Padding(
@@ -1516,6 +1772,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   _buildTextInputField(
                     controller: targetCtrl,
                     hint: hintText,
+                    enabled: !(remarks == 'name' && _singleIsEmployee == true),
+                    readOnly: (remarks == 'name' && _singleIsEmployee == true),
                   ),
                 ],
               ),
@@ -1621,14 +1879,22 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF004385),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
                 onPressed: _addGroupVisitor,
                 icon: const Icon(Icons.add_rounded, size: 16),
                 label: Text(
                   'Add Visitor',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -1643,11 +1909,15 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             separatorBuilder: (context, idx) => const SizedBox(height: 14),
             itemBuilder: (context, idx) {
               final visitor = _groupVisitors[idx];
-              final searchList = visitor.isEmployee == true ? employees : visitors;
+              final searchList = visitor.isEmployee == true
+                  ? employees
+                  : visitors;
               final searchQuery = visitor.searchCtrl.text.trim().toLowerCase();
               final filtered = searchList.where((it) {
                 if (searchQuery.isEmpty) return true;
-                final name = (it['name'] ?? it['visitor_name'] ?? '').toString().toLowerCase();
+                final name = (it['name'] ?? it['visitor_name'] ?? '')
+                    .toString()
+                    .toLowerCase();
                 final email = (it['email'] ?? '').toString().toLowerCase();
                 final phone = (it['phone'] ?? '').toString().toLowerCase();
                 return name.contains(searchQuery) ||
@@ -1681,7 +1951,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          idx == 0 ? 'Primary Visitor' : 'Visitor #${idx + 1}',
+                          'Visitor ${idx + 1}',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -1692,8 +1962,15 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         if (_groupVisitors.length > 1)
                           IconButton(
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 18),
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Color(0xFFEF4444),
+                              size: 18,
+                            ),
                             onPressed: () => _removeGroupVisitor(idx),
                           ),
                       ],
@@ -1703,14 +1980,20 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
                     // Search Bar
                     _buildSearchInput(
-                      hint: visitor.isEmployee == true ? 'Search Employee' : 'Search Visitor',
+                      hint: visitor.isEmployee == true
+                          ? 'Search Employee'
+                          : 'Search Visitor',
                       controller: visitor.searchCtrl,
                       isSearchOpen: visitor.isSearchOpen,
                       selectedData: visitor.selectedData,
                       filteredItems: filtered,
                       isEmployeeMode: visitor.isEmployee == true,
                       onTap: () => setState(() => visitor.isSearchOpen = true),
-                      onChanged: (val) => setState(() => visitor.isSearchOpen = true),
+                      onToggleOpen: () => setState(
+                        () => visitor.isSearchOpen = !visitor.isSearchOpen,
+                      ),
+                      onChanged: (val) =>
+                          setState(() => visitor.isSearchOpen = true),
                       onClear: () => _clearGroup(idx),
                       onSelect: (item) => _onGroupSelect(idx, item),
                     ),
@@ -1718,8 +2001,13 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                     const SizedBox(height: 12),
 
                     ...fields.map((f) {
-                      final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-                      var label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+                      final remarks = (f['remarks'] ?? '')
+                          .toString()
+                          .toLowerCase()
+                          .trim();
+                      var label =
+                          (f['long_display_text'] ?? f['short_name'] ?? '')
+                              .toString();
                       final isMandatory = f['mandatory'] == true;
 
                       if (remarks == 'is_employee') {
@@ -1728,7 +2016,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildFormFieldLabel(label.isNotEmpty ? label : 'Are you Employee?', isRequired: isMandatory),
+                              _buildFormFieldLabel(
+                                label.isNotEmpty ? label : 'Are you Employee?',
+                                isRequired: isMandatory,
+                              ),
                               const SizedBox(height: 6),
                               Row(
                                 children: [
@@ -1779,22 +2070,32 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildFormFieldLabel(label.isNotEmpty ? label : 'Role', isRequired: isMandatory),
+                              _buildFormFieldLabel(
+                                label.isNotEmpty ? label : 'Role',
+                                isRequired: isMandatory,
+                              ),
                               const SizedBox(height: 6),
                               _buildCleanDropdownField<String>(
-                                hint: 'Select ${label.isNotEmpty ? label : 'Role'}',
+                                hint:
+                                    'Select ${label.isNotEmpty ? label : 'Role'}',
                                 selectedValue: visitor.role,
                                 items: roles.map((r) {
-                                  return DropdownMenuItemData<String>(value: r, label: r);
+                                  return DropdownMenuItemData<String>(
+                                    value: r,
+                                    label: r,
+                                  );
                                 }).toList(),
-                                onSelected: (val) => setState(() => visitor.role = val),
+                                onSelected: (val) =>
+                                    setState(() => visitor.role = val),
                               ),
                             ],
                           ),
                         );
                       }
 
-                      if (remarks == 'organization' || remarks == 'company' || label.toLowerCase().contains('inst')) {
+                      if (remarks == 'organization' ||
+                          remarks == 'company' ||
+                          label.toLowerCase().contains('inst')) {
                         label = 'Department / Organization / Company';
                       }
 
@@ -1803,23 +2104,33 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
                       if (remarks == 'name') {
                         targetCtrl = visitor.fullNameCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
                       } else if (remarks == 'email') {
                         targetCtrl = visitor.emailCtrl;
                         hintText = 'Example: name@gmail.com';
-                      } else if (remarks == 'organization' || remarks == 'company') {
+                      } else if (remarks == 'organization' ||
+                          remarks == 'company') {
                         targetCtrl = visitor.orgCtrl;
-                        hintText = 'Enter your department / organization / company';
+                        hintText =
+                            'Enter your department / organization / company';
                       } else if (remarks == 'phone') {
                         targetCtrl = visitor.phoneCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
-                      } else if (remarks == 'indentity_id' || remarks == 'identity_id') {
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
+                      } else if (remarks == 'indentity_id' ||
+                          remarks == 'identity_id') {
                         targetCtrl = visitor.identityCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
                       } else {
-                        visitor.extraControllers.putIfAbsent(remarks, () => TextEditingController());
+                        visitor.extraControllers.putIfAbsent(
+                          remarks,
+                          () => TextEditingController(),
+                        );
                         targetCtrl = visitor.extraControllers[remarks]!;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
                       }
 
                       return Padding(
@@ -1827,7 +2138,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildFormFieldLabel(label, isRequired: isMandatory),
+                            _buildFormFieldLabel(
+                              label,
+                              isRequired: isMandatory,
+                            ),
                             const SizedBox(height: 6),
                             _buildTextInputField(
                               controller: targetCtrl,
@@ -1863,7 +2177,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: purposeFields.map((f) {
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-          final label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+          final label = (f['long_display_text'] ?? f['short_name'] ?? '')
+              .toString();
           final isMandatory = f['mandatory'] == true;
 
           if (remarks == 'site_place' || remarks == 'destination') {
@@ -1872,7 +2187,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Destination', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Destination',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<Map<String, dynamic>>(
                     hint: 'Select Site or type at least 3 characters to search',
@@ -1883,7 +2202,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         label: s['name']?.toString() ?? 'Site',
                       );
                     }).toList(),
-                    onSelected: (val) => setState(() => _selectedDestination = val),
+                    onSelected: (val) =>
+                        setState(() => _selectedDestination = val),
                   ),
                 ],
               ),
@@ -1896,24 +2216,35 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'PIC Host', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'PIC Host',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<Map<String, dynamic>>(
-                    hint: 'Select PIC Host or type at least 3 characters to search',
+                    hint:
+                        'Select PIC Host or type at least 3 characters to search',
                     selectedValue: _selectedPicHost,
                     items: hosts.map((e) {
                       final eName = (e['name'] ?? 'Host').toString();
                       String orgName = '';
                       final rawOrg = e['Organization'] ?? e['organization'];
                       if (rawOrg is Map) {
-                        orgName = (rawOrg['name'] ?? rawOrg['code'] ?? '').toString();
+                        orgName = (rawOrg['name'] ?? rawOrg['code'] ?? '')
+                            .toString();
                       } else if (rawOrg is String && !rawOrg.startsWith('{')) {
                         orgName = rawOrg;
                       } else if (e['organization_name'] != null) {
                         orgName = e['organization_name'].toString();
                       }
-                      final itemLabel = orgName.isNotEmpty ? '$eName ($orgName)' : eName;
-                      return DropdownMenuItemData<Map<String, dynamic>>(value: e, label: itemLabel);
+                      final itemLabel = orgName.isNotEmpty
+                          ? '$eName ($orgName)'
+                          : eName;
+                      return DropdownMenuItemData<Map<String, dynamic>>(
+                        value: e,
+                        label: itemLabel,
+                      );
                     }).toList(),
                     onSelected: (val) => setState(() => _selectedPicHost = val),
                   ),
@@ -1928,13 +2259,20 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Agenda', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Agenda',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<String>(
                     hint: 'Select agenda',
                     selectedValue: _selectedAgenda,
                     items: _agendaOptions.map((agenda) {
-                      return DropdownMenuItemData<String>(value: agenda, label: agenda);
+                      return DropdownMenuItemData<String>(
+                        value: agenda,
+                        label: agenda,
+                      );
                     }).toList(),
                     onSelected: (val) => setState(() => _selectedAgenda = val),
                   ),
@@ -1956,7 +2294,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Visit Start', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Visit Start',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildDateTimePickerField(
                     value: _visitStart,
@@ -1964,7 +2306,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                     onChanged: (dt) {
                       setState(() {
                         _visitStart = dt;
-                        if (_visitEnd != null && (_visitEnd!.isBefore(dt) || _visitEnd!.isAtSameMomentAs(dt))) {
+                        if (_visitEnd != null &&
+                            (_visitEnd!.isBefore(dt) ||
+                                _visitEnd!.isAtSameMomentAs(dt))) {
                           _visitEnd = dt.add(const Duration(hours: 2));
                         }
                       });
@@ -1981,7 +2325,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Visit End', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Visit End',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildDateTimePickerField(
                     value: _visitEnd,
@@ -1996,7 +2344,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           }
 
           // Any other dynamic field in purpose visit pra_form
-          _purposeExtraControllers.putIfAbsent(remarks, () => TextEditingController());
+          _purposeExtraControllers.putIfAbsent(
+            remarks,
+            () => TextEditingController(),
+          );
           final targetCtrl = _purposeExtraControllers[remarks]!;
 
           return Padding(
@@ -2004,7 +2355,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFormFieldLabel(label, isRequired: isMandatory, showInfo: true),
+                _buildFormFieldLabel(
+                  label,
+                  isRequired: isMandatory,
+                  showInfo: true,
+                ),
                 const SizedBox(height: 6),
                 _buildTextInputField(
                   controller: targetCtrl,
@@ -2031,7 +2386,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           Icon(
             isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
             size: 18,
-            color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+            color: isSelected
+                ? const Color(0xFF004385)
+                : const Color(0xFF94A3B8),
           ),
           const SizedBox(width: 8),
           Text(
@@ -2055,6 +2412,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     required List<Map<String, dynamic>> filteredItems,
     required bool isEmployeeMode,
     required VoidCallback onTap,
+    required VoidCallback onToggleOpen,
     required ValueChanged<String> onChanged,
     required VoidCallback onClear,
     required ValueChanged<Map<String, dynamic>> onSelect,
@@ -2084,11 +2442,53 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 color: const Color(0xFF94A3B8),
                 fontWeight: FontWeight.w400,
               ),
-              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF64748B)),
-              suffixIcon: selectedData != null || controller.text.isNotEmpty
-                  ? IconButton(icon: const Icon(Icons.close, size: 18), onPressed: onClear)
-                  : const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: Color(0xFF64748B),
+              ),
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selectedData != null || controller.text.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Color(0xFF64748B),
+                      ),
+                      tooltip: 'Clear',
+                      onPressed: onClear,
+                      splashRadius: 18,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                    ),
+                  IconButton(
+                    icon: Icon(
+                      isSearchOpen
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFF64748B),
+                      size: 22,
+                    ),
+                    tooltip: isSearchOpen ? 'Collapse list' : 'Expand list',
+                    onPressed: onToggleOpen,
+                    splashRadius: 18,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                  ),
+                ],
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -2099,7 +2499,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF004385),
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -2123,25 +2526,35 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: filteredItems.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, index) {
                 final it = filteredItems[index];
-                final name = (it['name'] ?? it['visitor_name'] ?? 'User').toString();
+                final name = (it['name'] ?? it['visitor_name'] ?? 'User')
+                    .toString();
                 final email = (it['email'] ?? '-').toString();
                 final phone = (it['phone'] ?? '-').toString();
-                final org = _extractOrganizationName(it['Organization'] ?? it['organization'], it['company']);
+                final org = _extractOrganizationName(
+                  it['Organization'] ?? it['organization'],
+                  it['company'],
+                );
 
                 return InkWell(
                   onTap: () => onSelect(it),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 14,
                           backgroundColor: const Color(0xFFE2E8F0),
                           child: Icon(
-                            isEmployeeMode ? Icons.badge_outlined : Icons.person_outline,
+                            isEmployeeMode
+                                ? Icons.badge_outlined
+                                : Icons.person_outline,
                             size: 16,
                             color: const Color(0xFF64748B),
                           ),
@@ -2160,8 +2573,13 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                 ),
                               ),
                               Text(
-                                org.isNotEmpty ? '$email | $phone ($org)' : '$email | $phone',
-                                style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                                org.isNotEmpty
+                                    ? '$email | $phone ($org)'
+                                    : '$email | $phone',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: const Color(0xFF64748B),
+                                ),
                               ),
                             ],
                           ),
@@ -2223,11 +2641,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: isSet ? FontWeight.w500 : FontWeight.w400,
-                  color: isSet ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                  color: isSet
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
                 ),
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: Color(0xFF64748B)),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: Color(0xFF64748B),
+            ),
           ],
         ),
       ),
@@ -2257,7 +2681,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 24,
+              ),
               child: Container(
                 width: 440,
                 constraints: const BoxConstraints(maxHeight: 460),
@@ -2293,9 +2720,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                           ),
                           IconButton(
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                            icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
-                            onPressed: () => Navigator.of(dialogContext).pop(null),
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              size: 20,
+                              color: Color(0xFF64748B),
+                            ),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(null),
                           ),
                         ],
                       ),
@@ -2307,24 +2742,44 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         child: TextField(
                           controller: searchCtrl,
                           onChanged: (v) => setPopupState(() {}),
-                          style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF1E293B)),
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            color: const Color(0xFF1E293B),
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Type to filter...',
-                            hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
-                            prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF64748B)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF94A3B8),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              size: 18,
+                              color: Color(0xFF64748B),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                             isDense: true,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF004385),
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),
@@ -2334,16 +2789,23 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         shrinkWrap: true,
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         itemCount: filtered.length,
-                        separatorBuilder: (context, idx) => const Divider(height: 1, color: Color(0xFFF8FAFC)),
+                        separatorBuilder: (context, idx) =>
+                            const Divider(height: 1, color: Color(0xFFF8FAFC)),
                         itemBuilder: (context, idx) {
                           final item = filtered[idx];
                           final isSelected = item.value == selectedValue;
 
                           return InkWell(
-                            onTap: () => Navigator.of(dialogContext).pop(item.value),
+                            onTap: () =>
+                                Navigator.of(dialogContext).pop(item.value),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                              color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 11,
+                              ),
+                              color: isSelected
+                                  ? const Color(0xFFEFF6FF)
+                                  : Colors.white,
                               child: Row(
                                 children: [
                                   Expanded(
@@ -2351,7 +2813,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                       item.label,
                                       style: GoogleFonts.inter(
                                         fontSize: 13,
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
                                         color: isSelected
                                             ? const Color(0xFF004385)
                                             : const Color(0xFF1E293B),
@@ -2359,7 +2823,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                     ),
                                   ),
                                   if (isSelected)
-                                    const Icon(Icons.check_rounded, size: 18, color: Color(0xFF004385)),
+                                    const Icon(
+                                      Icons.check_rounded,
+                                      size: 18,
+                                      color: Color(0xFF004385),
+                                    ),
                                 ],
                               ),
                             ),
@@ -2418,11 +2886,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: value != null ? FontWeight.w500 : FontWeight.w400,
-                  color: value != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                  color: value != null
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
                 ),
               ),
             ),
-            const Icon(Icons.calendar_month_outlined, size: 18, color: Color(0xFF64748B)),
+            const Icon(
+              Icons.calendar_month_outlined,
+              size: 18,
+              color: Color(0xFF64748B),
+            ),
           ],
         ),
       ),
@@ -2447,13 +2921,14 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         final gmt7Now = _getGmt7Now();
         DateTime liveTime = gmt7Now;
 
-        DateTime selectedDate = initialDate ??
+        DateTime selectedDate =
+            initialDate ??
             (minDateTime != null && minDateTime.isAfter(gmt7Now)
                 ? minDateTime
                 : gmt7Now);
 
         int? selectedHour = initialDate?.hour;
-        int? selectedMinute = initialDate != null ? (initialDate.minute ~/ 5) * 5 : null;
+        int? selectedMinute = initialDate?.minute;
 
         final ScrollController hourScrollController = ScrollController();
         final ScrollController minuteScrollController = ScrollController();
@@ -2472,7 +2947,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           if (selectedMinute != null &&
               selectedHour == minDateTime.hour &&
               selectedMinute <= minDateTime.minute) {
-            selectedMinute = ((minDateTime.minute ~/ 5) + 1) * 5;
+            selectedMinute = minDateTime.minute + 1;
             if (selectedMinute >= 60) {
               selectedHour += 1;
               selectedMinute = 0;
@@ -2484,12 +2959,33 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           final h = selectedHour;
           final m = selectedMinute;
           if (h != null && hourScrollController.hasClients) {
-            final targetH = h * 38.0;
-            hourScrollController.jumpTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent));
+            final targetH = (h * 38.0) - 92.0;
+            hourScrollController.jumpTo(
+              targetH.clamp(0.0, hourScrollController.position.maxScrollExtent),
+            );
+          } else if (hourScrollController.hasClients) {
+            if (minDateTime != null && isSameDayAsMin(selectedDate)) {
+              final targetH = minDateTime.hour * 38.0;
+              hourScrollController.jumpTo(
+                targetH.clamp(
+                  0.0,
+                  hourScrollController.position.maxScrollExtent,
+                ),
+              );
+            } else {
+              hourScrollController.jumpTo(0.0);
+            }
           }
           if (m != null && minuteScrollController.hasClients) {
-            final targetM = (m ~/ 5) * 38.0;
-            minuteScrollController.jumpTo(targetM.clamp(0.0, minuteScrollController.position.maxScrollExtent));
+            final targetM = (m * 38.0) - 92.0;
+            minuteScrollController.jumpTo(
+              targetM.clamp(
+                0.0,
+                minuteScrollController.position.maxScrollExtent,
+              ),
+            );
+          } else if (minuteScrollController.hasClients) {
+            minuteScrollController.jumpTo(0.0);
           }
         });
 
@@ -2506,7 +3002,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
             });
 
             final isSameDay = isSameDayAsMin(selectedDate);
-            final hasSelectedTime = selectedHour != null && selectedMinute != null;
+            final hasSelectedTime =
+                selectedHour != null && selectedMinute != null;
 
             final currentPreview = hasSelectedTime
                 ? DateTime(
@@ -2518,21 +3015,41 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   )
                 : null;
 
-            final isSelectionValid = hasSelectedTime &&
+            final isSelectionValid =
+                hasSelectedTime &&
                 (minDateTime == null || currentPreview!.isAfter(minDateTime));
 
             // Format Live Time String with seconds
-            final days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            final days = [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday',
+            ];
             final months = [
-              'January', 'February', 'March', 'April', 'May', 'June',
-              'July', 'August', 'September', 'October', 'November', 'December'
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December',
             ];
             final liveDayName = days[liveTime.weekday % 7];
             final liveMonthName = months[liveTime.month - 1];
             final liveHourStr = liveTime.hour.toString().padLeft(2, '0');
             final liveMinStr = liveTime.minute.toString().padLeft(2, '0');
             final liveSecStr = liveTime.second.toString().padLeft(2, '0');
-            final liveClockDisplay = '$liveDayName, ${liveTime.day} $liveMonthName ${liveTime.year}, $liveHourStr:$liveMinStr:$liveSecStr';
+            final liveClockDisplay =
+                '$liveDayName, ${liveTime.day} $liveMonthName ${liveTime.year}, $liveHourStr:$liveMinStr:$liveSecStr';
 
             return Dialog(
               backgroundColor: Colors.transparent,
@@ -2556,15 +3073,26 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   children: [
                     // Top Header
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 18, color: Color(0xFF004385)),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: Color(0xFF004385),
+                          ),
                           const SizedBox(width: 10),
                           Text(
                             title,
@@ -2577,16 +3105,25 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                           const Spacer(),
                           // 1. Real-time Live Clock GMT+7
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFEFF6FF),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.access_time_filled_rounded, size: 14, color: Color(0xFF004385)),
+                                const Icon(
+                                  Icons.access_time_filled_rounded,
+                                  size: 14,
+                                  color: Color(0xFF004385),
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   liveClockDisplay,
@@ -2621,22 +3158,31 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                 ),
                               ),
                               child: CalendarDatePicker(
+                                key: ValueKey(
+                                  '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
+                                ),
                                 initialDate: selectedDate,
                                 firstDate: minDateTime != null
-                                    ? DateTime(minDateTime.year, minDateTime.month, minDateTime.day)
+                                    ? DateTime(
+                                        minDateTime.year,
+                                        minDateTime.month,
+                                        minDateTime.day,
+                                      )
                                     : DateTime(2020),
                                 lastDate: DateTime(2035),
                                 onDateChanged: (newDate) {
                                   setDialogState(() {
                                     selectedDate = newDate;
-                                    if (selectedHour != null && isSameDayAsMin(newDate)) {
+                                    if (selectedHour != null &&
+                                        isSameDayAsMin(newDate)) {
                                       if (selectedHour! < minDateTime!.hour) {
                                         selectedHour = minDateTime.hour;
                                       }
                                       if (selectedMinute != null &&
                                           selectedHour == minDateTime.hour &&
-                                          selectedMinute! <= minDateTime.minute) {
-                                        selectedMinute = ((minDateTime.minute ~/ 5) + 1) * 5;
+                                          selectedMinute! <=
+                                              minDateTime.minute) {
+                                        selectedMinute = minDateTime.minute + 1;
                                         if (selectedMinute! >= 60) {
                                           selectedHour = selectedHour! + 1;
                                           selectedMinute = 0;
@@ -2644,6 +3190,33 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                       }
                                     }
                                   });
+                                  if (selectedHour == null &&
+                                      hourScrollController.hasClients) {
+                                    if (minDateTime != null &&
+                                        isSameDayAsMin(newDate)) {
+                                      final targetH = minDateTime.hour * 38.0;
+                                      hourScrollController.animateTo(
+                                        targetH.clamp(
+                                          0.0,
+                                          hourScrollController
+                                              .position
+                                              .maxScrollExtent,
+                                        ),
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    } else {
+                                      hourScrollController.animateTo(
+                                        0.0,
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    }
+                                  }
                                 },
                               ),
                             ),
@@ -2664,7 +3237,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                               children: [
                                 // 2. Selected Time Box (Starts Empty / Unselected)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(8),
@@ -2687,8 +3263,12 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                             : '-- : -- (Not selected)',
                                         style: GoogleFonts.inter(
                                           fontSize: hasSelectedTime ? 15 : 12.5,
-                                          fontWeight: hasSelectedTime ? FontWeight.w800 : FontWeight.w600,
-                                          color: hasSelectedTime ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                                          fontWeight: hasSelectedTime
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          color: hasSelectedTime
+                                              ? const Color(0xFF004385)
+                                              : const Color(0xFF94A3B8),
                                         ),
                                       ),
                                     ],
@@ -2730,14 +3310,15 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                 SizedBox(
                                   height: 230,
                                   child: ScrollConfiguration(
-                                    behavior: const MaterialScrollBehavior().copyWith(
-                                      dragDevices: {
-                                        PointerDeviceKind.touch,
-                                        PointerDeviceKind.mouse,
-                                        PointerDeviceKind.trackpad,
-                                        PointerDeviceKind.stylus,
-                                      },
-                                    ),
+                                    behavior: const MaterialScrollBehavior()
+                                        .copyWith(
+                                          dragDevices: {
+                                            PointerDeviceKind.touch,
+                                            PointerDeviceKind.mouse,
+                                            PointerDeviceKind.trackpad,
+                                            PointerDeviceKind.stylus,
+                                          },
+                                        ),
                                     child: Row(
                                       children: [
                                         // Hours List (00 - 23)
@@ -2745,79 +3326,148 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                           child: Container(
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFF8FAFC),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                              ),
                                             ),
                                             child: RawScrollbar(
                                               controller: hourScrollController,
                                               thumbVisibility: true,
                                               thickness: 3.5,
                                               radius: const Radius.circular(4),
-                                              thumbColor: const Color(0xFF94A3B8),
+                                              thumbColor: const Color(
+                                                0xFF94A3B8,
+                                              ),
                                               child: ListView.builder(
-                                                controller: hourScrollController,
-                                                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                                padding: const EdgeInsets.symmetric(vertical: 96, horizontal: 4),
+                                                controller:
+                                                    hourScrollController,
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 4,
+                                                    ),
                                                 itemCount: 24,
                                                 itemBuilder: (ctx, h) {
-                                                  final isHourDisabled = isSameDay && h < minDateTime!.hour;
-                                                  final isSelected = selectedHour == h;
+                                                  final isHourDisabled =
+                                                      isSameDay &&
+                                                      h < minDateTime!.hour;
+                                                  final isSelected =
+                                                      selectedHour == h;
 
                                                   return SizedBox(
                                                     height: 38,
                                                     child: Center(
                                                       child: InkWell(
-                                                        borderRadius: BorderRadius.circular(6),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
                                                         onTap: isHourDisabled
                                                             ? null
                                                             : () {
                                                                 setDialogState(() {
-                                                                  selectedHour = h;
-                                                                  selectedMinute ??= 0;
-                                                                  if (isSameDay && h == minDateTime!.hour) {
-                                                                    if (selectedMinute! <= minDateTime.minute) {
-                                                                      selectedMinute = ((minDateTime.minute ~/ 5) + 1) * 5;
-                                                                      if (selectedMinute! >= 60) {
-                                                                        selectedHour = h + 1;
-                                                                        selectedMinute = 0;
+                                                                  selectedHour =
+                                                                      h;
+                                                                  selectedMinute ??=
+                                                                      0;
+                                                                  if (isSameDay &&
+                                                                      h ==
+                                                                          minDateTime!
+                                                                              .hour) {
+                                                                    if (selectedMinute! <=
+                                                                        minDateTime
+                                                                            .minute) {
+                                                                      selectedMinute =
+                                                                          minDateTime
+                                                                              .minute +
+                                                                          1;
+                                                                      if (selectedMinute! >=
+                                                                          60) {
+                                                                        selectedHour =
+                                                                            h +
+                                                                            1;
+                                                                        selectedMinute =
+                                                                            0;
                                                                       }
                                                                     }
                                                                   }
                                                                 });
-                                                                if (hourScrollController.hasClients) {
+                                                                if (hourScrollController
+                                                                    .hasClients) {
                                                                   hourScrollController.animateTo(
-                                                                    (h * 38.0).clamp(0.0, hourScrollController.position.maxScrollExtent),
-                                                                    duration: const Duration(milliseconds: 250),
-                                                                    curve: Curves.easeOutCubic,
+                                                                    ((h * 38.0) -
+                                                                            92.0)
+                                                                        .clamp(
+                                                                          0.0,
+                                                                          hourScrollController
+                                                                              .position
+                                                                              .maxScrollExtent,
+                                                                        ),
+                                                                    duration: const Duration(
+                                                                      milliseconds:
+                                                                          250,
+                                                                    ),
+                                                                    curve: Curves
+                                                                        .easeOutCubic,
                                                                   );
                                                                 }
                                                               },
                                                         child: Container(
-                                                          width: double.infinity,
+                                                          width:
+                                                              double.infinity,
                                                           height: 34,
                                                           decoration: BoxDecoration(
                                                             color: isSelected
-                                                                ? const Color(0xFF004385)
+                                                                ? const Color(
+                                                                    0xFF004385,
+                                                                  )
                                                                 : (isHourDisabled
-                                                                    ? const Color(0xFFF1F5F9)
-                                                                    : Colors.transparent),
-                                                            borderRadius: BorderRadius.circular(6),
+                                                                      ? const Color(
+                                                                          0xFFF1F5F9,
+                                                                        )
+                                                                      : Colors
+                                                                            .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
                                                           ),
-                                                          alignment: Alignment.center,
+                                                          alignment:
+                                                              Alignment.center,
                                                           child: Text(
-                                                            h.toString().padLeft(2, '0'),
+                                                            h
+                                                                .toString()
+                                                                .padLeft(
+                                                                  2,
+                                                                  '0',
+                                                                ),
                                                             style: GoogleFonts.inter(
                                                               fontSize: 13,
-                                                              fontWeight: isSelected
-                                                                  ? FontWeight.w700
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .w700
                                                                   : (isHourDisabled
-                                                                      ? FontWeight.w400
-                                                                      : FontWeight.w600),
+                                                                        ? FontWeight
+                                                                              .w400
+                                                                        : FontWeight
+                                                                              .w600),
                                                               color: isSelected
                                                                   ? Colors.white
                                                                   : (isHourDisabled
-                                                                      ? const Color(0xFFCBD5E1)
-                                                                      : const Color(0xFF1E293B)),
+                                                                        ? const Color(
+                                                                            0xFFCBD5E1,
+                                                                          )
+                                                                        : const Color(
+                                                                            0xFF1E293B,
+                                                                          )),
                                                             ),
                                                           ),
                                                         ),
@@ -2832,79 +3482,139 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
                                         const SizedBox(width: 8),
 
-                                        // Minutes List (00 - 55 step 5)
+                                        // Minutes List (00 - 59)
                                         Expanded(
                                           child: Container(
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFF8FAFC),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                              ),
                                             ),
                                             child: RawScrollbar(
-                                              controller: minuteScrollController,
+                                              controller:
+                                                  minuteScrollController,
                                               thumbVisibility: true,
                                               thickness: 3.5,
                                               radius: const Radius.circular(4),
-                                              thumbColor: const Color(0xFF94A3B8),
+                                              thumbColor: const Color(
+                                                0xFF94A3B8,
+                                              ),
                                               child: ListView.builder(
-                                                controller: minuteScrollController,
-                                                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                                padding: const EdgeInsets.symmetric(vertical: 96, horizontal: 4),
-                                                itemCount: 12, // 00, 05, 10, ..., 55
-                                                itemBuilder: (ctx, idx) {
-                                                  final m = idx * 5;
-                                                  final isMinuteDisabled = isSameDay &&
+                                                controller:
+                                                    minuteScrollController,
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 4,
+                                                    ),
+                                                itemCount: 60,
+                                                itemBuilder: (ctx, m) {
+                                                  final isMinuteDisabled =
+                                                      isSameDay &&
                                                       selectedHour != null &&
-                                                      selectedHour == minDateTime!.hour &&
+                                                      selectedHour ==
+                                                          minDateTime!.hour &&
                                                       m <= minDateTime.minute;
-                                                  final isSelected = selectedMinute == m;
+                                                  final isSelected =
+                                                      selectedMinute == m;
 
                                                   return SizedBox(
                                                     height: 38,
                                                     child: Center(
                                                       child: InkWell(
-                                                        borderRadius: BorderRadius.circular(6),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
                                                         onTap: isMinuteDisabled
                                                             ? null
                                                             : () {
                                                                 setDialogState(() {
-                                                                  selectedMinute = m;
-                                                                  selectedHour ??= isSameDay ? minDateTime!.hour : 9;
+                                                                  selectedMinute =
+                                                                      m;
+                                                                  selectedHour ??=
+                                                                      isSameDay
+                                                                      ? minDateTime!
+                                                                            .hour
+                                                                      : 9;
                                                                 });
-                                                                if (minuteScrollController.hasClients) {
+                                                                if (minuteScrollController
+                                                                    .hasClients) {
                                                                   minuteScrollController.animateTo(
-                                                                    (idx * 38.0).clamp(0.0, minuteScrollController.position.maxScrollExtent),
-                                                                    duration: const Duration(milliseconds: 250),
-                                                                    curve: Curves.easeOutCubic,
+                                                                    ((m * 38.0) -
+                                                                            92.0)
+                                                                        .clamp(
+                                                                          0.0,
+                                                                          minuteScrollController
+                                                                              .position
+                                                                              .maxScrollExtent,
+                                                                        ),
+                                                                    duration: const Duration(
+                                                                      milliseconds:
+                                                                          250,
+                                                                    ),
+                                                                    curve: Curves
+                                                                        .easeOutCubic,
                                                                   );
                                                                 }
                                                               },
                                                         child: Container(
-                                                          width: double.infinity,
+                                                          width:
+                                                              double.infinity,
                                                           height: 34,
                                                           decoration: BoxDecoration(
                                                             color: isSelected
-                                                                ? const Color(0xFF004385)
+                                                                ? const Color(
+                                                                    0xFF004385,
+                                                                  )
                                                                 : (isMinuteDisabled
-                                                                    ? const Color(0xFFF1F5F9)
-                                                                    : Colors.transparent),
-                                                            borderRadius: BorderRadius.circular(6),
+                                                                      ? const Color(
+                                                                          0xFFF1F5F9,
+                                                                        )
+                                                                      : Colors
+                                                                            .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
                                                           ),
-                                                          alignment: Alignment.center,
+                                                          alignment:
+                                                              Alignment.center,
                                                           child: Text(
-                                                            m.toString().padLeft(2, '0'),
+                                                            m
+                                                                .toString()
+                                                                .padLeft(
+                                                                  2,
+                                                                  '0',
+                                                                ),
                                                             style: GoogleFonts.inter(
                                                               fontSize: 13,
-                                                              fontWeight: isSelected
-                                                                  ? FontWeight.w700
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .w700
                                                                   : (isMinuteDisabled
-                                                                      ? FontWeight.w400
-                                                                      : FontWeight.w600),
+                                                                        ? FontWeight
+                                                                              .w400
+                                                                        : FontWeight
+                                                                              .w600),
                                                               color: isSelected
                                                                   ? Colors.white
                                                                   : (isMinuteDisabled
-                                                                      ? const Color(0xFFCBD5E1)
-                                                                      : const Color(0xFF1E293B)),
+                                                                        ? const Color(
+                                                                            0xFFCBD5E1,
+                                                                          )
+                                                                        : const Color(
+                                                                            0xFF1E293B,
+                                                                          )),
                                                             ),
                                                           ),
                                                         ),
@@ -2927,11 +3637,18 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                       ),
                     ),
 
-                    const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFE2E8F0),
+                    ),
 
                     // Bottom Action Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           // 3. Automatic Now Button (GMT+7 Live Sync & Auto Scroll)
@@ -2940,54 +3657,72 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                               style: TextButton.styleFrom(
                                 backgroundColor: const Color(0xFFEFF6FF),
                                 foregroundColor: const Color(0xFF004385),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                               ),
                               onPressed: () {
                                 final nowGmt7 = _getGmt7Now();
                                 final targetHour = nowGmt7.hour;
-                                final targetMinute = (nowGmt7.minute ~/ 5) * 5;
+                                final targetMinute = nowGmt7.minute;
 
                                 setDialogState(() {
-                                  selectedDate = DateTime(nowGmt7.year, nowGmt7.month, nowGmt7.day);
+                                  selectedDate = DateTime(
+                                    nowGmt7.year,
+                                    nowGmt7.month,
+                                    nowGmt7.day,
+                                  );
                                   selectedHour = targetHour;
                                   selectedMinute = targetMinute;
                                 });
 
                                 if (hourScrollController.hasClients) {
-                                  final targetH = targetHour * 38.0;
+                                  final targetH = (targetHour * 38.0) - 92.0;
                                   hourScrollController.animateTo(
-                                    targetH.clamp(0.0, hourScrollController.position.maxScrollExtent),
+                                    targetH.clamp(
+                                      0.0,
+                                      hourScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
                                     duration: const Duration(milliseconds: 350),
                                     curve: Curves.easeOutCubic,
                                   );
                                 }
                                 if (minuteScrollController.hasClients) {
-                                  final targetM = (targetMinute ~/ 5) * 38.0;
+                                  final targetM = (targetMinute * 38.0) - 92.0;
                                   minuteScrollController.animateTo(
-                                    targetM.clamp(0.0, minuteScrollController.position.maxScrollExtent),
+                                    targetM.clamp(
+                                      0.0,
+                                      minuteScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
                                     duration: const Duration(milliseconds: 350),
                                     curve: Curves.easeOutCubic,
                                   );
                                 }
                               },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.flash_on_rounded, size: 14, color: Color(0xFF004385)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Now',
-                                    style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
-                                  ),
-                                ],
+                              child: Text(
+                                'Today',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           const Spacer(),
                           TextButton(
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF64748B),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
                             ),
                             onPressed: () {
                               tickerTimer?.cancel();
@@ -2995,7 +3730,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                             },
                             child: Text(
                               'Cancel',
-                              style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600),
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -3008,18 +3746,28 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                                   ? Colors.white
                                   : const Color(0xFF94A3B8),
                               elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 8,
+                              ),
                             ),
                             onPressed: isSelectionValid
                                 ? () {
                                     tickerTimer?.cancel();
-                                    Navigator.of(dialogContext).pop(currentPreview);
+                                    Navigator.of(
+                                      dialogContext,
+                                    ).pop(currentPreview);
                                   }
                                 : null,
                             child: Text(
                               'OK',
-                              style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],
@@ -3068,7 +3816,11 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     );
   }
 
-  Widget _buildFormFieldLabel(String label, {bool isRequired = false, bool showInfo = false}) {
+  Widget _buildFormFieldLabel(
+    String label, {
+    bool isRequired = false,
+    bool showInfo = false,
+  }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -3098,12 +3850,19 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   Widget _buildTextInputField({
     required TextEditingController controller,
     required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    bool enabled = true,
+    bool readOnly = false,
     ValueChanged<String>? onChanged,
   }) {
+    final isFieldDisabled = !enabled || readOnly;
     return SizedBox(
       height: 44,
       child: TextField(
         controller: controller,
+        enabled: enabled,
+        readOnly: isFieldDisabled,
+        keyboardType: keyboardType,
         textAlignVertical: TextAlignVertical.center,
         onChanged: (val) {
           if (onChanged != null) {
@@ -3114,31 +3873,53 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         },
         style: GoogleFonts.inter(
           fontSize: 13,
-          color: const Color(0xFF1E293B),
+          color: isFieldDisabled
+              ? const Color(0xFF64748B)
+              : const Color(0xFF1E293B),
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           isDense: true,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: isFieldDisabled ? const Color(0xFFF1F5F9) : Colors.white,
           hintText: hint,
           hintStyle: GoogleFonts.inter(
             fontSize: 12.5,
             color: const Color(0xFF94A3B8),
             fontWeight: FontWeight.w400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            borderSide: BorderSide(
+              color: isFieldDisabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFCBD5E1),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            borderSide: BorderSide(
+              color: isFieldDisabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFCBD5E1),
+            ),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+            borderSide: BorderSide(
+              color: isFieldDisabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFF004385),
+              width: isFieldDisabled ? 1.0 : 1.5,
+            ),
           ),
         ),
       ),
@@ -3151,7 +3932,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     final canProceedStep2 = _isStep2Valid;
     final canProceedStep3 = _isStep3Valid;
 
-    final isNextDisabled = (_currentStep == 1 && !canProceedStep1) ||
+    final isNextDisabled =
+        (_currentStep == 1 && !canProceedStep1) ||
         (_currentStep == 2 && !canProceedStep2) ||
         (_currentStep == 3 && !canProceedStep3);
 
@@ -3170,13 +3952,19 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   borderRadius: BorderRadius.circular(6),
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
               ),
               onPressed: !_isSubmitting ? _goToPreviousStep : null,
               icon: const Icon(Icons.arrow_back, size: 14),
               label: Text(
                 'Back',
-                style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -3192,7 +3980,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   ? const Color(0xFF94A3B8)
                   : Colors.white,
               elevation: isNextDisabled ? 0 : 1,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
             ),
             onPressed: (_isSubmitting || isNextDisabled)
@@ -3215,7 +4005,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
-                          color: isNextDisabled ? const Color(0xFF94A3B8) : Colors.white,
+                          color: isNextDisabled
+                              ? const Color(0xFF94A3B8)
+                              : Colors.white,
                         ),
                       ),
                       if (!isLastStep) ...[
@@ -3223,7 +4015,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                         Icon(
                           Icons.arrow_forward,
                           size: 14,
-                          color: isNextDisabled ? const Color(0xFF94A3B8) : Colors.white,
+                          color: isNextDisabled
+                              ? const Color(0xFF94A3B8)
+                              : Colors.white,
                         ),
                       ],
                     ],
@@ -3239,8 +4033,5 @@ class DropdownMenuItemData<T> {
   final T value;
   final String label;
 
-  DropdownMenuItemData({
-    required this.value,
-    required this.label,
-  });
+  DropdownMenuItemData({required this.value, required this.label});
 }
