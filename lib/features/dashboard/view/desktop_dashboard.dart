@@ -84,7 +84,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   final PageController _livePageController = PageController();
   final PageController _relatedPageController = PageController();
   String _selectedSite = 'SPU';
-  String _selectedLanguage = 'EN';
   String? _selectedBulkAction;
 
   // Design Tokens (from AGENTS.md)
@@ -271,18 +270,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // ── Left Column (~30% width) ──────────────────────────
-                          Expanded(flex: 30, child: _buildLeftColumn()),
+                          // ── Left Column (~34% width) ──────────────────────────
+                          Expanded(flex: 34, child: _buildLeftColumn()),
 
                           const SizedBox(width: 8),
 
-                          // ── Center Column (~41% width) ────────────────────────
-                          Expanded(flex: 41, child: _buildCenterColumn()),
+                          // ── Center Column (~38% width) ────────────────────────
+                          Expanded(flex: 38, child: _buildCenterColumn()),
 
                           const SizedBox(width: 8),
 
-                          // ── Right Column (~29% width) ─────────────────────────
-                          Expanded(flex: 29, child: _buildRightColumn()),
+                          // ── Right Column (~28% width) ─────────────────────────
+                          Expanded(flex: 28, child: _buildRightColumn()),
                         ],
                       ),
                     ),
@@ -631,11 +630,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             ],
           ),
 
-          const SizedBox(width: 6),
-
-          // Language Selector Dropdown (EN / ID)
-          _buildLanguageDropdown(),
-
           const SizedBox(width: 8),
 
           // User Profile Avatar with Green Online Status Dot
@@ -676,100 +670,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Language Selector Dropdown (EN / ID)
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildLanguageDropdown() {
-    return PopupMenuButton<String>(
-      tooltip: 'Select Language',
-      offset: const Offset(0, 32),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      onSelected: (lang) {
-        setState(() {
-          _selectedLanguage = lang;
-        });
-        if (lang == 'EN') {
-          Get.updateLocale(const Locale('en'));
-        } else {
-          Get.updateLocale(const Locale('id'));
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          value: 'EN',
-          height: 36,
-          child: Row(
-            children: [
-              const Text('🇬🇧', style: TextStyle(fontSize: 14)),
-              const SizedBox(width: 8),
-              Text(
-                'English (EN)',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: _selectedLanguage == 'EN' ? FontWeight.w700 : FontWeight.w500,
-                  color: const Color(0xFF1E293B),
-                ),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'ID',
-          height: 36,
-          child: Row(
-            children: [
-              const Text('🇮🇩', style: TextStyle(fontSize: 14)),
-              const SizedBox(width: 8),
-              Text(
-                'Indonesia (ID)',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: _selectedLanguage == 'ID' ? FontWeight.w700 : FontWeight.w500,
-                  color: const Color(0xFF1E293B),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-      child: Container(
-        height: 28,
-        padding: const EdgeInsets.symmetric(horizontal: 7),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              _selectedLanguage == 'EN' ? '🇬🇧' : '🇮🇩',
-              style: const TextStyle(fontSize: 12),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              _selectedLanguage,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _textDark,
-              ),
-            ),
-            const SizedBox(width: 2),
-            const Icon(
-              Icons.arrow_drop_down,
-              size: 15,
-              color: _textMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // LEFT COLUMN (~30% width)
+  // LEFT COLUMN (~34% width)
   // 1. Visitor Profile Card (Enhanced typography & styling matching screenshot)
   // 2. Tabs: Visit Information / Purpose Visit / Card / History
   // 3. Visitor QR Code Card
@@ -782,16 +683,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         children: [
           // ── 1. Top Visitor Profile Card (Keyed for Tour Step 2) ───────────
           Expanded(
-            flex: 6,
+            flex: 10,
             child: _buildCardContainer(
               key: _keyVisitorProfile,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                // Visitor Photo with Rounded Frame, Face Detection Reticle, and Clickable Preview
+                // Visitor Photo with Rounded Frame and Clickable Fullscreen Preview
                 Expanded(
-                  flex: 3,
+                  flex: 5,
                   child: Builder(
                     builder: (context) {
                       final selfieUrl = (visitor?['selfie_image'] ??
@@ -817,11 +718,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       final visitorName = (visitor?['visitor_name'] ?? visitor?['name'] ?? '').toString().trim();
 
                       return AspectRatio(
-                        aspectRatio: 3 / 4,
+                        aspectRatio: 0.76,
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             onTap: () {
                               _showProfileImagePreview(
                                 context,
@@ -831,12 +732,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               );
                             },
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: Stack(
-                                fit: StackFit.expand,
-                                children: [
-                                  if (hasSelfie)
-                                    Image.network(
+                              borderRadius: BorderRadius.circular(20),
+                              child: hasSelfie
+                                  ? Image.network(
                                       cdnUrl,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Image.asset(
@@ -844,8 +742,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         fit: BoxFit.cover,
                                       ),
                                     )
-                                  else
-                                    Image.asset(
+                                  : Image.asset(
                                       'assets/images/ai_image.jpeg',
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
@@ -859,42 +756,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         ),
                                       ),
                                     ),
-
-                                  // Green Face Detection Target Overlay (Only when visitor != null)
-                                  if (visitor != null)
-                                    Center(
-                                      child: Container(
-                                        width: 50,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: const Color(0xFF00E676),
-                                            width: 1.5,
-                                          ),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                      ),
-                                    ),
-
-                                  // Fullscreen Preview Indicator icon at bottom-right
-                                  Positioned(
-                                    right: 6,
-                                    bottom: 6,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withValues(alpha: 0.5),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.fullscreen_rounded,
-                                        size: 14,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ),
@@ -903,13 +764,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
 
                 // Visitor Details Table (Clean Typography with Visitor Type Badge & Detail Rows)
                 Expanded(
-                  flex: 7,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
+                  flex: 14,
+                  child: Builder(
+                    builder: (context) {
                       final visitorTypeName = (visitor?['visitor_type_name'] ??
                               visitor?['visitor_type'] ??
                               visitor?['type_visitor_name'] ??
@@ -926,107 +787,96 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           .toString()
                           .trim();
 
-                      return SizedBox(
-                        height: constraints.maxHeight,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: SizedBox(
-                            width: constraints.maxWidth,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  visitorName.isNotEmpty ? visitorName : 'Name',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1E293B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 3),
-                                if (visitor != null &&
-                                    visitorTypeName.isNotEmpty &&
-                                    visitorTypeName != '-') ...[
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      visitorTypeName,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF64748B),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                ],
-                                const Divider(
-                                  height: 6,
-                                  thickness: 1,
-                                  color: Color(0xFFF1F5F9),
-                                ),
-                                const SizedBox(height: 2),
-                                _buildDetailRow(
-                                  Icons.apartment_rounded,
-                                  'Organization',
-                                  visitor?['organization'] ??
-                                      visitor?['company'] ??
-                                      visitor?['org'] ??
-                                      visitor?['visitor_organization_name'] ??
-                                      '-',
-                                ),
-                                _buildDetailRow(
-                                  Icons.email_outlined,
-                                  'Email',
-                                  visitor?['email'] ??
-                                      visitor?['visitor_email'] ??
-                                      '-',
-                                ),
-                                _buildDetailRow(
-                                  Icons.phone_outlined,
-                                  'Phone',
-                                  visitor?['phone'] ??
-                                      visitor?['visitor_phone'] ??
-                                      '-',
-                                ),
-                                _buildDetailRow(
-                                  Icons.credit_card_outlined,
-                                  'Citizenship ID',
-                                  visitor?['id_card_no'] ??
-                                      visitor?['identity_id'] ??
-                                      visitor?['id_number'] ??
-                                      visitor?['nik'] ??
-                                      visitor?['id'] ??
-                                      '-',
-                                ),
-                                _buildDetailRow(
-                                  Icons.transgender_rounded,
-                                  'Gender',
-                                  visitor?['gender'] ??
-                                      visitor?['visitor_gender'] ??
-                                      '-',
-                                ),
-                                _buildDetailRow(
-                                  Icons.person_outline_rounded,
-                                  'Visitor Type',
-                                  visitorTypeName,
-                                ),
-                              ],
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            visitorName.isNotEmpty ? visitorName : 'Name',
+                            style: GoogleFonts.inter(
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
                             ),
+                            maxLines: 2,
+                            softWrap: true,
                           ),
-                        ),
+                          const SizedBox(height: 3),
+                          if (visitor != null &&
+                              visitorTypeName.isNotEmpty &&
+                              visitorTypeName != '-') ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 2.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                visitorTypeName,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                          ],
+                          const Divider(
+                            height: 12,
+                            thickness: 1,
+                            color: Color(0xFFF1F5F9),
+                          ),
+                          const SizedBox(height: 2),
+                          _buildDetailRow(
+                            Icons.apartment_rounded,
+                            'Organization',
+                            visitor?['organization'] ??
+                                visitor?['company'] ??
+                                visitor?['org'] ??
+                                visitor?['visitor_organization_name'] ??
+                                '-',
+                          ),
+                          _buildDetailRow(
+                            Icons.email_outlined,
+                            'Email',
+                            visitor?['email'] ??
+                                visitor?['visitor_email'] ??
+                                '-',
+                          ),
+                          _buildDetailRow(
+                            Icons.phone_outlined,
+                            'Phone',
+                            visitor?['phone'] ??
+                                visitor?['visitor_phone'] ??
+                                '-',
+                          ),
+                          _buildDetailRow(
+                            Icons.credit_card_outlined,
+                            'Citizenship ID',
+                            visitor?['id_card_no'] ??
+                                visitor?['identity_id'] ??
+                                visitor?['id_number'] ??
+                                visitor?['nik'] ??
+                                visitor?['id'] ??
+                                '-',
+                          ),
+                          _buildDetailRow(
+                            Icons.transgender_rounded,
+                            'Gender',
+                            visitor?['gender'] ??
+                                visitor?['visitor_gender'] ??
+                                '-',
+                          ),
+                          _buildDetailRow(
+                            Icons.person_outline_rounded,
+                            'Visitor Type',
+                            visitor?['occupancy'] ?? visitorTypeName,
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -1040,13 +890,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
         // ── 2 & 3. Middle Tabs & QR Code (Grouped & Keyed for Tour Step 3) ─
         Expanded(
-          flex: 20,
+          flex: 14,
           child: Container(
             key: _keyVisitorTabs,
             child: Column(
               children: [
                 Expanded(
-                  flex: 13,
+                  flex: 9,
                   child: _buildCardContainer(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -1251,34 +1101,34 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         : value.trim();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0.6),
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 1.0),
-            child: Icon(icon, size: 13.5, color: const Color(0xFF1E293B)),
+            padding: const EdgeInsets.only(top: 1.5),
+            child: Icon(icon, size: 14.5, color: const Color(0xFF334155)),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 7),
           SizedBox(
-            width: 90,
+            width: 88,
             child: Text(
               label,
               maxLines: 1,
               softWrap: false,
               style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF1E293B),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: const Color(0xFF334155),
               ),
             ),
           ),
           Text(
-            ' :  ',
+            ':  ',
             style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF1E293B),
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF334155),
             ),
           ),
           Expanded(
@@ -1287,10 +1137,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               maxLines: 2,
               softWrap: true,
               style: GoogleFonts.inter(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
                 color: const Color(0xFF1E293B),
-                height: 1.15,
+                height: 1.22,
               ),
             ),
           ),
