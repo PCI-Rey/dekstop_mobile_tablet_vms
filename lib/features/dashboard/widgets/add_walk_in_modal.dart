@@ -583,19 +583,25 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     return true;
   }
 
+  bool _isBicycle(String? vehicleType) {
+    if (vehicleType == null) return false;
+    final t = vehicleType.toLowerCase().trim();
+    return t == 'bicycle' || t == 'sepeda' || t.contains('bicycle') || t.contains('sepeda') || t == 'bike';
+  }
+
   bool get _isStep4Valid {
     if (_isGroup == true) {
       for (final v in _groupVisitors) {
         if (v.isDriving == true) {
           if (v.vehicleType == null || v.vehicleType!.isEmpty) return false;
-          if (v.vehiclePlateCtrl.text.trim().isEmpty) return false;
+          if (!_isBicycle(v.vehicleType) && v.vehiclePlateCtrl.text.trim().isEmpty) return false;
         }
       }
       return true;
     } else {
       if (_singleIsDriving == true) {
         if (_singleVehicleType == null || _singleVehicleType!.isEmpty) return false;
-        if (_singleVehiclePlateCtrl.text.trim().isEmpty) return false;
+        if (!_isBicycle(_singleVehicleType) && _singleVehiclePlateCtrl.text.trim().isEmpty) return false;
       }
       return true;
     }
@@ -2069,28 +2075,41 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               _buildRadioOption(
                 label: 'No Vehicle',
                 isSelected: _singleIsDriving == false,
-                onTap: () => setState(() => _singleIsDriving = false),
+                onTap: () => setState(() {
+                  _singleIsDriving = false;
+                  _singleVehicleType = null;
+                  _singleVehiclePlateCtrl.clear();
+                }),
               ),
             ],
           ),
 
           if (_singleIsDriving) ...[
             const SizedBox(height: 20),
-            _buildFormFieldLabel('Vehicle Type', isRequired: false),
+            _buildFormFieldLabel('Vehicle Type', isRequired: true),
             const SizedBox(height: 6),
             _buildCleanDropdownField<String>(
               hint: 'Select Vehicle Type',
               selectedValue: _singleVehicleType,
               items: _getVehicleTypeOptions(),
-              onSelected: (val) => setState(() => _singleVehicleType = val),
+              onSelected: (val) {
+                setState(() {
+                  _singleVehicleType = val;
+                  if (_isBicycle(val)) {
+                    _singleVehiclePlateCtrl.clear();
+                  }
+                });
+              },
             ),
-            const SizedBox(height: 16),
-            _buildFormFieldLabel('Vehicle License Plate', isRequired: false),
-            const SizedBox(height: 6),
-            _buildTextInputField(
-              controller: _singleVehiclePlateCtrl,
-              hint: 'e.g. B 1234 XYZ',
-            ),
+            if (!_isBicycle(_singleVehicleType)) ...[
+              const SizedBox(height: 16),
+              _buildFormFieldLabel('Vehicle License Plate', isRequired: true),
+              const SizedBox(height: 6),
+              _buildTextInputField(
+                controller: _singleVehiclePlateCtrl,
+                hint: 'e.g. B 1234 XYZ',
+              ),
+            ],
           ],
         ],
       ),
@@ -2154,23 +2173,40 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         _buildRadioOption(
                           label: 'No Vehicle',
                           isSelected: v.isDriving == false,
-                          onTap: () => setState(() => v.isDriving = false),
+                          onTap: () => setState(() {
+                            v.isDriving = false;
+                            v.vehicleType = null;
+                            v.vehiclePlateCtrl.clear();
+                          }),
                         ),
                       ],
                     ),
                     if (v.isDriving) ...[
                       const SizedBox(height: 12),
+                      _buildFormFieldLabel('Vehicle Type', isRequired: true),
+                      const SizedBox(height: 6),
                       _buildCleanDropdownField<String>(
                         hint: 'Select Vehicle Type',
                         selectedValue: v.vehicleType,
                         items: _getVehicleTypeOptions(),
-                        onSelected: (val) => setState(() => v.vehicleType = val),
+                        onSelected: (val) {
+                          setState(() {
+                            v.vehicleType = val;
+                            if (_isBicycle(val)) {
+                              v.vehiclePlateCtrl.clear();
+                            }
+                          });
+                        },
                       ),
-                      const SizedBox(height: 10),
-                      _buildTextInputField(
-                        controller: v.vehiclePlateCtrl,
-                        hint: 'License Plate (e.g. B 1234 XYZ)',
-                      ),
+                      if (!_isBicycle(v.vehicleType)) ...[
+                        const SizedBox(height: 10),
+                        _buildFormFieldLabel('Vehicle License Plate', isRequired: true),
+                        const SizedBox(height: 6),
+                        _buildTextInputField(
+                          controller: v.vehiclePlateCtrl,
+                          hint: 'License Plate (e.g. B 1234 XYZ)',
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -2670,39 +2706,39 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             }
           } else {
             // Text / Dropdown / Radio fields
-            String answerVal = '';
             if (remarks == 'name') {
-              answerVal = name;
+              formItem['answer_text'] = name;
             } else if (remarks == 'email') {
-              answerVal = email;
+              formItem['answer_text'] = email;
             } else if (remarks == 'phone') {
-              answerVal = phone;
+              formItem['answer_text'] = phone;
             } else if (remarks == 'organization' || remarks == 'company') {
-              answerVal = org;
+              formItem['answer_text'] = org;
             } else if (remarks == 'identity_id' || remarks == 'indentity_id') {
-              answerVal = identity;
+              formItem['answer_text'] = identity;
             } else if (remarks == 'is_employee') {
-              answerVal = isEmployee ? 'true' : 'false';
+              formItem['answer_text'] = isEmployee ? 'true' : 'false';
             } else if (remarks == 'employee') {
-              answerVal = employeeId;
+              formItem['answer_text'] = employeeId;
             } else if (remarks == 'visitor_role' || remarks == 'role') {
-              answerVal = role ?? '';
+              formItem['answer_text'] = role ?? '';
             } else if (remarks == 'site_place' || remarks == 'destination') {
-              answerVal = siteId;
+              formItem['answer_text'] = siteId;
             } else if (remarks == 'host' || remarks == 'pic_host') {
-              answerVal = hostId;
+              formItem['answer_text'] = hostId;
             } else if (remarks == 'agenda') {
-              answerVal = agenda;
+              formItem['answer_text'] = agenda;
             } else if (remarks == 'is_driving') {
-              answerVal = isDriving ? 'true' : 'false';
+              formItem['answer_text'] = isDriving ? 'true' : 'false';
             } else if (remarks == 'vehicle_type') {
-              answerVal = vehicleType ?? '';
+              formItem['answer_text'] = isDriving ? (vehicleType?.isNotEmpty == true ? vehicleType : null) : null;
             } else if (remarks == 'vehicle_plate') {
-              answerVal = vehiclePlate;
+              formItem['answer_text'] = (!isDriving || _isBicycle(vehicleType))
+                  ? null
+                  : (vehiclePlate.trim().isNotEmpty ? vehiclePlate.trim() : null);
             } else {
-              answerVal = extraCtrls[remarks]?.text.trim() ?? '';
+              formItem['answer_text'] = extraCtrls[remarks]?.text.trim() ?? '';
             }
-            formItem['answer_text'] = answerVal;
           }
 
           builtFormList.add(formItem);
@@ -2929,7 +2965,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             'custom_field_id': '6ec27b6a-016e-4aa8-94e7-fa37292bed4a',
             'multiple_option_fields': [],
             'visitor_form_type': 1,
-            'answer_text': vehicleType ?? '',
+            'answer_text': isDriving ? (vehicleType?.isNotEmpty == true ? vehicleType : null) : null,
           },
           {
             'sort': 2,
@@ -2943,7 +2979,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             'custom_field_id': '66f05293-fea2-4948-b871-cf65124b3edc',
             'multiple_option_fields': [],
             'visitor_form_type': 1,
-            'answer_text': vehiclePlate,
+            'answer_text': (!isDriving || _isBicycle(vehicleType))
+                ? null
+                : (vehiclePlate.trim().isNotEmpty ? vehiclePlate.trim() : null),
           },
         ],
       },
