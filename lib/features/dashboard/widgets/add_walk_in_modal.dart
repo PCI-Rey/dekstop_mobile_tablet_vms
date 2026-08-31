@@ -168,6 +168,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   UploadedFileData? _singleSelfieImage;
   UploadedFileData? _singleKtpImage;
 
+  int _maxStepReached = 1;
+
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -847,6 +849,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         _singleIsDriving = false;
         _singleKtpImage = null;
         _singleSelfieImage = null;
+        _maxStepReached = 1;
         for (final v in _groupVisitors) {
           v.isEmployee = false;
           v.role = null;
@@ -934,6 +937,29 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     );
   }
 
+  bool _isStepCompleted(int stepNum) {
+    if (stepNum == _currentStep) return false;
+    if (stepNum > _maxStepReached) return false;
+    if (stepNum == 1) return _isStep1Valid && (_currentStep > 1 || _maxStepReached > 1);
+    if (stepNum == 2) return _isStep1Valid && _isStep2Valid && (_currentStep > 2 || _maxStepReached > 2);
+    if (stepNum == 3) return _isStep1Valid && _isStep2Valid && _isStep3Valid && (_currentStep > 3 || _maxStepReached > 3);
+    if (stepNum == 4) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && (_currentStep > 4 || _maxStepReached > 4);
+    if (stepNum == 5) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid && (_currentStep > 5 || _maxStepReached > 5);
+    if (stepNum == 6) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid && _isStep6Valid && (_currentStep > 6 || _maxStepReached > 6);
+    return false;
+  }
+
+  bool _canJumpToStep(int stepNum) {
+    if (_currentStep == stepNum) return false;
+    if (stepNum == 1) return true;
+    if (stepNum == 2) return _isStep1Valid;
+    if (stepNum == 3) return _isStep1Valid && _isStep2Valid;
+    if (stepNum == 4) return _isStep1Valid && _isStep2Valid && _isStep3Valid;
+    if (stepNum == 5) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid;
+    if (stepNum == 6) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid;
+    return false;
+  }
+
   Widget _buildStepper() {
     final titles = _getDynamicStepTitles();
     final showAllSteps = _selectedVisitorType != null || _currentStep >= 2;
@@ -949,67 +975,90 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         children: List.generate(visibleTitles.length * 2 - 1, (index) {
           if (index.isOdd) {
             final stepBefore = (index ~/ 2) + 1;
-            final isCompleted = _currentStep > stepBefore;
+            bool isConnectorCompleted = false;
+            if (stepBefore == 1) {
+              isConnectorCompleted = _isStep1Valid && (_currentStep >= 2 || _maxStepReached >= 2);
+            } else if (stepBefore == 2) {
+              isConnectorCompleted = _isStep1Valid && _isStep2Valid && (_currentStep >= 3 || _maxStepReached >= 3);
+            } else if (stepBefore == 3) {
+              isConnectorCompleted = _isStep1Valid && _isStep2Valid && _isStep3Valid && (_currentStep >= 4 || _maxStepReached >= 4);
+            } else if (stepBefore == 4) {
+              isConnectorCompleted = _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && (_currentStep >= 5 || _maxStepReached >= 5);
+            } else if (stepBefore == 5) {
+              isConnectorCompleted = _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid && (_currentStep >= 6 || _maxStepReached >= 6);
+            }
+
             return Container(
               width: 50,
               height: 2,
               margin: const EdgeInsets.only(top: 12, left: 10, right: 10),
-              color: isCompleted ? const Color(0xFF004385) : const Color(0xFFE2E8F0),
+              color: isConnectorCompleted ? const Color(0xFF004385) : const Color(0xFFE2E8F0),
             );
           }
 
           final stepNum = (index ~/ 2) + 1;
           final isActive = _currentStep == stepNum;
-          final isCompleted = _currentStep > stepNum;
-          final canJump = isCompleted;
+          final isCompleted = _isStepCompleted(stepNum);
+          final canJump = _canJumpToStep(stepNum);
+          final showCheckmark = isCompleted && !isActive;
 
-          return InkWell(
-            onTap: canJump && !isActive
-                ? () => setState(() => _currentStep = stepNum)
-                : null,
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              width: 105,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 26,
-                    height: 26,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive || isCompleted
-                          ? const Color(0xFF004385)
-                          : const Color(0xFFCBD5E1),
-                    ),
-                    child: Center(
-                      child: isCompleted
-                          ? const Icon(Icons.check, size: 14, color: Colors.white)
-                          : Text(
-                              '$stepNum',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+          return MouseRegion(
+            cursor: canJump ? SystemMouseCursors.click : SystemMouseCursors.basic,
+            child: InkWell(
+              onTap: canJump
+                  ? () => setState(() {
+                      if (stepNum > _maxStepReached) {
+                        _maxStepReached = stepNum;
+                      }
+                      _currentStep = stepNum;
+                    })
+                  : null,
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 105,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isActive || isCompleted
+                            ? const Color(0xFF004385)
+                            : (canJump ? const Color(0xFF94A3B8) : const Color(0xFFCBD5E1)),
+                      ),
+                      child: Center(
+                        child: showCheckmark
+                            ? const Icon(Icons.check, size: 14, color: Colors.white)
+                            : Text(
+                                '$stepNum',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    visibleTitles[stepNum - 1],
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                      color: isActive
-                          ? const Color(0xFF004385)
-                          : const Color(0xFF64748B),
+                    const SizedBox(height: 6),
+                    Text(
+                      visibleTitles[stepNum - 1],
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        color: isActive
+                            ? const Color(0xFF004385)
+                            : (isCompleted || canJump
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFF64748B)),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
@@ -3277,6 +3326,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     if (isFinalStep) {
                       _handleSubmit();
                     } else {
+                      if (_currentStep + 1 > _maxStepReached) {
+                        _maxStepReached = _currentStep + 1;
+                      }
                       setState(() => _currentStep++);
                     }
                   }

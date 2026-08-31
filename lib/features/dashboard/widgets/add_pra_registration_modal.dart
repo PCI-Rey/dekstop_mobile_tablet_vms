@@ -68,6 +68,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
   int _currentStep =
       1; // 1: User Type, 2: Visitor Information, 3: Purpose Visit
+  int _maxStepReached = 1;
 
   // --- Step 1 State ---
   Map<String, dynamic>? _selectedVisitorType;
@@ -186,6 +187,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         }
 
         _singleRole = null;
+        _maxStepReached = 1;
         _clearSingle();
       });
     }
@@ -332,6 +334,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       },
     ];
   }
+
+  bool get _isStep1Valid =>
+      _selectedVisitorType != null && _isGroup != null;
 
   bool get _isStep2Valid {
     final fields = _getVisitorInfoPraFormFields();
@@ -646,6 +651,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         );
         return;
       }
+      if (_currentStep + 1 > _maxStepReached) {
+        _maxStepReached = _currentStep + 1;
+      }
       setState(() => _currentStep = 2);
     } else if (_currentStep == 2) {
       final fields = _getVisitorInfoPraFormFields();
@@ -702,6 +710,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           );
           return;
         }
+      }
+      if (_currentStep + 1 > _maxStepReached) {
+        _maxStepReached = _currentStep + 1;
       }
       setState(() => _currentStep = 3);
     }
@@ -1310,62 +1321,98 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     );
   }
 
+  bool _isStepCompleted(int stepNum) {
+    if (stepNum == _currentStep) return false;
+    if (stepNum > _maxStepReached) return false;
+    if (stepNum == 1) return _isStep1Valid && (_currentStep > 1 || _maxStepReached > 1);
+    if (stepNum == 2) return _isStep1Valid && _isStep2Valid && (_currentStep > 2 || _maxStepReached > 2);
+    if (stepNum == 3) return _isStep1Valid && _isStep2Valid && _isStep3Valid && (_currentStep > 3 || _maxStepReached > 3);
+    return false;
+  }
+
+  bool _canJumpToStep(int stepNum) {
+    if (_currentStep == stepNum) return false;
+    if (stepNum == 1) return true;
+    if (stepNum == 2) return _isStep1Valid;
+    if (stepNum == 3) return _isStep1Valid && _isStep2Valid;
+    return false;
+  }
+
   Widget _buildStepItem(int stepNumber, String title) {
     final isActive = _currentStep == stepNumber;
-    final isCompleted = _currentStep > stepNumber;
-    final canJump = isCompleted;
+    final isCompleted = _isStepCompleted(stepNumber);
+    final canJump = _canJumpToStep(stepNumber);
+    final showCheckmark = isCompleted && !isActive;
 
-    return InkWell(
-      onTap: canJump && !isActive
-          ? () => setState(() => _currentStep = stepNumber)
-          : null,
-      borderRadius: BorderRadius.circular(6),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive || isCompleted
-                    ? const Color(0xFF004385)
-                    : const Color(0xFFCBD5E1),
-              ),
-              child: Center(
-                child: isCompleted
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
-                    : Text(
-                        '$stepNumber',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+    return MouseRegion(
+      cursor: canJump ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: InkWell(
+        onTap: canJump
+            ? () => setState(() {
+                if (stepNumber > _maxStepReached) {
+                  _maxStepReached = stepNumber;
+                }
+                _currentStep = stepNumber;
+              })
+            : null,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive || isCompleted
+                      ? const Color(0xFF004385)
+                      : (canJump
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFFCBD5E1)),
+                ),
+                child: Center(
+                  child: showCheckmark
+                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                      : Text(
+                          '$stepNumber',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 12.5,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive
-                    ? const Color(0xFF004385)
-                    : const Color(0xFF64748B),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                  color: isActive
+                      ? const Color(0xFF004385)
+                      : (isCompleted || canJump
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFF64748B)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildStepConnector(int stepBefore) {
-    final isCompleted = _currentStep > stepBefore;
+    bool isCompleted = false;
+    if (stepBefore == 1) {
+      isCompleted = _isStep1Valid && (_currentStep >= 2 || _maxStepReached >= 2);
+    } else if (stepBefore == 2) {
+      isCompleted = _isStep1Valid && _isStep2Valid && (_currentStep >= 3 || _maxStepReached >= 3);
+    }
+
     return Container(
       width: 60,
       height: 2,
