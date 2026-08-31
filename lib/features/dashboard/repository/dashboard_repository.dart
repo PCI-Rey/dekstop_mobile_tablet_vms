@@ -223,21 +223,10 @@ class DashboardRepository {
       queryParams['today'] = 'true';
     }
 
-    // 1. Try GET /api/operator-invitation/upcoming-purpose
-    final getApi = await _dioClient.get<Map<String, dynamic>>(
+    return await _dioClient.get<Map<String, dynamic>>(
       '/api/operator-invitation/upcoming-purpose',
       queryParameters: queryParams,
     );
-    if (getApi is Success) return getApi;
-
-    // 2. Try GET /operator-invitation/upcoming-purpose
-    final getDirect = await _dioClient.get<Map<String, dynamic>>(
-      '/operator-invitation/upcoming-purpose',
-      queryParameters: queryParams,
-    );
-    if (getDirect is Success) return getDirect;
-
-    return getApi;
   }
 
   Future<ApiResult<Map<String, dynamic>>> getUpcomingVisitors({
@@ -268,21 +257,10 @@ class DashboardRepository {
       },
     };
 
-    // 1. Try GET /api/operator-invitation/upcoming-visitor
-    final getApi = await _dioClient.get<Map<String, dynamic>>(
+    return await _dioClient.get<Map<String, dynamic>>(
       '/api/operator-invitation/upcoming-visitor',
       queryParameters: queryParams,
     );
-    if (getApi is Success) return getApi;
-
-    // 2. Try GET /operator-invitation/upcoming-visitor
-    final getDirect = await _dioClient.get<Map<String, dynamic>>(
-      '/operator-invitation/upcoming-visitor',
-      queryParameters: queryParams,
-    );
-    if (getDirect is Success) return getDirect;
-
-    return getApi;
   }
 
   Future<ApiResult<Map<String, dynamic>>> extendVisitorPeriod({
