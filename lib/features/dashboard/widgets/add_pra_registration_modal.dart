@@ -72,7 +72,6 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   // --- Step 1 State ---
   Map<String, dynamic>? _selectedVisitorType;
   Map<String, dynamic>? _visitorTypeDetail;
-  bool _isLoadingVisitorTypeDetail = false;
   bool? _isGroup; // null = unselected, false = Single, true = Group
   String _groupCode = '';
   final TextEditingController _groupNameController = TextEditingController();
@@ -86,7 +85,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   final TextEditingController _singleIdentityCtrl = TextEditingController();
   final Map<String, TextEditingController> _singleExtraControllers = {};
   String? _singleRole;
-  bool? _singleIsEmployee;
+  bool? _singleIsEmployee = false;
   bool _singleIsSearchOpen = false;
   Map<String, dynamic>? _singleSelectedData;
 
@@ -123,7 +122,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
   void _initGroupVisitors() {
     _groupVisitors.clear();
-    _groupVisitors.add(GroupVisitorEntry());
+    final entry = GroupVisitorEntry();
+    entry.isEmployee = false;
+    _groupVisitors.add(entry);
   }
 
   String _generateGroupCode() {
@@ -158,7 +159,6 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     setState(() {
       _selectedVisitorType = type;
       _visitorTypeDetail = null;
-      _isLoadingVisitorTypeDetail = true;
     });
 
     final typeId = (type['id'] ?? '').toString();
@@ -167,19 +167,25 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     if (mounted) {
       setState(() {
         _visitorTypeDetail = detail;
-        _isLoadingVisitorTypeDetail = false;
 
-        // Do not auto-select employee; let user explicitly select Yes or No
+        // Auto-select 'No' (false) for Employee
         _singleIsEmployee = false;
         for (final v in _groupVisitors) {
-          v.isEmployee = null;
+          v.isEmployee = false;
+          v.role = null;
+          v.selectedData = null;
+          v.searchCtrl.clear();
+          v.fullNameCtrl.clear();
+          v.emailCtrl.clear();
+          v.phoneCtrl.clear();
+          v.orgCtrl.clear();
+          v.identityCtrl.clear();
+          for (final c in v.extraControllers.values) {
+            c.clear();
+          }
         }
 
         _singleRole = null;
-        for (final v in _groupVisitors) {
-          v.role = null;
-        }
-
         _clearSingle();
       });
     }
@@ -1284,6 +1290,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   }
 
   Widget _buildStepper() {
+    final showAllSteps = _selectedVisitorType != null || _currentStep >= 2;
+
     return Container(
       color: const Color(0xFFFAFCFF),
       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1291,10 +1299,12 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildStepItem(1, 'User Type'),
-          _buildStepConnector(1),
-          _buildStepItem(2, 'Visitor Information'),
-          _buildStepConnector(2),
-          _buildStepItem(3, 'Purpose Visit'),
+          if (showAllSteps) ...[
+            _buildStepConnector(1),
+            _buildStepItem(2, 'Visitor Information'),
+            _buildStepConnector(2),
+            _buildStepItem(3, 'Purpose Visit'),
+          ],
         ],
       ),
     );
@@ -1303,42 +1313,54 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   Widget _buildStepItem(int stepNumber, String title) {
     final isActive = _currentStep == stepNumber;
     final isCompleted = _currentStep > stepNumber;
+    final canJump = isCompleted;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive || isCompleted
-                ? const Color(0xFF004385)
-                : const Color(0xFFCBD5E1),
-          ),
-          child: Center(
-            child: isCompleted
-                ? const Icon(Icons.check, size: 14, color: Colors.white)
-                : Text(
-                    '$stepNumber',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-          ),
+    return InkWell(
+      onTap: canJump && !isActive
+          ? () => setState(() => _currentStep = stepNumber)
+          : null,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive || isCompleted
+                    ? const Color(0xFF004385)
+                    : const Color(0xFFCBD5E1),
+              ),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : Text(
+                        '$stepNumber',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive
+                    ? const Color(0xFF004385)
+                    : const Color(0xFF64748B),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: GoogleFonts.inter(
-            fontSize: 12.5,
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            color: isActive ? const Color(0xFF004385) : const Color(0xFF64748B),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -1391,22 +1413,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _buildSectionHeader('Visitor Type', isRequired: true),
-              if (_isLoadingVisitorTypeDetail) ...[
-                const SizedBox(width: 10),
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF004385),
-                  ),
-                ),
-              ],
-            ],
-          ),
+          _buildSectionHeader('Visitor Type', isRequired: true),
           const SizedBox(height: 14),
           Wrap(
             spacing: 12,

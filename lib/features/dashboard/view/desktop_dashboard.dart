@@ -778,7 +778,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               visitor?['type_visitor'] ??
                               visitor?['category'] ??
                               visitor?['occupancy'] ??
-                              'Visitor')
+                              '-')
                           .toString()
                           .trim();
 
@@ -875,7 +875,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           _buildDetailRow(
                             Icons.person_outline_rounded,
                             'Visitor Type',
-                            visitor?['occupancy'] ?? visitorTypeName,
+                            visitor != null ? (visitor['occupancy'] ?? (visitorTypeName.isNotEmpty && visitorTypeName != '-' ? visitorTypeName : visitor['visitor_type_name'] ?? visitor['visitor_type'] ?? '-')) : '-',
                           ),
                         ],
                       );
@@ -2559,8 +2559,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       key: _keySelectMultiple,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Reactive Instant Select Multiple Custom Checkbox & Label
+                        // Reactive Instant Select Multiple Custom Checkbox & Label (Hidden by default)
                         Obx(() {
+                          final showMultiple = controller.rxShowSelectMultiple.value;
+                          if (!showMultiple) {
+                            return const SizedBox.shrink();
+                          }
+
                           final isMultiple = controller.rxSelectMultiple.value;
 
                           void toggleMultiple() {
@@ -2577,51 +2582,56 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             }
                           }
 
-                          return InkWell(
-                            onTap: toggleMultiple,
-                            borderRadius: BorderRadius.circular(6),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 17,
-                                  height: 17,
-                                  margin: const EdgeInsets.only(right: 8),
-                                  decoration: BoxDecoration(
-                                    color: isMultiple
-                                        ? const Color(0xFF003082)
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: isMultiple
-                                          ? const Color(0xFF003082)
-                                          : const Color(0xFFCBD5E1),
-                                      width: 1.5,
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              InkWell(
+                                onTap: toggleMultiple,
+                                borderRadius: BorderRadius.circular(6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 17,
+                                      height: 17,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      decoration: BoxDecoration(
+                                        color: isMultiple
+                                            ? const Color(0xFF003082)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: isMultiple
+                                              ? const Color(0xFF003082)
+                                              : const Color(0xFFCBD5E1),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: isMultiple
+                                          ? const Center(
+                                              child: Icon(
+                                                Icons.check_rounded,
+                                                size: 13,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : null,
                                     ),
-                                  ),
-                                  child: isMultiple
-                                      ? const Center(
-                                          child: Icon(
-                                            Icons.check_rounded,
-                                            size: 13,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : null,
+                                    Text(
+                                      'Select Multiple',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: _textDark,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  'Select Multiple',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w500,
-                                    color: _textDark,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 12),
+                            ],
                           );
                         }),
-                        const SizedBox(width: 12),
                         // Dedicated Pagination Indicator (< current/total >) with Button Controls
                         Obx(() {
                           final activeTab = controller.rxFeedTabIndex.value;
@@ -2840,178 +2850,170 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   }),
                 ),
 
-                // Bottom Bulk Action Toolbar (Only for Related Visitors; Hidden on Live Visitors)
+                // Bottom Bulk Action Toolbar (Hidden by default for Related Visitors)
                 Obx(() {
                   final activeTab = controller.rxFeedTabIndex.value;
-                  if (activeTab == 0) {
-                    // Live Visitors tab is purely for displaying data, no bottom action bar
+                  final showToolbar = controller.rxShowRelatedBottomToolbar.value;
+                  if (!showToolbar || activeTab == 0) {
                     return const SizedBox.shrink();
                   }
 
                   return Row(
                     children: [
-                      CompositedTransformTarget(
-                        link: _bulkActionLayerLink,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Obx(() {
+                          CompositedTransformTarget(
+                            link: _bulkActionLayerLink,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: Obx(() {
+                                final isMultipleActive = controller.rxSelectMultiple.value;
+                                final hasItems = controller.rxSelectedItems.isNotEmpty;
+                                final actions = _getAvailableBulkActions();
+                                final isDropdownEnabled = isMultipleActive && hasItems && actions.isNotEmpty;
+                                final hasActionSelected = isDropdownEnabled &&
+                                    _selectedBulkAction != null &&
+                                    actions.contains(_selectedBulkAction);
+
+                                final displayAction = hasActionSelected
+                                    ? _selectedBulkAction!
+                                    : (isDropdownEnabled ? 'Select Action' : 'Action');
+
+                                return InkWell(
+                                  onTap: isDropdownEnabled ? _toggleBulkActionMenu : null,
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    height: 32,
+                                    constraints: const BoxConstraints(minWidth: 128),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: isDropdownEnabled ? Colors.white : const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: (_isBulkActionMenuOpen && isDropdownEnabled)
+                                            ? const Color(0xFF003082)
+                                            : (isDropdownEnabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
+                                        width: (_isBulkActionMenuOpen && isDropdownEnabled) ? 1.5 : 1,
+                                      ),
+                                      boxShadow: (_isBulkActionMenuOpen && isDropdownEnabled)
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFF003082).withValues(alpha: 0.1),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 1),
+                                              )
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (hasActionSelected) ...[
+                                          Icon(
+                                            _getActionIcon(displayAction),
+                                            size: 15,
+                                            color: _getActionColor(displayAction),
+                                          ),
+                                          const SizedBox(width: 6),
+                                        ],
+                                        Text(
+                                          displayAction,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11.5,
+                                            fontWeight: hasActionSelected ? FontWeight.w600 : FontWeight.w500,
+                                            color: hasActionSelected ? _textDark : const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          (_isBulkActionMenuOpen && isDropdownEnabled)
+                                              ? Icons.keyboard_arrow_up_rounded
+                                              : Icons.keyboard_arrow_down_rounded,
+                                          size: 17,
+                                          color: isDropdownEnabled
+                                              ? const Color(0xFF003082)
+                                              : const Color(0xFF94A3B8),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Obx(() {
                             final isMultipleActive = controller.rxSelectMultiple.value;
                             final hasItems = controller.rxSelectedItems.isNotEmpty;
                             final actions = _getAvailableBulkActions();
-                            final isDropdownEnabled = isMultipleActive && hasItems && actions.isNotEmpty;
-                            final hasActionSelected = isDropdownEnabled &&
+                            final isEnabled = isMultipleActive &&
+                                hasItems &&
+                                actions.isNotEmpty &&
                                 _selectedBulkAction != null &&
                                 actions.contains(_selectedBulkAction);
 
-                            final displayAction = hasActionSelected
-                                ? _selectedBulkAction!
-                                : (isDropdownEnabled ? 'Select Action' : 'Action');
-
-                            return InkWell(
-                              onTap: isDropdownEnabled ? _toggleBulkActionMenu : null,
-                              borderRadius: BorderRadius.circular(6),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                height: 32,
-                                constraints: const BoxConstraints(minWidth: 128),
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                decoration: BoxDecoration(
-                                  color: isDropdownEnabled ? Colors.white : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: (_isBulkActionMenuOpen && isDropdownEnabled)
-                                        ? const Color(0xFF003082)
-                                        : (isDropdownEnabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-                                    width: (_isBulkActionMenuOpen && isDropdownEnabled) ? 1.5 : 1,
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: isEnabled ? _applyBulkAction : null,
+                                borderRadius: BorderRadius.circular(6),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  height: 32,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: isEnabled
+                                        ? const Color(0xFF004385)
+                                        : const Color(0xFFE5E7EB),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
-                                  boxShadow: (_isBulkActionMenuOpen && isDropdownEnabled)
-                                      ? [
-                                          BoxShadow(
-                                            color: const Color(0xFF003082).withValues(alpha: 0.1),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 1),
-                                          )
-                                        ]
-                                      : null,
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (hasActionSelected) ...[
-                                      Icon(
-                                        _getActionIcon(displayAction),
-                                        size: 15,
-                                        color: _getActionColor(displayAction),
-                                      ),
-                                      const SizedBox(width: 6),
-                                    ],
-                                    Text(
-                                      displayAction,
+                                  child: Center(
+                                    child: Text(
+                                      'Apply',
                                       style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        fontWeight: hasActionSelected ? FontWeight.w600 : FontWeight.w500,
-                                        color: hasActionSelected ? _textDark : const Color(0xFF94A3B8),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: isEnabled
+                                            ? Colors.white
+                                            : const Color(0xFF94A3B8),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      (_isBulkActionMenuOpen && isDropdownEnabled)
-                                          ? Icons.keyboard_arrow_up_rounded
-                                          : Icons.keyboard_arrow_down_rounded,
-                                      size: 17,
-                                      color: isDropdownEnabled
-                                          ? const Color(0xFF003082)
-                                          : const Color(0xFF94A3B8),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             );
                           }),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Obx(() {
-                        final isMultipleActive = controller.rxSelectMultiple.value;
-                        final hasItems = controller.rxSelectedItems.isNotEmpty;
-                        final actions = _getAvailableBulkActions();
-                        final isEnabled = isMultipleActive &&
-                            hasItems &&
-                            actions.isNotEmpty &&
-                            _selectedBulkAction != null &&
-                            actions.contains(_selectedBulkAction);
+                          const Spacer(),
+                          // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
+                          Obx(() {
+                            final hasData = controller.rxSelectedVisitor.value != null ||
+                                controller.rxAllRelatedVisitors.isNotEmpty;
+                            if (!hasData) return const SizedBox.shrink();
 
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: isEnabled ? _applyBulkAction : null,
-                            borderRadius: BorderRadius.circular(6),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              height: 32,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                color: isEnabled
-                                    ? const Color(0xFF004385)
-                                    : const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Apply',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: isEnabled
-                                        ? Colors.white
-                                        : const Color(0xFF94A3B8),
-                                  ),
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildFeedPillButton(
+                                  'Extend',
+                                  Icons.access_time_rounded,
+                                  const Color(0xFFFBBF24),
+                                  Colors.white,
+                                  () => _handleAction('Extend'),
                                 ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                      const Spacer(),
-                      // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
-                      Obx(() {
-                        final hasData = controller.rxSelectedVisitor.value != null ||
-                            controller.rxAllRelatedVisitors.isNotEmpty;
-                        if (!hasData) return const SizedBox.shrink();
-
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildFeedPillButton(
-                              'Extend',
-                              Icons.access_time_rounded,
-                              const Color(0xFFFBBF24),
-                              Colors.white,
-                              () => _handleAction('Extend'),
-                            ),
-                            const SizedBox(width: 6),
-                            _buildFeedPillButton(
-                              'Card Issuance',
-                              Icons.credit_card_rounded,
-                              const Color(0xFF7B1FA2),
-                              Colors.white,
-                              () => _handleAction('Card Issuance'),
-                            ),
-                            // const SizedBox(width: 6),
-                            // _buildFeedPillButton(
-                            //   'Print',
-                            //   Icons.print_rounded,
-                            //   const Color(0xFF64748B),
-                            //   Colors.white,
-                            //   () => _handlePrintAction(),
-                            // ),
-                          ],
-                        );
-                      }),
-                    ],
-                  );
-                }),
+                                const SizedBox(width: 6),
+                                _buildFeedPillButton(
+                                  'Card Issuance',
+                                  Icons.credit_card_rounded,
+                                  const Color(0xFF7B1FA2),
+                                  Colors.white,
+                                  () => _handleAction('Card Issuance'),
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
+                      );
+                    }),
               ],
             ),
           ),

@@ -152,6 +152,8 @@ class DashboardController extends GetxController {
       <Map<String, dynamic>>[]; // original copy for search
   final rxTimeline = <Map<String, dynamic>>[].obs;
   final rxBlacklistedVisitorIds = <String>{}.obs;
+  final rxShowRelatedBottomToolbar = false.obs;
+  final rxShowSelectMultiple = false.obs;
 
   // Registered Sites & Site Selection
   final rxRegisteredSites = <Map<String, dynamic>>[].obs;
@@ -2320,11 +2322,31 @@ class DashboardController extends GetxController {
           item['visitor']?['employee']?['gender'] ??
           item['gender'],
     );
-    final visitorRole = sanitize(item['visitor_role'], fallback: 'Visitor');
-    final visitorTypeName = sanitize(
-      item['visitor_type_name'],
-      fallback: 'General Visitor',
-    );
+    final vMap = item['visitor'] is Map ? (item['visitor'] as Map) : null;
+    final vTypeMap = item['visitor_type'] is Map ? (item['visitor_type'] as Map) : null;
+    final nestedVTypeMap = vMap != null && vMap['visitor_type'] is Map ? (vMap['visitor_type'] as Map) : null;
+
+    String? resolvedTypeName = item['visitor_type_name']?.toString() ??
+        vTypeMap?['name']?.toString() ??
+        vMap?['visitor_type_name']?.toString() ??
+        nestedVTypeMap?['name']?.toString() ??
+        item['occupancy']?.toString() ??
+        item['category']?.toString();
+
+    if (resolvedTypeName == null || resolvedTypeName.isEmpty || resolvedTypeName == '-' || resolvedTypeName == 'null') {
+      final vTypeId = (item['visitor_type'] ?? item['visitor_type_id'] ?? vMap?['visitor_type'] ?? '').toString().trim();
+      if (vTypeId.isNotEmpty && vTypeId != '-' && vTypeId != 'null') {
+        final match = rxPraRegVisitorTypes.firstWhereOrNull(
+          (t) => (t['id'] ?? '').toString().trim().toLowerCase() == vTypeId.toLowerCase(),
+        );
+        if (match != null) {
+          resolvedTypeName = (match['name'] ?? match['visitor_type_name'] ?? '').toString().trim();
+        }
+      }
+    }
+
+    final visitorRole = sanitize(item['visitor_role'], fallback: '-');
+    final visitorTypeName = sanitize(resolvedTypeName, fallback: '-');
     final visitorStatus = sanitize(
       item['visitor_status'] ?? item['status'] ?? item['transaction_status'],
       fallback: 'Preregis',

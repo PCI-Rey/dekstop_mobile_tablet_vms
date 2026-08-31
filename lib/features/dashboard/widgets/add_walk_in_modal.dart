@@ -55,7 +55,7 @@ class GroupWalkInVisitorEntry {
   bool isSearchOpen = false;
   Map<String, dynamic>? selectedData;
   String? role;
-  bool? isEmployee;
+  bool? isEmployee = false;
 
   // Vehicle data
   bool isDriving = false;
@@ -118,7 +118,6 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // --- Step 1 State: User Type ---
   Map<String, dynamic>? _selectedVisitorType;
   Map<String, dynamic>? _visitorTypeDetail;
-  bool _isLoadingVisitorTypeDetail = false;
   bool? _isGroup; // false = Single, true = Group
   String _groupCode = '';
   final TextEditingController _groupNameController = TextEditingController();
@@ -134,7 +133,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   bool _singleIsSearchOpen = false;
   Map<String, dynamic>? _singleSelectedData;
   String? _singleRole;
-  bool? _singleIsEmployee;
+  bool? _singleIsEmployee = false;
 
   // --- Step 2 State: Group Mode ---
   final List<GroupWalkInVisitorEntry> _groupVisitors = [];
@@ -175,7 +174,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   void initState() {
     super.initState();
     _groupCode = _generateGroupCode();
-    _groupVisitors.add(GroupWalkInVisitorEntry());
+    final entry = GroupWalkInVisitorEntry();
+    entry.isEmployee = false;
+    _groupVisitors.add(entry);
     controller.fetchPraRegistrationDependencies(silent: true);
   }
 
@@ -453,7 +454,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
   void _addGroupVisitor() {
     setState(() {
-      _groupVisitors.add(GroupWalkInVisitorEntry());
+      final entry = GroupWalkInVisitorEntry();
+      entry.isEmployee = false;
+      _groupVisitors.add(entry);
     });
   }
 
@@ -830,7 +833,6 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     setState(() {
       _selectedVisitorType = type;
       _visitorTypeDetail = null;
-      _isLoadingVisitorTypeDetail = true;
     });
 
     final typeId = (type['id'] ?? '').toString();
@@ -839,14 +841,30 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     if (mounted) {
       setState(() {
         _visitorTypeDetail = detail;
-        _isLoadingVisitorTypeDetail = false;
         _singleIsEmployee = false;
         _singleRole = null;
         _singleVehicleType = null;
+        _singleIsDriving = false;
+        _singleKtpImage = null;
+        _singleSelfieImage = null;
         for (final v in _groupVisitors) {
-          v.isEmployee = null;
+          v.isEmployee = false;
           v.role = null;
           v.vehicleType = null;
+          v.isDriving = false;
+          v.selectedData = null;
+          v.searchCtrl.clear();
+          v.fullNameCtrl.clear();
+          v.emailCtrl.clear();
+          v.phoneCtrl.clear();
+          v.orgCtrl.clear();
+          v.identityCtrl.clear();
+          v.vehiclePlateCtrl.clear();
+          v.ktpImage = null;
+          v.selfieImage = null;
+          for (final c in v.extraControllers.values) {
+            c.clear();
+          }
         }
         _clearSingle();
       });
@@ -918,67 +936,81 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
   Widget _buildStepper() {
     final titles = _getDynamicStepTitles();
+    final showAllSteps = _selectedVisitorType != null || _currentStep >= 2;
+    final visibleCount = showAllSteps ? titles.length : 1;
+    final visibleTitles = titles.take(visibleCount).toList();
 
     return Container(
       color: const Color(0xFFFAFCFF),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(titles.length * 2 - 1, (index) {
+        children: List.generate(visibleTitles.length * 2 - 1, (index) {
           if (index.isOdd) {
             final stepBefore = (index ~/ 2) + 1;
             final isCompleted = _currentStep > stepBefore;
-            return Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12),
-                height: 2,
-                color: isCompleted ? const Color(0xFF004385) : const Color(0xFFE2E8F0),
-              ),
+            return Container(
+              width: 50,
+              height: 2,
+              margin: const EdgeInsets.only(top: 12, left: 10, right: 10),
+              color: isCompleted ? const Color(0xFF004385) : const Color(0xFFE2E8F0),
             );
           }
 
           final stepNum = (index ~/ 2) + 1;
           final isActive = _currentStep == stepNum;
           final isCompleted = _currentStep > stepNum;
+          final canJump = isCompleted;
 
-          return SizedBox(
-            width: 105,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isActive || isCompleted ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
-                  ),
-                  child: Center(
-                    child: isCompleted
-                        ? const Icon(Icons.check, size: 14, color: Colors.white)
-                        : Text(
-                            '$stepNum',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+          return InkWell(
+            onTap: canJump && !isActive
+                ? () => setState(() => _currentStep = stepNum)
+                : null,
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              width: 105,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive || isCompleted
+                          ? const Color(0xFF004385)
+                          : const Color(0xFFCBD5E1),
+                    ),
+                    child: Center(
+                      child: isCompleted
+                          ? const Icon(Icons.check, size: 14, color: Colors.white)
+                          : Text(
+                              '$stepNum',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  titles[stepNum - 1],
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    color: isActive ? const Color(0xFF004385) : const Color(0xFF64748B),
+                  const SizedBox(height: 6),
+                  Text(
+                    visibleTitles[stepNum - 1],
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      color: isActive
+                          ? const Color(0xFF004385)
+                          : const Color(0xFF64748B),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }),
@@ -1220,19 +1252,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              _buildSectionHeader('Visitor Type', isRequired: true),
-              if (_isLoadingVisitorTypeDetail) ...[
-                const SizedBox(width: 10),
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF004385)),
-                ),
-              ],
-            ],
-          ),
+          _buildSectionHeader('Visitor Type', isRequired: true),
           const SizedBox(height: 14),
           Wrap(
             spacing: 12,
