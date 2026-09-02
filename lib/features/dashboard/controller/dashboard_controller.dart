@@ -13,10 +13,127 @@ class DashboardController extends GetxController {
 
   String? _activeSearchVisitorId;
 
+  // --- User Permissions (RBAC) ---
+  final rxUserPermissions = <String>{}.obs;
+  final rxPermissionScopes = <String, dynamic>{}.obs;
+  final rxIsPermissionsLoaded = false.obs;
+
+  bool can(String permission) {
+    if (!rxIsPermissionsLoaded.value) return true; // Safe fallback during initial load
+    if (rxUserPermissions.isEmpty) return true; // Safe fallback if no permissions configured
+    return rxUserPermissions.contains(permission);
+  }
+
+  bool get canCheckIn => can('OperatorVisitorCheckIn');
+  bool get canCheckOut => can('OperatorVisitorCheckout');
+  bool get canWalkIn => can('OperatorVisitorWalkIn');
+  bool get canPraRegister => can('OperatorVisitorPreregister');
+  bool get canExtend => can('OperatorVisitorExtend');
+  bool get canArrival => can('OperatorVisitorSendNotificationArrival');
+  bool get canTriggerOpen => can('OperatorVisitorTriggerOpen');
+  bool get canParking => can('OperatorVisitorParkingIssuance');
+  bool get canCardIssue => can('OperatorVisitorCardIssuance');
+  bool get canBlock => can('OperatorVisitorBlock');
+  bool get canManageAccess => can('ManageAccessScope');
+  bool get canManageBlacklist => can('ManageBlacklist');
+  bool get canManageVisitor => can('ManageVisitor');
+
+  Set<String> get allowedSiteIds {
+    final sites = <String>{};
+    final scopes = rxPermissionScopes;
+    final manageSites = scopes['manage_sites'] as List?;
+    if (manageSites != null) {
+      for (final s in manageSites) {
+        if (s is Map && s['site_id'] != null) {
+          sites.add(s['site_id'].toString().toLowerCase().trim());
+        }
+      }
+    }
+    final regSites = scopes['manage_registersites'] as List?;
+    if (regSites != null) {
+      for (final s in regSites) {
+        if (s is Map && s['site_id'] != null) {
+          sites.add(s['site_id'].toString().toLowerCase().trim());
+        }
+      }
+    }
+    return sites;
+  }
+
+  Set<String> get allowedVisitorTypeIds {
+    final types = <String>{};
+    final scopes = rxPermissionScopes;
+    final manageTypes = scopes['manage_visitor_types'] as List?;
+    if (manageTypes != null) {
+      for (final t in manageTypes) {
+        if (t is Map && t['visitor_type_id'] != null) {
+          types.add(t['visitor_type_id'].toString().toLowerCase().trim());
+        }
+      }
+    }
+    return types;
+  }
+
+  Future<void> fetchUserPermissions() async {
+    try {
+      final res = await _dashboardRepository.getUserPermissions();
+      if (res is Success<Map<String, dynamic>>) {
+        final data = res.data;
+        final collection = (data['collection'] is Map)
+            ? data['collection'] as Map<String, dynamic>
+            : (data['data'] is Map ? data['data'] as Map<String, dynamic> : data);
+
+        final permsSet = <String>{};
+
+        // 1. Top-level permissions array
+        final rawPerms = collection['permissions'] as List?;
+        if (rawPerms != null) {
+          for (final p in rawPerms) {
+            if (p is Map && p['permission'] != null) {
+              permsSet.add(p['permission'].toString().trim());
+            }
+          }
+        }
+
+        // 2. Scopes object
+        final scopes = (collection['scopes'] as Map?) ?? {};
+        rxPermissionScopes.assignAll(Map<String, dynamic>.from(scopes));
+
+        final manageVisitors = scopes['manage_visitors'] as List?;
+        if (manageVisitors != null) {
+          for (final mv in manageVisitors) {
+            if (mv is Map && mv['permission'] != null) {
+              permsSet.add(mv['permission'].toString().trim());
+            }
+          }
+        }
+
+        rxUserPermissions.assignAll(permsSet);
+        rxIsPermissionsLoaded.value = true;
+        _printPermissionsSummary();
+      }
+    } catch (e) {
+      debugPrint('==> Error fetching user permissions: $e');
+    }
+  }
+
+  void _printPermissionsSummary() {
+    final count = rxUserPermissions.length;
+    final sitesCount = allowedSiteIds.length;
+    final typesCount = allowedVisitorTypeIds.length;
+    debugPrint('\n╔══════════════════════════════════════════════════════════════════╗');
+    debugPrint('║ [RBAC] ==> User Permissions loaded: $count permissions found');
+    debugPrint('║ [RBAC] Allowed Sites: $sitesCount | Allowed Visitor Types: $typesCount');
+    debugPrint('╚══════════════════════════════════════════════════════════════════╝\n');
+  }
+
   Future<void> refreshDashboardAllStatus() async {
     rxIsActionLoading.value = true;
 
     try {
+      // 0. Refresh User Permissions
+      await fetchUserPermissions();
+
       // 1. Refresh Registered Sites
       await fetchRegisteredSites();
 
@@ -46,6 +163,9 @@ class DashboardController extends GetxController {
         title: 'Success',
         message: 'Refresh Successfully',
       );
+
+      // Print at the very end of refresh so it doesn't get buried
+      _printPermissionsSummary();
     } catch (_) {
       AppSnackbar.error(
         title: 'Refresh Failed',
@@ -527,6 +647,7 @@ class DashboardController extends GetxController {
 
   Future<void> _loadInitialDashboardData() async {
     try {
+      await fetchUserPermissions();
       await fetchRegisteredSites();
       await fetchUpcomingPurpose(filter: 'Today');
       await fetchLiveVisitors();
@@ -543,6 +664,11 @@ class DashboardController extends GetxController {
           await fetchLiveVisitors();
         }
       }
+
+      // Print at the very end of startup so it is clearly visible at bottom of terminal
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _printPermissionsSummary();
+      });
     } catch (_) {}
   }
 

@@ -1282,9 +1282,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // Step 1: User Type
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildStep1UserType() {
-    final List<Map<String, dynamic>> visitorTypes = controller.rxPraRegVisitorTypes.isNotEmpty
-        ? controller.rxPraRegVisitorTypes
-        : [
+    final List<Map<String, dynamic>> rawTypes = controller.rxPraRegVisitorTypes.isNotEmpty
+        ? controller.rxPraRegVisitorTypes.toList()
+        : <Map<String, dynamic>>[
             {'name': 'All Access (VIP)', 'id': '29b12a27-cff3-44dc-be0f-4a743510b836'},
             {'name': 'CIT', 'id': '0eac503e-d0c9-4ba5-afac-99a0b94e44f3'},
             {'name': 'General Visitor', 'id': '1e7ab7a0-1fdd-4546-b65f-6a8dcc345148'},
@@ -1295,6 +1295,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             {'name': 'Utility Maintenance', 'id': 'b3618bd5-b6f0-4329-9cf5-6c853970217d'},
             {'name': 'Visitor Resident', 'id': '4bd22555-12fc-4aea-84a3-2163fe7dadc7'},
           ];
+
+    final allowedTypes = controller.allowedVisitorTypeIds;
+    final List<Map<String, dynamic>> visitorTypes = allowedTypes.isNotEmpty
+        ? rawTypes.where((type) {
+            final id = (type['id'] ?? '').toString().toLowerCase().trim();
+            return allowedTypes.contains(id);
+          }).toList()
+        : rawTypes;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -1952,7 +1960,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildStep3PurposeVisit() {
     final purposeFields = _getPurposeVisitPraFormFields();
-    final sites = controller.rxPraRegSites;
+    final allowedSites = controller.allowedSiteIds;
+    final sites = allowedSites.isNotEmpty
+        ? controller.rxPraRegSites.where((s) {
+            final id = (s['id'] ?? s['site_id'] ?? '').toString().toLowerCase().trim();
+            return allowedSites.contains(id);
+          }).toList()
+        : controller.rxPraRegSites;
     final hosts = controller.rxPraRegHosts.isNotEmpty
         ? controller.rxPraRegHosts
         : controller.rxPraRegEmployees;

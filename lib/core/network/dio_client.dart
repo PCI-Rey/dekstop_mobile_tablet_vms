@@ -376,6 +376,321 @@ class DioClient {
         return ApiResult.success(fromJson(mockProfile));
       }
       return ApiResult.success(mockProfile as T);
+    } else if (path.contains('user-permission')) {
+      final mockPermissions = {
+        "status": "success",
+        "status_code": 200,
+        "title": "success",
+        "msg": "Data retrieved successfully",
+        "collection": {
+          "permissions": [
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "AllowSSOActiveDirectory",
+              "id": "2fb627c3-f418-4953-bf89-21efb21b116a"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "OperatorRegisterSite",
+              "id": "b1cc4bea-f861-48cf-b7b5-25230013f7e1"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "ManageBlacklist",
+              "id": "cdf0967f-ca0a-465c-8574-386d93816f6c"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "ManageVisitor",
+              "id": "cb81871e-512a-4c7f-b445-42441684568d"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "ManageAccessScope",
+              "id": "6f3be5f6-282f-4223-b627-4a95e9df1418"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "AllowMobileLogin",
+              "id": "589d6c81-4330-4f8e-bf4c-61830810f4cf"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "ManageSiteScope",
+              "id": "ed251d90-b55c-4f4b-a96d-64181e4335fa"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "OrganizationAssignment",
+              "id": "683b2c5e-296d-43c0-8c94-7798b1332fa7"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "OperatorAsWatcher",
+              "id": "9403e44c-762e-4479-b4cc-7cd1428e82d6"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "ManageVisitorTypeScope",
+              "id": "c61710b0-9868-475a-9e04-bbf5d19f8657"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "ManageInvite",
+              "id": "e9bd6e6a-88c2-4df3-82e5-d6fc23b00090"
+            },
+            {
+              "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+              "permission": "AsHead",
+              "id": "e775e332-4724-4c88-bfaf-e2339e722ccd"
+            }
+          ],
+          "scopes": {
+            "manage_visitors": [
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorSendNotificationArrival",
+                "id": "a512268a-9bc8-49d1-8483-0c8b86e577f2"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorCardIssuance",
+                "id": "9d78238c-84f5-45fe-bc02-1027addb5d4c"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorExtend",
+                "id": "ee6854dc-b0b2-472a-8e01-2d6c8c43c63c"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorBlock",
+                "id": "501c62e7-0ead-48ed-a48b-37361dacfe79"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorTriggerOpen",
+                "id": "3574032e-3338-4d5b-8b03-4a69ba220cbc"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorPreregister",
+                "id": "786461c7-4e6c-482d-9bdb-5bd8876871ef"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorParkingIssuance",
+                "id": "d307e812-53b7-4a63-a58a-a2b139a497fd"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorCheckIn",
+                "id": "57462968-ba2f-4cfe-b636-a6d11c9edc6c"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorWalkIn",
+                "id": "0c440560-9298-499e-9a4d-e45929e75c6e"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "OperatorVisitorCheckout",
+                "id": "cbc7aec5-8f2a-433a-9bea-e73548356aed"
+              }
+            ],
+            "organization_assignments": [
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "organization_id": "01c94b9c-fac5-4155-8859-72d07db3656c",
+                "organization_type": "Organization",
+                "id": "ed89635c-f448-4eca-8a54-12efd28493e2"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "organization_id": "039e6d9c-e4f2-48d1-aef7-7cf59dd87f4e",
+                "organization_type": "Organization",
+                "id": "589c5eed-4cac-4f73-b7ef-cac865fd6a03"
+              }
+            ],
+            "site_assignments": [],
+            "manage_sites": [
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "e3facb54-eae1-48d5-9457-3ef7d3f7ba3b",
+                "can_grant": false,
+                "can_revoke": false,
+                "can_block": false,
+                "permission": "ManageSiteScope",
+                "id": "6682fb07-622b-4226-bd71-f051ca63d937"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "f1157454-cce7-42d5-bccb-c23136c6319b",
+                "can_grant": false,
+                "can_revoke": false,
+                "can_block": false,
+                "permission": "ManageSiteScope",
+                "id": "831257b9-fe09-4b86-ba05-831bb7c8ac40"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "9bcb7f68-11c9-446b-89e7-ea6ba28d3914",
+                "can_grant": false,
+                "can_revoke": false,
+                "can_block": false,
+                "permission": "ManageSiteScope",
+                "id": "756c1b45-bf15-4021-94a3-370aec7ffd98"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "8a87a302-5812-4b45-b5ce-0ce2a54f45b5",
+                "can_grant": false,
+                "can_revoke": false,
+                "can_block": false,
+                "permission": "ManageSiteScope",
+                "id": "a73a38d1-f512-4ef0-8a5b-a67b5e926972"
+              }
+            ],
+            "visitor_type_assignments": [],
+            "manage_visitor_types": [
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "3e903b97-bb4a-42bb-a840-b2316202ea7d",
+                "permission": "ManageVisitorTypeScope",
+                "id": "8ea66333-22bd-4d1c-954a-47bb93fb1409"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "e0533de1-52a7-4b47-8e80-79239d8f723d",
+                "permission": "ManageVisitorTypeScope",
+                "id": "e9cbdc1b-c764-4e63-9709-54be0e6522e3"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "4bd22555-12fc-4aea-84a3-2163fe7dadc7",
+                "permission": "ManageVisitorTypeScope",
+                "id": "1cf5890a-895a-4cbb-8600-e5fed8759879"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "b3618bd5-b6f0-4329-9cf5-6c853970217d",
+                "permission": "ManageVisitorTypeScope",
+                "id": "c2d66c8d-54bb-4af3-af64-f421ed0862e5"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "2e8a7639-84f9-42ab-8096-304c259245db",
+                "permission": "ManageVisitorTypeScope",
+                "id": "48ab8e6e-bb95-4319-ab26-b6ccd948db69"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "1e7ab7a0-1fdd-4546-b65f-6a8dcc345148",
+                "permission": "ManageVisitorTypeScope",
+                "id": "e529a89c-9533-4f2e-960a-c04eb2473aea"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "29b12a27-cff3-44dc-be0f-4a743510b836",
+                "permission": "ManageVisitorTypeScope",
+                "id": "a06a110d-a289-41ad-8861-ad648725e447"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "f0bd33a4-427a-4110-ab19-6e423dafa3e5",
+                "permission": "ManageVisitorTypeScope",
+                "id": "165372ef-ebb7-44e3-afd6-b06ec188a295"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "visitor_type_id": "0eac503e-d0c9-4ba5-afac-99a0b94e44f3",
+                "permission": "ManageVisitorTypeScope",
+                "id": "b4f83d74-1f2d-4c6c-bcf6-b801d6da493f"
+              }
+            ],
+            "manage_accesss": [
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "ManageAccessScope",
+                "access_control_id": "84140f2d-df77-4514-806f-6aa821523f9e",
+                "can_revoke": true,
+                "can_grant": true,
+                "can_block": true,
+                "id": "2c616f7b-ce82-4601-a3ac-732b4e4f6c8b"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "ManageAccessScope",
+                "access_control_id": "60f53801-59ed-44b5-87b7-619c88c96407",
+                "can_revoke": true,
+                "can_grant": true,
+                "can_block": true,
+                "id": "8cdc06ca-24cd-4ecf-8b47-80b21e3f53c9"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "ManageAccessScope",
+                "access_control_id": "6f647a1a-96bd-4e36-805c-c9ff23160966",
+                "can_revoke": true,
+                "can_grant": true,
+                "can_block": true,
+                "id": "26633531-5b71-4c60-896e-8f53fd380cd7"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "ManageAccessScope",
+                "access_control_id": "b70849f0-1579-4030-bf04-e95db722b833",
+                "can_revoke": true,
+                "can_grant": true,
+                "can_block": true,
+                "id": "1b18c66d-2c56-4902-9143-bee34a95c40e"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "ManageAccessScope",
+                "access_control_id": "acf244a4-d48f-4e8c-8a4a-69219305971c",
+                "can_revoke": true,
+                "can_grant": true,
+                "can_block": true,
+                "id": "4797c7d8-3439-40d3-b8fd-e5511bbbbd72"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "permission": "ManageAccessScope",
+                "access_control_id": "f6228599-adb4-4216-8a3c-c0e786c32557",
+                "can_revoke": true,
+                "can_grant": true,
+                "can_block": true,
+                "id": "a65296f1-2771-4578-bf70-ee2e8babbe73"
+              }
+            ],
+            "manage_registersites": [
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "1d6c9704-f6ab-47bd-a6b0-3e1fb3d6faea",
+                "permission": "OperatorRegisterSite",
+                "id": "6a923ced-df6b-40f6-aa25-5fb18b070aaa"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "86f01873-ea70-4ccf-a014-6438f14dbe93",
+                "permission": "OperatorRegisterSite",
+                "id": "968e7f76-e028-4b35-a2a9-8fe33436df7d"
+              },
+              {
+                "user_group_id": "cbff225d-7514-40ad-90b5-2a257e1f5056",
+                "site_id": "e3facb54-eae1-48d5-9457-3ef7d3f7ba3b",
+                "permission": "OperatorRegisterSite",
+                "id": "197f9dd6-9951-47f3-ba3d-e1f3cb1fb78c"
+              }
+            ]
+          }
+        }
+      };
+      if (fromJson != null) {
+        return ApiResult.success(fromJson(mockPermissions));
+      }
+      return ApiResult.success(mockPermissions as T);
     }
 
     return ApiResult.failure(const ServerException(statusCode: 404, message: 'Resource not found in Demo server.'));

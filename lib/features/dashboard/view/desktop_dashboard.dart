@@ -1392,64 +1392,71 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               }
               // 4. If Host (is_host == true) OR visitor is Available / Waiting / isPraregisterDone: show Check In + Block buttons
               else if (isHost || isPraregisterDone || rawStatus.contains('available') || rawStatus.contains('waiting')) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      height: 26,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
-                          foregroundColor: Colors.white,
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                return Obx(() {
+                  final canCheckIn = controller.canCheckIn;
+                  final canBlock = controller.canBlock;
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: 26,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: canCheckIn ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
+                            foregroundColor: canCheckIn ? Colors.white : const Color(0xFF94A3B8),
+                            elevation: canCheckIn ? 1 : 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 0,
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 0,
-                          ),
-                        ),
-                        onPressed: () => _handleAction('Check In'),
-                        icon: const Icon(Icons.login_rounded, size: 14, color: Colors.white),
-                        label: Text(
-                          'Check In',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      height: 26,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
-                          foregroundColor: Colors.white,
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 0,
-                          ),
-                        ),
-                        onPressed: () => _handleAction('Block'),
-                        icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
-                        label: Text(
-                          'Block',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                          onPressed: () => _handleAction('Check In'),
+                          icon: Icon(Icons.login_rounded, size: 14, color: canCheckIn ? Colors.white : const Color(0xFF94A3B8)),
+                          label: Text(
+                            'Check In',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: canCheckIn ? Colors.white : const Color(0xFF94A3B8),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        height: 26,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: canBlock ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                            foregroundColor: canBlock ? Colors.white : const Color(0xFF94A3B8),
+                            elevation: canBlock ? 1 : 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 0,
+                            ),
+                          ),
+                          onPressed: () => _handleAction('Block'),
+                          icon: Icon(Icons.block_rounded, size: 14, color: canBlock ? Colors.white : const Color(0xFF94A3B8)),
+                          label: Text(
+                            'Block',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: canBlock ? Colors.white : const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                });
               }
               // 5. Regular visitor with Preregis / Praregis and not done: show ONLY the Fill Form button
               else {
@@ -2151,184 +2158,161 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         _buildCardContainer(
           key: _keyActionGrid,
           padding: const EdgeInsets.all(6.0),
-          child: Column(
-            children: [
-              // Row 1: Scan QR (Wide), Parking, Open
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: _buildActionButton(
-                      label: 'Scan QR',
-                      icon: Icons.qr_code_2_rounded,
-                      bgColor: const Color(0xFF005696),
-                      onTap: () => _handleAction('Scan QR'),
+          child: Obx(() {
+            return Column(
+              children: [
+                // Row 1: Scan QR (Wide), Parking, Open
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _buildActionButton(
+                        label: 'Scan QR',
+                        icon: Icons.qr_code_2_rounded,
+                        bgColor: const Color(0xFF005696),
+                        onTap: () => _handleAction('Scan QR'),
+                        isEnabled: true,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Parking',
-                      icon: Icons.local_parking_rounded,
-                      bgColor: const Color(0xFF00A3B8),
-                      onTap: () => _handleAction('Parking'),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Parking',
+                        icon: Icons.local_parking_rounded,
+                        bgColor: const Color(0xFF00A3B8),
+                        onTap: () => _handleAction('Parking'),
+                        isEnabled: controller.canParking,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Open',
-                      icon: Icons.meeting_room_outlined,
-                      bgColor: const Color(0xFFA62626),
-                      onTap: () => _handleAction('Open Door'),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Open',
+                        icon: Icons.meeting_room_outlined,
+                        bgColor: const Color(0xFFA62626),
+                        onTap: () => _handleAction('Open Door'),
+                        isEnabled: controller.canTriggerOpen,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
 
-              // Row 2: Pra Register, Walk In, Extend, Arrival
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Pra Register',
-                      icon: Icons.person_add_alt_1_outlined,
-                      bgColor: const Color(0xFF005696),
-                      onTap: () => _handleAction('Pra Register'),
+                // Row 2: Pra Register, Walk In, Extend, Arrival
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Pra Register',
+                        icon: Icons.person_add_alt_1_outlined,
+                        bgColor: const Color(0xFF005696),
+                        onTap: () => _handleAction('Pra Register'),
+                        isEnabled: controller.canPraRegister,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Walk In',
-                      icon: Icons.person_add_alt_1_outlined,
-                      bgColor: const Color(0xFF005696),
-                      onTap: () => _handleAction('Walk In'),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Walk In',
+                        icon: Icons.person_add_alt_1_outlined,
+                        bgColor: const Color(0xFF005696),
+                        onTap: () => _handleAction('Walk In'),
+                        isEnabled: controller.canWalkIn,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Extend',
-                      icon: Icons.access_time_rounded,
-                      bgColor: const Color(0xFFF5B82A),
-                      onTap: () => _handleAction('Extend'),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Extend',
+                        icon: Icons.access_time_rounded,
+                        bgColor: const Color(0xFFF5B82A),
+                        onTap: () => _handleAction('Extend'),
+                        isEnabled: controller.canExtend,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Arrival',
-                      icon: Icons.task_alt_rounded,
-                      bgColor: const Color(0xFF00B074),
-                      onTap: () => _handleAction('Arrival'),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Arrival',
+                        icon: Icons.task_alt_rounded,
+                        bgColor: const Color(0xFF00B074),
+                        onTap: () => _handleAction('Arrival'),
+                        isEnabled: controller.canArrival,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
 
-              // Row 3: Checkin, Checkout, Print, Blacklist
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Check In',
-                      icon: Icons.login_rounded,
-                      bgColor: const Color(0xFF18B854),
-                      onTap: () => _handleAction('Check In'),
+                // Row 3: Checkin, Checkout
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Check In',
+                        icon: Icons.login_rounded,
+                        bgColor: const Color(0xFF18B854),
+                        onTap: () => _handleAction('Check In'),
+                        isEnabled: controller.canCheckIn,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Check Out',
-                      icon: Icons.logout_rounded,
-                      bgColor: const Color(0xFFE52929),
-                      onTap: () => _handleAction('Check Out'),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Check Out',
+                        icon: Icons.logout_rounded,
+                        bgColor: const Color(0xFFE52929),
+                        onTap: () => _handleAction('Check Out'),
+                        isEnabled: controller.canCheckOut,
+                      ),
                     ),
-                  ),
-                  // const SizedBox(width: 4),
-                  // // Printer Action Button (Strictly Preserved)
-                  // Expanded(
-                  //   child: _buildActionButton(
-                  //     label: 'Print',
-                  //     icon: Icons.print_rounded,
-                  //     bgColor: const Color(0xFF005696),
-                  //     onTap: () => _handlePrintAction(),
-                  //   ),
-                  // ),
-                  // const SizedBox(width: 4),
-                  // Expanded(
-                  //   child: _buildActionButton(
-                  //     label: 'Blacklist',
-                  //     icon: Icons.block_rounded,
-                  //     bgColor: const Color(0xFF005696),
-                  //     onTap: () => _handleAction('Blacklist'),
-                  //   ),
-                  // ),
-                ],
-              ),
-              const SizedBox(height: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
 
-              // Row 4: Card Issue, Card Return, Enable Edit, Edit Form
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Card Issue',
-                      icon: Icons.style_outlined,
-                      bgColor: const Color(0xFF005696),
-                      onTap: () => _handleAction('Card Issue'),
+                // Row 4: Card Issue, Card Return
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Card Issue',
+                        icon: Icons.style_outlined,
+                        bgColor: const Color(0xFF005696),
+                        onTap: () => _handleAction('Card Issue'),
+                        isEnabled: controller.canCardIssue,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Card Return',
-                      icon: Icons.style_outlined,
-                      bgColor: const Color(0xFF005696),
-                      onTap: () => _handleAction('Card Return'),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Card Return',
+                        icon: Icons.style_outlined,
+                        bgColor: const Color(0xFF005696),
+                        onTap: () => _handleAction('Card Return'),
+                        isEnabled: controller.canCardIssue,
+                      ),
                     ),
-                  ),
-                  // const SizedBox(width: 4),
-                  // Expanded(
-                  //   child: _buildActionButton(
-                  //     label: 'Enable Edit',
-                  //     icon: Icons.edit_note_rounded,
-                  //     bgColor: const Color(0xFF005696),
-                  //     onTap: () => _handleAction('Enable Edit'),
-                  //   ),
-                  // ),
-                  // const SizedBox(width: 4),
-                  // Expanded(
-                  //   child: _buildActionButton(
-                  //     label: 'Edit Form',
-                  //     icon: Icons.edit_rounded,
-                  //     bgColor: const Color(0xFF005696),
-                  //     onTap: () => _handleAction('Edit Form'),
-                  //   ),
-                  // ),
-                ],
-              ),
-              const SizedBox(height: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
 
-              // Row 5: Access Alocation (Full width stretching to right edge)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      label: 'Access Alocation',
-                      icon: Icons.lock_rounded,
-                      bgColor: const Color(0xFFFF8A00),
-                      onTap: () => _handleAction('Access Alocation'),
+                // Row 5: Access Alocation (Full width stretching to right edge)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionButton(
+                        label: 'Access Alocation',
+                        icon: Icons.lock_rounded,
+                        bgColor: const Color(0xFFFF8A00),
+                        onTap: () => _handleAction('Access Alocation'),
+                        isEnabled: controller.canManageAccess,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
+              ],
+            );
+          }),
         ),
 
         const SizedBox(height: 5),
@@ -3066,30 +3050,43 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     required IconData icon,
     required Color bgColor,
     required VoidCallback onTap,
+    bool isEnabled = true,
   }) {
+    final effectiveBgColor = isEnabled ? bgColor : const Color(0xFFE2E8F0);
+    final effectiveContentColor = isEnabled ? Colors.white : const Color(0xFF94A3B8);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: isEnabled
+            ? onTap
+            : () {
+                AppSnackbar.warning(
+                  title: 'Permission Denied',
+                  message: 'You do not have permission to use $label.',
+                );
+              },
         borderRadius: BorderRadius.circular(5),
         child: Container(
           height: 30,
           padding: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
-            color: bgColor,
+            color: effectiveBgColor,
             borderRadius: BorderRadius.circular(5),
-            boxShadow: [
-              BoxShadow(
-                color: bgColor.withValues(alpha: 0.2),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            boxShadow: isEnabled
+                ? [
+                    BoxShadow(
+                      color: bgColor.withValues(alpha: 0.2),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 13, color: Colors.white),
+              Icon(icon, size: 13, color: effectiveContentColor),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
@@ -3099,7 +3096,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: effectiveContentColor,
                   ),
                 ),
               ),
@@ -4252,6 +4249,52 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     final isBlocked = visitor?['is_block'] == true ||
         rawStatus == 'block' ||
         rawStatus == 'blacklist';
+
+    // --- Permission Enforcement Guards ---
+    if (actionName == 'Check In' && !controller.canCheckIn) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Check In visitors.');
+      return;
+    }
+    if (actionName == 'Check Out' && !controller.canCheckOut) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Check Out visitors.');
+      return;
+    }
+    if ((actionName == 'Walk In' || actionName == 'Walk-In') && !controller.canWalkIn) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to create Walk-In visitors.');
+      return;
+    }
+    if ((actionName == 'Pra Register' || actionName == 'Pra-Register' || actionName == 'Pre Register') && !controller.canPraRegister) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to create Pra-Registrations.');
+      return;
+    }
+    if ((actionName == 'Extend' || actionName == 'Extend Visit') && !controller.canExtend) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to extend visits.');
+      return;
+    }
+    if (actionName == 'Arrival' && !controller.canArrival) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to send Arrival notifications.');
+      return;
+    }
+    if ((actionName == 'Open' || actionName == 'Open Door') && !controller.canTriggerOpen) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to trigger Open Door.');
+      return;
+    }
+    if (actionName == 'Parking' && !controller.canParking) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission for Parking issuance.');
+      return;
+    }
+    if ((actionName == 'Card Issue' || actionName == 'Card Issuance' || actionName == 'Choose Card' || actionName == 'Card Return' || actionName == 'Return Card') && !controller.canCardIssue) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission for Card operations.');
+      return;
+    }
+    if ((actionName == 'Block' || actionName == 'Blacklist') && !controller.canBlock) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Block/Blacklist visitors.');
+      return;
+    }
+    if ((actionName == 'Access Issuance' || actionName == 'Access Alocation' || actionName == 'Access Allocation') && !controller.canManageAccess) {
+      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to manage access allocations.');
+      return;
+    }
 
     if (actionName == 'Scan QR') {
       _showScanQrDialog();

@@ -574,4 +574,25 @@ class DashboardRepository {
     }
     return null;
   }
+
+  // --- User Permissions (/user-permission) ---
+  Future<ApiResult<Map<String, dynamic>>> getUserPermissions() async {
+    // 1. Try GET /api/operator-invitation/user-permission
+    final getOpPerm = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/user-permission',
+    );
+    if (getOpPerm is Success) return getOpPerm;
+
+    // 2. Try GET /api/user-permission
+    final getApiPerm = await _dioClient.get<Map<String, dynamic>>(
+      '/api/user-permission',
+    );
+    if (getApiPerm is Success) return getApiPerm;
+
+    // 3. Try GET /user-permission
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/user-permission',
+    );
+  }
 }
+
