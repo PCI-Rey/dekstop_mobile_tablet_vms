@@ -34,9 +34,9 @@ class DashboardController extends GetxController {
   bool get canParking => can('OperatorVisitorParkingIssuance');
   bool get canCardIssue => can('OperatorVisitorCardIssuance');
   bool get canBlock => can('OperatorVisitorBlock');
-  bool get canManageAccess => can('ManageAccessScope');
-  bool get canManageBlacklist => can('ManageBlacklist');
-  bool get canManageVisitor => can('ManageVisitor');
+  bool get canManageAccess => true;
+  bool get canManageBlacklist => canBlock;
+  bool get canManageVisitor => true;
 
   Set<String> get allowedSiteIds {
     final sites = <String>{};
@@ -85,21 +85,9 @@ class DashboardController extends GetxController {
 
         final permsSet = <String>{};
 
-        // 1. Top-level permissions array
-        final rawPerms = collection['permissions'] as List?;
-        if (rawPerms != null) {
-          for (final p in rawPerms) {
-            if (p is Map && p['permission'] != null) {
-              permsSet.add(p['permission'].toString().trim());
-            }
-          }
-        }
-
-        // 2. Scopes object
+        // Extract ONLY manage_visitors scope permissions as requested
         final scopes = (collection['scopes'] as Map?) ?? {};
-        rxPermissionScopes.assignAll(Map<String, dynamic>.from(scopes));
-
-        final manageVisitors = scopes['manage_visitors'] as List?;
+        final manageVisitors = (scopes['manage_visitors'] ?? collection['manage_visitors']) as List?;
         if (manageVisitors != null) {
           for (final mv in manageVisitors) {
             if (mv is Map && mv['permission'] != null) {
@@ -119,11 +107,8 @@ class DashboardController extends GetxController {
 
   void _printPermissionsSummary() {
     final count = rxUserPermissions.length;
-    final sitesCount = allowedSiteIds.length;
-    final typesCount = allowedVisitorTypeIds.length;
     debugPrint('\n╔══════════════════════════════════════════════════════════════════╗');
-    debugPrint('║ [RBAC] ==> User Permissions loaded: $count permissions found');
-    debugPrint('║ [RBAC] Allowed Sites: $sitesCount | Allowed Visitor Types: $typesCount');
+    debugPrint('║ [RBAC] ==> Visitor Permissions loaded: $count permissions (manage_visitors)');
     debugPrint('╚══════════════════════════════════════════════════════════════════╝\n');
   }
 

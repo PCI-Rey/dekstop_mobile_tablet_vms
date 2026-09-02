@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -4291,10 +4293,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Block/Blacklist visitors.');
       return;
     }
-    if ((actionName == 'Access Issuance' || actionName == 'Access Alocation' || actionName == 'Access Allocation') && !controller.canManageAccess) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to manage access allocations.');
-      return;
-    }
 
     if (actionName == 'Scan QR') {
       _showScanQrDialog();
@@ -7455,42 +7453,115 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
                   ] else ...[
-                    // Mode 1: Camera Scanner
-                    Container(
-                      height: 220,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
+                    // Mode 1: Camera Scanner (Guarded for desktop platforms)
+                    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) ...[
+                      Container(
+                        height: 220,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF1E293B)),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E293B),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.qr_code_scanner_rounded,
+                                color: Color(0xFF38BDF8),
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Desktop Hardware Scanner Mode',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'USB Barcode / QR Scanners type directly into the system.\nPlease switch to "Input Manual" tab to scan or enter code.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF94A3B8),
+                                fontSize: 11,
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton.icon(
+                              onPressed: () => setModalState(() => tabMode = 0),
+                              icon: const Icon(Icons.keyboard_outlined, size: 14),
+                              label: const Text('Switch to Input Manual'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF004385),
+                                foregroundColor: Colors.white,
+                                textStyle: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: MobileScanner(
-                        onDetect: (capture) async {
-                          final barcodes = capture.barcodes;
-                          for (final b in barcodes) {
-                            final code = b.rawValue?.trim().toUpperCase() ?? '';
-                            if (code.isNotEmpty) {
-                              setModalState(() => isSearching = true);
-                              final success = await controller
-                                  .searchInvitationCode(code);
-                              setModalState(() => isSearching = false);
-                              if (success) {
-                                Get.back();
-                                final loaded = controller.rxSelectedVisitor.value;
-                                if (loaded != null && onVisitorLoaded != null) {
-                                  onVisitorLoaded(loaded);
+                    ] else ...[
+                      Container(
+                        height: 220,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: MobileScanner(
+                          onDetect: (capture) async {
+                            final barcodes = capture.barcodes;
+                            for (final b in barcodes) {
+                              final code = b.rawValue?.trim().toUpperCase() ?? '';
+                              if (code.isNotEmpty) {
+                                setModalState(() => isSearching = true);
+                                final success = await controller
+                                    .searchInvitationCode(code);
+                                setModalState(() => isSearching = false);
+                                if (success) {
+                                  Get.back();
+                                  final loaded = controller.rxSelectedVisitor.value;
+                                  if (loaded != null && onVisitorLoaded != null) {
+                                    onVisitorLoaded(loaded);
+                                  }
+                                  AppSnackbar.success(
+                                    title: 'Success',
+                                    message: 'Data retrieved successfully',
+                                  );
                                 }
-                                AppSnackbar.success(
-                                  title: 'Success',
-                                  message: 'Data retrieved successfully',
-                                );
+                                break;
                               }
-                              break;
                             }
-                          }
-                        },
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ],
 
                   const SizedBox(height: 20),

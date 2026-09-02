@@ -1425,7 +1425,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   // Step 1: User Type
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildStep1UserType() {
-    final List<Map<String, dynamic>> rawTypes = controller.rxPraRegVisitorTypes.isNotEmpty
+    final List<Map<String, dynamic>> visitorTypes = controller.rxPraRegVisitorTypes.isNotEmpty
         ? controller.rxPraRegVisitorTypes.toList()
         : <Map<String, dynamic>>[
             {
@@ -1453,14 +1453,6 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               'id': '4bd22555-12fc-4aea-84a3-2163fe7dadc7',
             },
           ];
-
-    final allowedTypes = controller.allowedVisitorTypeIds;
-    final List<Map<String, dynamic>> visitorTypes = allowedTypes.isNotEmpty
-        ? rawTypes.where((type) {
-            final id = (type['id'] ?? '').toString().toLowerCase().trim();
-            return allowedTypes.contains(id);
-          }).toList()
-        : rawTypes;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -2227,13 +2219,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildStep3PurposeVisit() {
     final purposeFields = _getPurposeVisitPraFormFields();
-    final allowedSites = controller.allowedSiteIds;
-    final sites = allowedSites.isNotEmpty
-        ? controller.rxPraRegSites.where((s) {
-            final id = (s['id'] ?? s['site_id'] ?? '').toString().toLowerCase().trim();
-            return allowedSites.contains(id);
-          }).toList()
-        : controller.rxPraRegSites;
+    final sites = controller.rxPraRegSites;
     final hosts = controller.rxPraRegHosts.isNotEmpty
         ? controller.rxPraRegHosts
         : controller.rxPraRegEmployees;
