@@ -53,7 +53,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   bool _isTourActive = false;
   int _tourStep = 0;
 
-
   // Site Dropdown Overlay (SPU, Gedung SINERGI, Resident)
   OverlayEntry? _siteOverlay;
   final LayerLink _siteLayerLink = LayerLink();
@@ -289,10 +288,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
                   ),
-
-                  // ── 4. Bottom Copyright Footer ────────────────────────────────
-                  _buildFooter(),
+                  const SizedBox(height: 4),
                 ],
+
+                // ── 4. Bottom Copyright Footer ────────────────────────────────
+                _buildFooter(),
               ],
             ),
           ),
@@ -686,464 +686,506 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         children: [
           // ── 1. Top Visitor Profile Card (Keyed for Tour Step 2) ───────────
           Expanded(
-            flex: 10,
+            flex: 7,
             child: _buildCardContainer(
               key: _keyVisitorProfile,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                // Visitor Photo with Rounded Frame and Clickable Fullscreen Preview
-                Expanded(
-                  flex: 5,
-                  child: Builder(
-                    builder: (context) {
-                      final selfieUrl = (visitor?['selfie_image'] ??
-                              visitor?['visitor_face'] ??
-                              visitor?['faceimage'] ??
-                              visitor?['face_image'] ??
-                              visitor?['photo'] ??
-                              visitor?['avatar'] ??
-                              visitor?['visitor']?['faceimage'] ??
-                              visitor?['visitor']?['face_image'] ??
-                              visitor?['raw']?['selfie_image'] ??
-                              visitor?['raw']?['face_image'] ??
-                              '')
-                          .toString()
-                          .trim();
+                  // Visitor Photo with Rounded Frame and Clickable Fullscreen Preview (Enlarged & Prominent)
+                  Expanded(
+                    flex: 6,
+                    child: Builder(
+                      builder: (context) {
+                        final selfieUrl =
+                            (visitor?['selfie_image'] ??
+                                    visitor?['visitor_face'] ??
+                                    visitor?['faceimage'] ??
+                                    visitor?['face_image'] ??
+                                    visitor?['photo'] ??
+                                    visitor?['avatar'] ??
+                                    visitor?['visitor']?['faceimage'] ??
+                                    visitor?['visitor']?['face_image'] ??
+                                    visitor?['raw']?['selfie_image'] ??
+                                    visitor?['raw']?['face_image'] ??
+                                    '')
+                                .toString()
+                                .trim();
 
-                      final hasSelfie = selfieUrl.isNotEmpty &&
-                          selfieUrl != '-' &&
-                          selfieUrl != 'null' &&
-                          (selfieUrl.startsWith('/') || selfieUrl.startsWith('http'));
+                        final hasSelfie =
+                            selfieUrl.isNotEmpty &&
+                            selfieUrl != '-' &&
+                            selfieUrl != 'null' &&
+                            (selfieUrl.startsWith('/') ||
+                                selfieUrl.startsWith('http'));
 
-                      final cdnUrl = hasSelfie ? AppConstants.getCdnImageUrl(selfieUrl) : '';
-                      final visitorName = (visitor?['visitor_name'] ?? visitor?['name'] ?? '').toString().trim();
+                        final cdnUrl = hasSelfie
+                            ? AppConstants.getCdnImageUrl(selfieUrl)
+                            : '';
+                        final visitorName =
+                            (visitor?['visitor_name'] ?? visitor?['name'] ?? '')
+                                .toString()
+                                .trim();
 
-                      return AspectRatio(
-                        aspectRatio: 0.76,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: () {
-                              _showProfileImagePreview(
-                                context,
-                                imageUrl: hasSelfie ? cdnUrl : 'assets/images/ai_image.jpeg',
-                                isAsset: !hasSelfie,
-                                visitorName: visitorName,
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: hasSelfie
-                                  ? Image.network(
-                                      cdnUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Image.asset(
+                        return AspectRatio(
+                          aspectRatio: 0.88,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: () {
+                                _showProfileImagePreview(
+                                  context,
+                                  imageUrl: hasSelfie
+                                      ? cdnUrl
+                                      : 'assets/images/ai_image.jpeg',
+                                  isAsset: !hasSelfie,
+                                  visitorName: visitorName,
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: hasSelfie
+                                    ? Image.network(
+                                        cdnUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            Image.asset(
+                                              'assets/images/ai_image.jpeg',
+                                              fit: BoxFit.cover,
+                                            ),
+                                      )
+                                    : Image.asset(
                                         'assets/images/ai_image.jpeg',
                                         fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : Image.asset(
-                                      'assets/images/ai_image.jpeg',
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
-                                        color: const Color(0xFFF1F5F9),
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.person,
-                                            size: 44,
-                                            color: Color(0xFF94A3B8),
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: const Color(0xFFF1F5F9),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 46,
+                                              color: Color(0xFF94A3B8),
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(width: 14),
-
-                // Visitor Details Table (Clean Typography with Visitor Type Badge & Detail Rows)
-                Expanded(
-                  flex: 14,
-                  child: Builder(
-                    builder: (context) {
-                      final visitorTypeName = (visitor?['visitor_type_name'] ??
-                              visitor?['visitor_type'] ??
-                              visitor?['type_visitor_name'] ??
-                              visitor?['type_visitor'] ??
-                              visitor?['category'] ??
-                              visitor?['occupancy'] ??
-                              '-')
-                          .toString()
-                          .trim();
-
-                      final visitorName = (visitor?['name'] ??
-                              visitor?['visitor_name'] ??
-                              'Name')
-                          .toString()
-                          .trim();
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            visitorName.isNotEmpty ? visitorName : 'Name',
-                            style: GoogleFonts.inter(
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E293B),
-                            ),
-                            maxLines: 2,
-                            softWrap: true,
-                          ),
-                          const SizedBox(height: 3),
-                          if (visitor != null &&
-                              visitorTypeName.isNotEmpty &&
-                              visitorTypeName != '-') ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 2.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                visitorTypeName,
-                                style: GoogleFonts.inter(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF64748B),
-                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                          ],
-                          const Divider(
-                            height: 12,
-                            thickness: 1,
-                            color: Color(0xFFF1F5F9),
                           ),
-                          const SizedBox(height: 2),
-                          _buildDetailRow(
-                            Icons.apartment_rounded,
-                            'Organization',
-                            visitor?['organization'] ??
-                                visitor?['company'] ??
-                                visitor?['org'] ??
-                                visitor?['visitor_organization_name'] ??
-                                '-',
-                          ),
-                          _buildDetailRow(
-                            Icons.email_outlined,
-                            'Email',
-                            visitor?['email'] ??
-                                visitor?['visitor_email'] ??
-                                '-',
-                          ),
-                          _buildDetailRow(
-                            Icons.phone_outlined,
-                            'Phone',
-                            visitor?['phone'] ??
-                                visitor?['visitor_phone'] ??
-                                '-',
-                          ),
-                          _buildDetailRow(
-                            Icons.credit_card_outlined,
-                            'Citizenship ID',
-                            visitor?['id_card_no'] ??
-                                visitor?['identity_id'] ??
-                                visitor?['id_number'] ??
-                                visitor?['nik'] ??
-                                visitor?['id'] ??
-                                '-',
-                          ),
-                          _buildDetailRow(
-                            Icons.transgender_rounded,
-                            'Gender',
-                            visitor?['gender'] ??
-                                visitor?['visitor_gender'] ??
-                                '-',
-                          ),
-                          _buildDetailRow(
-                            Icons.person_outline_rounded,
-                            'Visitor Type',
-                            visitor != null ? (visitor['occupancy'] ?? (visitorTypeName.isNotEmpty && visitorTypeName != '-' ? visitorTypeName : visitor['visitor_type_name'] ?? visitor['visitor_type'] ?? '-')) : '-',
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 5),
-
-        // ── 2 & 3. Middle Tabs & QR Code (Grouped & Keyed for Tour Step 3) ─
-        Expanded(
-          flex: 14,
-          child: Container(
-            key: _keyVisitorTabs,
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 9,
-                  child: _buildCardContainer(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Tabs Navigation Row (Even spacing & clean indicators)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildTabHeader(0, 'Visit Information'),
-                            _buildTabHeader(1, 'Purpose Visit'),
-                            _buildTabHeader(2, 'Card'),
-                            _buildTabHeader(3, 'History'),
-                          ],
-                        ),
-                        const Divider(
-                          height: 8,
-                          thickness: 1,
-                          color: Color(0xFFF1F5F9),
-                        ),
-
-                        // Tab Content with Middle Vertical Divider
-                        Expanded(
-                          child: _selectedVisitorInfoTab == 0
-                              ? _buildVisitInformationTab(visitor)
-                              : _selectedVisitorInfoTab == 1
-                              ? _buildPurposeVisitTab(visitor)
-                              : _selectedVisitorInfoTab == 2
-                              ? _buildCardTab(visitor)
-                              : _buildHistoryTab(visitor),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
-                ),
-                const SizedBox(height: 5),
-                Expanded(
-                  flex: 7,
-                  child: _buildCardContainer(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Visitor QR Code',
-                          style: GoogleFonts.inter(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F2B48),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+
+                  const SizedBox(width: 12),
+
+                  // Visitor Details Table (Clean Typography with Visitor Type Badge & Detail Rows)
+                  Expanded(
+                    flex: 12,
+                    child: Builder(
+                      builder: (context) {
+                        final visitorTypeName =
+                            (visitor?['visitor_type_name'] ??
+                                    visitor?['visitor_type'] ??
+                                    visitor?['type_visitor_name'] ??
+                                    visitor?['type_visitor'] ??
+                                    visitor?['category'] ??
+                                    visitor?['occupancy'] ??
+                                    '-')
+                                .toString()
+                                .trim();
+
+                        final visitorName =
+                            (visitor?['name'] ??
+                                    visitor?['visitor_name'] ??
+                                    'Name')
+                                .toString()
+                                .trim();
+
+                        return SingleChildScrollView(
+                          physics: const ClampingScrollPhysics(),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Left: Prominent QR Code container with Tap Modal
-                              Builder(
-                                builder: (context) {
-                                  final qrData = (visitor?['invitation_code'] != null &&
-                                          visitor!['invitation_code'].toString() != '-' &&
-                                          visitor['invitation_code'].toString().isNotEmpty)
-                                      ? visitor['invitation_code'].toString()
-                                      : (visitor?['qr_code_data'] != null &&
-                                              visitor!['qr_code_data'].toString() != '-' &&
-                                              visitor['qr_code_data'].toString().isNotEmpty
-                                          ? visitor['qr_code_data'].toString()
-                                          : (visitor?['visitor_code'] != null &&
-                                                  visitor!['visitor_code'].toString() != '-' &&
-                                                  visitor['visitor_code'].toString().isNotEmpty
-                                              ? visitor['visitor_code'].toString()
-                                              : null));
-
-                                  if (qrData != null && qrData.isNotEmpty) {
-                                    return Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () => _showVisitorQrModal(
-                                          context,
-                                          visitor,
-                                          qrData,
-                                        ),
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Tooltip(
-                                          message: 'Click to enlarge QR Code',
-                                          child: Container(
-                                            width: 96,
-                                            height: 96,
-                                            padding: const EdgeInsets.all(5),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: const Color(0xFFE2E8F0),
-                                                width: 1.2,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withValues(alpha: 0.04),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: QrImageView(
-                                              data: qrData,
-                                              version: QrVersions.auto,
-                                              padding: EdgeInsets.zero,
-                                              size: 86.0,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  return Container(
-                                    width: 96,
-                                    height: 96,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: const Color(0xFFE2E8F0),
-                                        width: 1.2,
-                                      ),
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.qr_code_2_rounded,
-                                          size: 34,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'No QR',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              const SizedBox(width: 16),
-
-                              // Right: Invitation / Check In / Out Time Fields
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildQrDetailField(
-                                      'Invitation Code',
-                                      visitor?['invitation_code'] ?? '-',
-                                      isCopyable: true,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    _buildQrDetailField(
-                                      'Check In Time',
-                                      visitor?['check_in'] ?? '-',
-                                    ),
-                                    const SizedBox(height: 6),
-                                    _buildQrDetailField(
-                                      'Check Out Time',
-                                      visitor?['check_out'] ?? '-',
-                                    ),
-                                  ],
+                              Text(
+                                visitorName.isNotEmpty ? visitorName : 'Name',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1E293B),
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              if (visitor != null &&
+                                  visitorTypeName.isNotEmpty &&
+                                  visitorTypeName != '-') ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    visitorTypeName,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                              ],
+                              const Divider(
+                                height: 6,
+                                thickness: 1,
+                                color: Color(0xFFF1F5F9),
+                              ),
+                              _buildDetailRow(
+                                Icons.apartment_rounded,
+                                'Organization',
+                                visitor?['organization'] ??
+                                    visitor?['company'] ??
+                                    visitor?['org'] ??
+                                    visitor?['visitor_organization_name'] ??
+                                    '-',
+                              ),
+                              _buildDetailRow(
+                                Icons.email_outlined,
+                                'Email',
+                                visitor?['email'] ??
+                                    visitor?['visitor_email'] ??
+                                    '-',
+                              ),
+                              _buildDetailRow(
+                                Icons.phone_outlined,
+                                'Phone',
+                                visitor?['phone'] ??
+                                    visitor?['visitor_phone'] ??
+                                    '-',
+                              ),
+                              _buildDetailRow(
+                                Icons.credit_card_outlined,
+                                'Citizenship ID',
+                                visitor?['id_card_no'] ??
+                                    visitor?['identity_id'] ??
+                                    visitor?['id_number'] ??
+                                    visitor?['nik'] ??
+                                    visitor?['id'] ??
+                                    '-',
+                              ),
+                              _buildDetailRow(
+                                Icons.transgender_rounded,
+                                'Gender',
+                                visitor?['gender'] ??
+                                    visitor?['visitor_gender'] ??
+                                    '-',
+                              ),
+                              _buildDetailRow(
+                                Icons.person_outline_rounded,
+                                'Visitor Type',
+                                visitor != null
+                                    ? (visitor['occupancy'] ??
+                                          (visitorTypeName.isNotEmpty &&
+                                                  visitorTypeName != '-'
+                                              ? visitorTypeName
+                                              : visitor['visitor_type_name'] ??
+                                                    visitor['visitor_type'] ??
+                                                    '-'))
+                                    : '-',
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  });
-}
+
+          const SizedBox(height: 5),
+
+          // ── 2 & 3. Middle Tabs & QR Code (Grouped & Keyed for Tour Step 3) ─
+          Expanded(
+            flex: 17,
+            child: Container(
+              key: _keyVisitorTabs,
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: _buildCardContainer(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Boxed Segmented Tabs Bar (Visit Information, Purpose Visit, Card Information, Visitor Tracker)
+                          _buildVisitorTabBar(),
+                          const SizedBox(height: 6),
+
+                          // Tab Content with Middle Vertical Divider
+                          Expanded(
+                            child: _selectedVisitorInfoTab == 0
+                                ? _buildVisitInformationTab(visitor)
+                                : _selectedVisitorInfoTab == 1
+                                ? _buildPurposeVisitTab(visitor)
+                                : _selectedVisitorInfoTab == 2
+                                ? _buildCardTab(visitor)
+                                : _buildHistoryTab(visitor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Expanded(
+                    flex: 6,
+                    child: _buildCardContainer(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Visitor QR Code',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F2B48),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Left: Prominent QR Code container with Tap Modal
+                                Builder(
+                                  builder: (context) {
+                                    final qrData =
+                                        (visitor?['invitation_code'] != null &&
+                                            visitor!['invitation_code']
+                                                    .toString() !=
+                                                '-' &&
+                                            visitor['invitation_code']
+                                                .toString()
+                                                .isNotEmpty)
+                                        ? visitor['invitation_code'].toString()
+                                        : (visitor?['qr_code_data'] != null &&
+                                                  visitor!['qr_code_data']
+                                                          .toString() !=
+                                                      '-' &&
+                                                  visitor['qr_code_data']
+                                                      .toString()
+                                                      .isNotEmpty
+                                              ? visitor['qr_code_data']
+                                                    .toString()
+                                              : (visitor?['visitor_code'] !=
+                                                            null &&
+                                                        visitor!['visitor_code']
+                                                                .toString() !=
+                                                            '-' &&
+                                                        visitor['visitor_code']
+                                                            .toString()
+                                                            .isNotEmpty
+                                                    ? visitor['visitor_code']
+                                                          .toString()
+                                                    : null));
+
+                                    if (qrData != null && qrData.isNotEmpty) {
+                                      return Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () => _showVisitorQrModal(
+                                            context,
+                                            visitor,
+                                            qrData,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          child: Tooltip(
+                                            message: 'Click to enlarge QR Code',
+                                            child: Container(
+                                              width: 96,
+                                              height: 96,
+                                              padding: const EdgeInsets.all(5),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: const Color(
+                                                    0xFFE2E8F0,
+                                                  ),
+                                                  width: 1.2,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(
+                                                          alpha: 0.04,
+                                                        ),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: QrImageView(
+                                                data: qrData,
+                                                version: QrVersions.auto,
+                                                padding: EdgeInsets.zero,
+                                                size: 86.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    return Container(
+                                      width: 96,
+                                      height: 96,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF8FAFC),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: const Color(0xFFE2E8F0),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.qr_code_2_rounded,
+                                            size: 34,
+                                            color: Color(0xFF94A3B8),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'No QR',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF94A3B8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                // Right: Invitation / Check In / Out Time Fields
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    physics: const ClampingScrollPhysics(),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        _buildQrDetailField(
+                                          'Invitation Code',
+                                          visitor?['invitation_code'] ?? '-',
+                                          isCopyable: true,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _buildQrDetailField(
+                                          'Check In Time',
+                                          visitor?['check_in'] ?? '-',
+                                        ),
+                                        const SizedBox(height: 4),
+                                        _buildQrDetailField(
+                                          'Check Out Time',
+                                          visitor?['check_out'] ?? '-',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
 
   Widget _buildDetailRow(IconData icon, String label, String? value) {
-    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+    final displayValue =
+        (value == null || value.trim().isEmpty || value.trim() == 'null')
         ? '-'
         : value.trim();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 1.5),
-            child: Icon(icon, size: 14.5, color: const Color(0xFF334155)),
+            child: Icon(icon, size: 13.5, color: const Color(0xFF475569)),
           ),
-          const SizedBox(width: 7),
+          const SizedBox(width: 5),
           SizedBox(
-            width: 88,
+            width: 86,
             child: Text(
               label,
               maxLines: 1,
               softWrap: false,
               style: GoogleFonts.inter(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w400,
-                color: const Color(0xFF334155),
+                color: const Color(0xFF475569),
               ),
             ),
           ),
           Text(
             ':  ',
             style: GoogleFonts.inter(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w400,
-              color: const Color(0xFF334155),
+              color: const Color(0xFF475569),
             ),
           ),
           Expanded(
             child: Text(
               displayValue,
-              maxLines: 2,
-              softWrap: true,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF1E293B),
-                height: 1.22,
+                height: 1.2,
               ),
             ),
           ),
@@ -1153,7 +1195,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildVisitInformationTab(Map<String, dynamic>? visitor) {
-    final bool isHost = visitor?['is_host'] == true || visitor?['raw']?['is_host'] == true;
+    final bool isHost =
+        visitor?['is_host'] == true || visitor?['raw']?['is_host'] == true;
 
     return Column(
       children: [
@@ -1254,12 +1297,19 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           const SizedBox(height: 4),
           Builder(
             builder: (context) {
-              final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '').toString().toLowerCase();
-              final isBlocked = visitor['is_block'] == true ||
+              final rawStatus =
+                  (visitor['visitor_status'] ?? visitor['status'] ?? '')
+                      .toString()
+                      .toLowerCase();
+              final isBlocked =
+                  visitor['is_block'] == true ||
                   rawStatus == 'block' ||
                   rawStatus == 'blacklist';
-              final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
-              final bool isPraregisterDone = visitor['is_praregister_done'] == true ||
+              final bool isHost =
+                  visitor['is_host'] == true ||
+                  visitor['raw']?['is_host'] == true;
+              final bool isPraregisterDone =
+                  visitor['is_praregister_done'] == true ||
                   visitor['raw']?['is_praregister_done'] == true ||
                   visitor['is_complete_preregister'] == true ||
                   visitor['raw']?['is_complete_preregister'] == true ||
@@ -1287,7 +1337,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ),
                       ),
                       onPressed: () => _handleAction('Unblock'),
-                      icon: const Icon(Icons.lock_open_rounded, size: 14, color: Colors.white),
+                      icon: const Icon(
+                        Icons.lock_open_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         'Unblock',
                         style: GoogleFonts.inter(
@@ -1320,7 +1374,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                         ),
                         onPressed: () => _handleAction('Check Out'),
-                        icon: const Icon(Icons.logout_rounded, size: 14, color: Colors.white),
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                         label: Text(
                           'Check Out',
                           style: GoogleFonts.inter(
@@ -1347,7 +1405,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                         ),
                         onPressed: () => _handleAction('Block'),
-                        icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
+                        icon: const Icon(
+                          Icons.block_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                         label: Text(
                           'Block',
                           style: GoogleFonts.inter(
@@ -1380,7 +1442,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ),
                       ),
                       onPressed: () => _handleAction('Block'),
-                      icon: const Icon(Icons.block_rounded, size: 14, color: Colors.white),
+                      icon: const Icon(
+                        Icons.block_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         'Block',
                         style: GoogleFonts.inter(
@@ -1393,7 +1459,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 );
               }
               // 4. If Host (is_host == true) OR visitor is Available / Waiting / isPraregisterDone: show Check In + Block buttons
-              else if (isHost || isPraregisterDone || rawStatus.contains('available') || rawStatus.contains('waiting')) {
+              else if (isHost ||
+                  isPraregisterDone ||
+                  rawStatus.contains('available') ||
+                  rawStatus.contains('waiting')) {
                 return Obx(() {
                   final canCheckIn = controller.canCheckIn;
                   final canBlock = controller.canBlock;
@@ -1405,8 +1474,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         height: 26,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: canCheckIn ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
-                            foregroundColor: canCheckIn ? Colors.white : const Color(0xFF94A3B8),
+                            backgroundColor: canCheckIn
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFE2E8F0),
+                            foregroundColor: canCheckIn
+                                ? Colors.white
+                                : const Color(0xFF94A3B8),
                             elevation: canCheckIn ? 1 : 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
@@ -1417,13 +1490,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             ),
                           ),
                           onPressed: () => _handleAction('Check In'),
-                          icon: Icon(Icons.login_rounded, size: 14, color: canCheckIn ? Colors.white : const Color(0xFF94A3B8)),
+                          icon: Icon(
+                            Icons.login_rounded,
+                            size: 14,
+                            color: canCheckIn
+                                ? Colors.white
+                                : const Color(0xFF94A3B8),
+                          ),
                           label: Text(
                             'Check In',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: canCheckIn ? Colors.white : const Color(0xFF94A3B8),
+                              color: canCheckIn
+                                  ? Colors.white
+                                  : const Color(0xFF94A3B8),
                             ),
                           ),
                         ),
@@ -1433,8 +1514,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         height: 26,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: canBlock ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                            foregroundColor: canBlock ? Colors.white : const Color(0xFF94A3B8),
+                            backgroundColor: canBlock
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFE2E8F0),
+                            foregroundColor: canBlock
+                                ? Colors.white
+                                : const Color(0xFF94A3B8),
                             elevation: canBlock ? 1 : 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
@@ -1445,13 +1530,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             ),
                           ),
                           onPressed: () => _handleAction('Block'),
-                          icon: Icon(Icons.block_rounded, size: 14, color: canBlock ? Colors.white : const Color(0xFF94A3B8)),
+                          icon: Icon(
+                            Icons.block_rounded,
+                            size: 14,
+                            color: canBlock
+                                ? Colors.white
+                                : const Color(0xFF94A3B8),
+                          ),
                           label: Text(
                             'Block',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: canBlock ? Colors.white : const Color(0xFF94A3B8),
+                              color: canBlock
+                                  ? Colors.white
+                                  : const Color(0xFF94A3B8),
                             ),
                           ),
                         ),
@@ -1643,10 +1736,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  Clipboard.setData(ClipboardData(text: cardNum));
+                                  Clipboard.setData(
+                                    ClipboardData(text: cardNum),
+                                  );
                                   AppSnackbar.success(
                                     title: 'Card Copied',
-                                    message: 'Card number $cardNum copied to clipboard.',
+                                    message:
+                                        'Card number $cardNum copied to clipboard.',
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(4),
@@ -1658,7 +1754,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF004385).withValues(alpha: 0.08),
+                                      color: const Color(
+                                        0xFF004385,
+                                      ).withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Row(
@@ -1770,12 +1868,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildStatusMetadataField(IconData icon, String label, String? value) {
-    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+    final displayValue =
+        (value == null || value.trim().isEmpty || value.trim() == 'null')
         ? '-'
         : value.trim();
 
     Color badgeColor;
-    final lower = displayValue.toLowerCase().replaceAll(' ', '').replaceAll('-', '').replaceAll('_', '');
+    final lower = displayValue
+        .toLowerCase()
+        .replaceAll(' ', '')
+        .replaceAll('-', '')
+        .replaceAll('_', '');
     if (lower.contains('checkin') || lower == 'in') {
       badgeColor = Colors.green; // Sesuai warna popup notif success
     } else if (lower.contains('available') || lower.contains('approved')) {
@@ -1812,7 +1915,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ),
               const SizedBox(height: 1.5),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 1.5,
+                ),
                 decoration: BoxDecoration(
                   color: badgeColor,
                   borderRadius: BorderRadius.circular(5),
@@ -1840,41 +1946,95 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildTabHeader(int index, String title) {
-    final isSelected = _selectedVisitorInfoTab == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedVisitorInfoTab = index),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 12.5,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF003082)
-                  : const Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (isSelected)
-            Container(
-              height: 2.5,
-              width: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFF003082),
-                borderRadius: BorderRadius.circular(2),
+  Widget _buildVisitorTabBar() {
+    final tabs = [
+      'Visit Information',
+      'Purpose Visit',
+      'Card Information',
+      'Visitor Tracker',
+    ];
+
+    return Container(
+      height: 35,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        children: List.generate(tabs.length * 2 - 1, (index) {
+          if (index.isOdd) {
+            return Container(
+              width: 1,
+              height: double.infinity,
+              color: const Color(0xFFE2E8F0),
+            );
+          }
+
+          final tabIndex = index ~/ 2;
+          final title = tabs[tabIndex];
+          final isSelected = _selectedVisitorInfoTab == tabIndex;
+
+          return Expanded(
+            child: Material(
+              color: isSelected ? const Color(0xFFF4F8FD) : Colors.white,
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedVisitorInfoTab = tabIndex;
+                  });
+                },
+                child: SizedBox(
+                  height: double.infinity,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? const Color(0xFF00569E)
+                                    : const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (isSelected)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            height: 2.5,
+                            color: const Color(0xFF00569E),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            )
-          else
-            const SizedBox(height: 2.5),
-        ],
+            ),
+          );
+        }),
       ),
     );
   }
 
   Widget _buildMetadataField(IconData icon, String label, String? value) {
-    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+    final displayValue =
+        (value == null || value.trim().isEmpty || value.trim() == 'null')
         ? '-'
         : value.trim();
 
@@ -1916,8 +2076,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildQrDetailField(String label, String? value, {bool isCopyable = false}) {
-    final displayValue = (value == null || value.trim().isEmpty || value.trim() == 'null')
+  Widget _buildQrDetailField(
+    String label,
+    String? value, {
+    bool isCopyable = false,
+  }) {
+    final displayValue =
+        (value == null || value.trim().isEmpty || value.trim() == 'null')
         ? '-'
         : value.trim();
 
@@ -1988,12 +2153,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (dialogContext) {
-        final invitationCode = (visitor?['invitation_code'] ?? qrData).toString();
-        final visitorName = (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor').toString();
+        final invitationCode = (visitor?['invitation_code'] ?? qrData)
+            .toString();
+        final visitorName =
+            (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor')
+                .toString();
 
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           child: Container(
             width: 380,
             decoration: BoxDecoration(
@@ -2030,7 +2201,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                       IconButton(
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                         icon: const Icon(
                           Icons.close_rounded,
                           size: 22,
@@ -2042,7 +2216,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ),
                 ),
 
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF1F5F9),
+                ),
 
                 // Body content: Large QR Code and details
                 Padding(
@@ -2093,17 +2271,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               letterSpacing: 1.2,
                             ),
                           ),
-                          if (invitationCode.isNotEmpty && invitationCode != '-') ...[
+                          if (invitationCode.isNotEmpty &&
+                              invitationCode != '-') ...[
                             const SizedBox(width: 6),
                             Material(
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(4),
                                 onTap: () {
-                                  Clipboard.setData(ClipboardData(text: invitationCode));
+                                  Clipboard.setData(
+                                    ClipboardData(text: invitationCode),
+                                  );
                                   AppSnackbar.success(
                                     title: 'Copied',
-                                    message: 'Invitation code copied to clipboard',
+                                    message:
+                                        'Invitation code copied to clipboard',
                                   );
                                 },
                                 child: const Padding(
@@ -2341,7 +2523,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         isSelected: activeTab == 0,
                         onTap: () {
                           controller.rxFeedTabIndex.value = 0;
-                          _visitorSearchController.text = controller.rxLiveSearchQuery.value;
+                          _visitorSearchController.text =
+                              controller.rxLiveSearchQuery.value;
                           setState(() {});
                         },
                       ),
@@ -2352,7 +2535,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         isSelected: activeTab == 1,
                         onTap: () {
                           controller.rxFeedTabIndex.value = 1;
-                          _visitorSearchController.text = controller.rxRelatedSearchQuery.value;
+                          _visitorSearchController.text =
+                              controller.rxRelatedSearchQuery.value;
                           setState(() {});
                         },
                       ),
@@ -2371,8 +2555,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           },
                           borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            height: 26,
-                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            height: 28,
+                            padding: const EdgeInsets.symmetric(horizontal: 9),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(6),
@@ -2386,15 +2570,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               children: [
                                 const Icon(
                                   Icons.close_rounded,
-                                  size: 12,
+                                  size: 14,
                                   color: _redDanger,
                                 ),
-                                const SizedBox(width: 3),
+                                const SizedBox(width: 4),
                                 Text(
                                   'Clear',
                                   style: GoogleFonts.inter(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                     color: _redDanger,
                                   ),
                                 ),
@@ -2414,13 +2598,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           },
                           borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            height: 26,
-                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            height: 28,
+                            padding: const EdgeInsets.symmetric(horizontal: 9),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: const Color(0xFF1976D2).withValues(alpha: 0.4),
+                                color: const Color(
+                                  0xFF1976D2,
+                                ).withValues(alpha: 0.4),
                               ),
                             ),
                             child: Row(
@@ -2429,15 +2615,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               children: [
                                 const Icon(
                                   Icons.refresh_rounded,
-                                  size: 13,
+                                  size: 14,
                                   color: Color(0xFF003082),
                                 ),
-                                const SizedBox(width: 3),
+                                const SizedBox(width: 4),
                                 Text(
                                   'Refresh',
                                   style: GoogleFonts.inter(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                     color: const Color(0xFF003082),
                                   ),
                                 ),
@@ -2491,7 +2677,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 minWidth: 36,
                                 minHeight: 36,
                               ),
-                              suffixIcon: _visitorSearchController.text.isNotEmpty
+                              suffixIcon:
+                                  _visitorSearchController.text.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(
                                         Icons.cancel_rounded,
@@ -2499,7 +2686,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         color: Color(0xFF94A3B8),
                                       ),
                                       padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 28,
+                                        minHeight: 36,
+                                      ),
                                       onPressed: () {
                                         _visitorSearchController.clear();
                                         controller.filterVisitors('');
@@ -2547,7 +2737,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       children: [
                         // Reactive Instant Select Multiple Custom Checkbox & Label (Hidden by default)
                         Obx(() {
-                          final showMultiple = controller.rxShowSelectMultiple.value;
+                          final showMultiple =
+                              controller.rxShowSelectMultiple.value;
                           if (!showMultiple) {
                             return const SizedBox.shrink();
                           }
@@ -2624,15 +2815,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           final list = activeTab == 0
                               ? controller.rxLiveVisitors
                               : controller.rxRelatedVisitors;
-                          final total = list.isNotEmpty ? (list.length / 10).ceil() : 0;
+                          final total = list.isNotEmpty
+                              ? (list.length / 10).ceil()
+                              : 0;
                           final current = activeTab == 0
                               ? controller.rxLiveCurrentPage.value
                               : controller.rxRelatedCurrentPage.value;
                           final safeCurrent = list.isEmpty
                               ? 0
-                              : (current > total ? total : (current < 1 ? 1 : current));
+                              : (current > total
+                                    ? total
+                                    : (current < 1 ? 1 : current));
                           final hasPrev = list.isNotEmpty && safeCurrent > 1;
-                          final hasNext = list.isNotEmpty && safeCurrent < total;
+                          final hasNext =
+                              list.isNotEmpty && safeCurrent < total;
 
                           return Row(
                             mainAxisSize: MainAxisSize.min,
@@ -2657,20 +2853,30 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           if (_livePageController.hasClients) {
                                             _livePageController.animateToPage(
                                               targetIndex,
-                                              duration: const Duration(milliseconds: 250),
+                                              duration: const Duration(
+                                                milliseconds: 250,
+                                              ),
                                               curve: Curves.easeInOut,
                                             );
                                           }
-                                          controller.rxLiveCurrentPage.value = targetIndex + 1;
+                                          controller.rxLiveCurrentPage.value =
+                                              targetIndex + 1;
                                         } else {
-                                          if (_relatedPageController.hasClients) {
-                                            _relatedPageController.animateToPage(
-                                              targetIndex,
-                                              duration: const Duration(milliseconds: 250),
-                                              curve: Curves.easeInOut,
-                                            );
+                                          if (_relatedPageController
+                                              .hasClients) {
+                                            _relatedPageController
+                                                .animateToPage(
+                                                  targetIndex,
+                                                  duration: const Duration(
+                                                    milliseconds: 250,
+                                                  ),
+                                                  curve: Curves.easeInOut,
+                                                );
                                           }
-                                          controller.rxRelatedCurrentPage.value = targetIndex + 1;
+                                          controller
+                                                  .rxRelatedCurrentPage
+                                                  .value =
+                                              targetIndex + 1;
                                         }
                                       }
                                     : null,
@@ -2703,20 +2909,30 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           if (_livePageController.hasClients) {
                                             _livePageController.animateToPage(
                                               targetIndex,
-                                              duration: const Duration(milliseconds: 250),
+                                              duration: const Duration(
+                                                milliseconds: 250,
+                                              ),
                                               curve: Curves.easeInOut,
                                             );
                                           }
-                                          controller.rxLiveCurrentPage.value = targetIndex + 1;
+                                          controller.rxLiveCurrentPage.value =
+                                              targetIndex + 1;
                                         } else {
-                                          if (_relatedPageController.hasClients) {
-                                            _relatedPageController.animateToPage(
-                                              targetIndex,
-                                              duration: const Duration(milliseconds: 250),
-                                              curve: Curves.easeInOut,
-                                            );
+                                          if (_relatedPageController
+                                              .hasClients) {
+                                            _relatedPageController
+                                                .animateToPage(
+                                                  targetIndex,
+                                                  duration: const Duration(
+                                                    milliseconds: 250,
+                                                  ),
+                                                  curve: Curves.easeInOut,
+                                                );
                                           }
-                                          controller.rxRelatedCurrentPage.value = targetIndex + 1;
+                                          controller
+                                                  .rxRelatedCurrentPage
+                                                  .value =
+                                              targetIndex + 1;
                                         }
                                       }
                                     : null,
@@ -2742,7 +2958,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     final list = activeTab == 0
                         ? controller.rxLiveVisitors
                         : controller.rxRelatedVisitors;
-                    final totalPages = list.isNotEmpty ? (list.length / 10).ceil() : 1;
+                    final totalPages = list.isNotEmpty
+                        ? (list.length / 10).ceil()
+                        : 1;
                     final pageController = activeTab == 0
                         ? _livePageController
                         : _relatedPageController;
@@ -2784,23 +3002,32 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         },
                         itemBuilder: (context, pageIndex) {
                           final startIndex = pageIndex * 10;
-                          final pageItems = list.skip(startIndex).take(10).toList();
+                          final pageItems = list
+                              .skip(startIndex)
+                              .take(10)
+                              .toList();
                           final row1Items = pageItems.take(5).toList();
                           final row2Items = pageItems.skip(5).take(5).toList();
 
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2,
+                              vertical: 2,
+                            ),
                             child: Column(
                               children: [
                                 // Row 1 (Expanded, fills top half)
                                 Expanded(
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       for (int i = 0; i < 5; i++) ...[
                                         if (i < row1Items.length)
                                           Expanded(
-                                            child: _buildFeedVisitorCard(row1Items[i]),
+                                            child: _buildFeedVisitorCard(
+                                              row1Items[i],
+                                            ),
                                           )
                                         else
                                           const Expanded(child: SizedBox()),
@@ -2813,12 +3040,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 // Row 2 (Expanded, fills bottom half)
                                 Expanded(
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       for (int i = 0; i < 5; i++) ...[
                                         if (i < row2Items.length)
                                           Expanded(
-                                            child: _buildFeedVisitorCard(row2Items[i]),
+                                            child: _buildFeedVisitorCard(
+                                              row2Items[i],
+                                            ),
                                           )
                                         else
                                           const Expanded(child: SizedBox()),
@@ -2839,167 +3069,206 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 // Bottom Bulk Action Toolbar (Hidden by default for Related Visitors)
                 Obx(() {
                   final activeTab = controller.rxFeedTabIndex.value;
-                  final showToolbar = controller.rxShowRelatedBottomToolbar.value;
+                  final showToolbar =
+                      controller.rxShowRelatedBottomToolbar.value;
                   if (!showToolbar || activeTab == 0) {
                     return const SizedBox.shrink();
                   }
 
                   return Row(
                     children: [
-                          CompositedTransformTarget(
-                            link: _bulkActionLayerLink,
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Obx(() {
-                                final isMultipleActive = controller.rxSelectMultiple.value;
-                                final hasItems = controller.rxSelectedItems.isNotEmpty;
-                                final actions = _getAvailableBulkActions();
-                                final isDropdownEnabled = isMultipleActive && hasItems && actions.isNotEmpty;
-                                final hasActionSelected = isDropdownEnabled &&
-                                    _selectedBulkAction != null &&
-                                    actions.contains(_selectedBulkAction);
-
-                                final displayAction = hasActionSelected
-                                    ? _selectedBulkAction!
-                                    : (isDropdownEnabled ? 'Select Action' : 'Action');
-
-                                return InkWell(
-                                  onTap: isDropdownEnabled ? _toggleBulkActionMenu : null,
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    height: 32,
-                                    constraints: const BoxConstraints(minWidth: 128),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                                    decoration: BoxDecoration(
-                                      color: isDropdownEnabled ? Colors.white : const Color(0xFFF8FAFC),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: (_isBulkActionMenuOpen && isDropdownEnabled)
-                                            ? const Color(0xFF003082)
-                                            : (isDropdownEnabled ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0)),
-                                        width: (_isBulkActionMenuOpen && isDropdownEnabled) ? 1.5 : 1,
-                                      ),
-                                      boxShadow: (_isBulkActionMenuOpen && isDropdownEnabled)
-                                          ? [
-                                              BoxShadow(
-                                                color: const Color(0xFF003082).withValues(alpha: 0.1),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 1),
-                                              )
-                                            ]
-                                          : null,
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (hasActionSelected) ...[
-                                          Icon(
-                                            _getActionIcon(displayAction),
-                                            size: 15,
-                                            color: _getActionColor(displayAction),
-                                          ),
-                                          const SizedBox(width: 6),
-                                        ],
-                                        Text(
-                                          displayAction,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11.5,
-                                            fontWeight: hasActionSelected ? FontWeight.w600 : FontWeight.w500,
-                                            color: hasActionSelected ? _textDark : const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Icon(
-                                          (_isBulkActionMenuOpen && isDropdownEnabled)
-                                              ? Icons.keyboard_arrow_up_rounded
-                                              : Icons.keyboard_arrow_down_rounded,
-                                          size: 17,
-                                          color: isDropdownEnabled
-                                              ? const Color(0xFF003082)
-                                              : const Color(0xFF94A3B8),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Obx(() {
-                            final isMultipleActive = controller.rxSelectMultiple.value;
-                            final hasItems = controller.rxSelectedItems.isNotEmpty;
+                      CompositedTransformTarget(
+                        link: _bulkActionLayerLink,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Obx(() {
+                            final isMultipleActive =
+                                controller.rxSelectMultiple.value;
+                            final hasItems =
+                                controller.rxSelectedItems.isNotEmpty;
                             final actions = _getAvailableBulkActions();
-                            final isEnabled = isMultipleActive &&
+                            final isDropdownEnabled =
+                                isMultipleActive &&
                                 hasItems &&
-                                actions.isNotEmpty &&
+                                actions.isNotEmpty;
+                            final hasActionSelected =
+                                isDropdownEnabled &&
                                 _selectedBulkAction != null &&
                                 actions.contains(_selectedBulkAction);
 
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: isEnabled ? _applyBulkAction : null,
-                                borderRadius: BorderRadius.circular(6),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  height: 32,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: isEnabled
-                                        ? const Color(0xFF004385)
-                                        : const Color(0xFFE5E7EB),
-                                    borderRadius: BorderRadius.circular(6),
+                            final displayAction = hasActionSelected
+                                ? _selectedBulkAction!
+                                : (isDropdownEnabled
+                                      ? 'Select Action'
+                                      : 'Action');
+
+                            return InkWell(
+                              onTap: isDropdownEnabled
+                                  ? _toggleBulkActionMenu
+                                  : null,
+                              borderRadius: BorderRadius.circular(6),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                height: 32,
+                                constraints: const BoxConstraints(
+                                  minWidth: 128,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDropdownEnabled
+                                      ? Colors.white
+                                      : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color:
+                                        (_isBulkActionMenuOpen &&
+                                            isDropdownEnabled)
+                                        ? const Color(0xFF003082)
+                                        : (isDropdownEnabled
+                                              ? const Color(0xFFCBD5E1)
+                                              : const Color(0xFFE2E8F0)),
+                                    width:
+                                        (_isBulkActionMenuOpen &&
+                                            isDropdownEnabled)
+                                        ? 1.5
+                                        : 1,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      'Apply',
+                                  boxShadow:
+                                      (_isBulkActionMenuOpen &&
+                                          isDropdownEnabled)
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFF003082,
+                                            ).withValues(alpha: 0.1),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (hasActionSelected) ...[
+                                      Icon(
+                                        _getActionIcon(displayAction),
+                                        size: 15,
+                                        color: _getActionColor(displayAction),
+                                      ),
+                                      const SizedBox(width: 6),
+                                    ],
+                                    Text(
+                                      displayAction,
                                       style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: isEnabled
-                                            ? Colors.white
+                                        fontSize: 11.5,
+                                        fontWeight: hasActionSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: hasActionSelected
+                                            ? _textDark
                                             : const Color(0xFF94A3B8),
                                       ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      (_isBulkActionMenuOpen &&
+                                              isDropdownEnabled)
+                                          ? Icons.keyboard_arrow_up_rounded
+                                          : Icons.keyboard_arrow_down_rounded,
+                                      size: 17,
+                                      color: isDropdownEnabled
+                                          ? const Color(0xFF003082)
+                                          : const Color(0xFF94A3B8),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
                           }),
-                          const Spacer(),
-                          // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
-                          Obx(() {
-                            final hasData = controller.rxSelectedVisitor.value != null ||
-                                controller.rxAllRelatedVisitors.isNotEmpty;
-                            if (!hasData) return const SizedBox.shrink();
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Obx(() {
+                        final isMultipleActive =
+                            controller.rxSelectMultiple.value;
+                        final hasItems = controller.rxSelectedItems.isNotEmpty;
+                        final actions = _getAvailableBulkActions();
+                        final isEnabled =
+                            isMultipleActive &&
+                            hasItems &&
+                            actions.isNotEmpty &&
+                            _selectedBulkAction != null &&
+                            actions.contains(_selectedBulkAction);
 
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildFeedPillButton(
-                                  'Extend',
-                                  Icons.access_time_rounded,
-                                  const Color(0xFFFBBF24),
-                                  Colors.white,
-                                  () => _handleAction('Extend'),
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: isEnabled ? _applyBulkAction : null,
+                            borderRadius: BorderRadius.circular(6),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: 32,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isEnabled
+                                    ? const Color(0xFF004385)
+                                    : const Color(0xFFE5E7EB),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  'Apply',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isEnabled
+                                        ? Colors.white
+                                        : const Color(0xFF94A3B8),
+                                  ),
                                 ),
-                                const SizedBox(width: 6),
-                                _buildFeedPillButton(
-                                  'Card Issuance',
-                                  Icons.credit_card_rounded,
-                                  const Color(0xFF7B1FA2),
-                                  Colors.white,
-                                  () => _handleAction('Card Issuance'),
-                                ),
-                              ],
-                            );
-                          }),
-                        ],
-                      );
-                    }),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      const Spacer(),
+                      // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
+                      Obx(() {
+                        final hasData =
+                            controller.rxSelectedVisitor.value != null ||
+                            controller.rxAllRelatedVisitors.isNotEmpty;
+                        if (!hasData) return const SizedBox.shrink();
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildFeedPillButton(
+                              'Extend',
+                              Icons.access_time_rounded,
+                              const Color(0xFFFBBF24),
+                              Colors.white,
+                              () => _handleAction('Extend'),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildFeedPillButton(
+                              'Card Issuance',
+                              Icons.credit_card_rounded,
+                              const Color(0xFF7B1FA2),
+                              Colors.white,
+                              () => _handleAction('Card Issuance'),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  );
+                }),
               ],
             ),
           ),
@@ -3055,7 +3324,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     bool isEnabled = true,
   }) {
     final effectiveBgColor = isEnabled ? bgColor : const Color(0xFFE2E8F0);
-    final effectiveContentColor = isEnabled ? Colors.white : const Color(0xFF94A3B8);
+    final effectiveContentColor = isEnabled
+        ? Colors.white
+        : const Color(0xFF94A3B8);
 
     return Material(
       color: Colors.transparent,
@@ -3117,29 +3388,34 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF003082) : _textMuted,
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (isSelected)
-            Container(
-              height: 2.5,
-              width: 90,
-              decoration: BoxDecoration(
-                color: const Color(0xFF003082),
-                borderRadius: BorderRadius.circular(2),
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        height: 28,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? const Color(0xFF003082) : _textMuted,
               ),
-            )
-          else
-            const SizedBox(height: 2.5),
-        ],
+            ),
+            if (isSelected)
+              Container(
+                height: 2.5,
+                width: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF003082),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              )
+            else
+              const SizedBox(height: 2.5),
+          ],
+        ),
       ),
     );
   }
@@ -3147,47 +3423,55 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   Widget _buildFeedVisitorCard(Map<String, dynamic> item) {
     return Obx(() {
       final selectedVisitor = controller.rxSelectedVisitor.value;
-      final selectedId = (selectedVisitor?['invitation_code'] ??
-              selectedVisitor?['visitor_code'] ??
-              selectedVisitor?['id'] ??
-              selectedVisitor?['transaction_visitor_id'] ??
-              '')
-          .toString();
+      final selectedId =
+          (selectedVisitor?['invitation_code'] ??
+                  selectedVisitor?['visitor_code'] ??
+                  selectedVisitor?['id'] ??
+                  selectedVisitor?['transaction_visitor_id'] ??
+                  '')
+              .toString();
       final currentActiveTab = controller.rxFeedTabIndex.value;
-      final isMultipleMode = controller.rxSelectMultiple.value && currentActiveTab == 1;
+      final isMultipleMode =
+          controller.rxSelectMultiple.value && currentActiveTab == 1;
       final selectedSet = controller.rxSelectedItems.toSet();
 
-      final keys = [
-        item['id'],
-        item['trx_id'],
-        item['transaction_visitor_id'],
-        item['visitor_id'],
-        item['invitation_code'],
-        item['visitor_code'],
-        item['visitor_number'],
-        item['name'],
-        item['visitor_name'],
-      ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+      final keys =
+          [
+                item['id'],
+                item['trx_id'],
+                item['transaction_visitor_id'],
+                item['visitor_id'],
+                item['invitation_code'],
+                item['visitor_code'],
+                item['visitor_number'],
+                item['name'],
+                item['visitor_name'],
+              ]
+              .where((k) => k != null && k.toString().trim().isNotEmpty)
+              .map((k) => k.toString().trim())
+              .toList();
 
-      final itemId = (item['id'] ??
-              item['transaction_visitor_id'] ??
-              item['visitor_id'] ??
-              item['invitation_code'] ??
-              item['visitor_code'] ??
-              '')
-          .toString();
+      final itemId =
+          (item['id'] ??
+                  item['transaction_visitor_id'] ??
+                  item['visitor_id'] ??
+                  item['invitation_code'] ??
+                  item['visitor_code'] ??
+                  '')
+              .toString();
       final isSelected = isMultipleMode
           ? keys.any((k) => selectedSet.contains(k))
           : (selectedId.isNotEmpty && keys.contains(selectedId));
-      final faceImg = (item['selfie_image'] ??
-              item['photo'] ??
-              item['avatar'] ??
-              item['faceimage'] ??
-              item['face_image'] ??
-              item['visitor_face'] ??
-              item['host_faceimage'] ??
-              '')
-          .toString();
+      final faceImg =
+          (item['selfie_image'] ??
+                  item['photo'] ??
+                  item['avatar'] ??
+                  item['faceimage'] ??
+                  item['face_image'] ??
+                  item['visitor_face'] ??
+                  item['host_faceimage'] ??
+                  '')
+              .toString();
 
       return Material(
         color: Colors.transparent,
@@ -3196,12 +3480,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             if (currentActiveTab == 0) {
               // 1. Tapping Live Visitor card (even if Select Multiple is active)
               // directly searches its invitation code & loads Related Visitors tab!
-              final invCode = (item['invitation_code'] ??
-                      item['visitor_code'] ??
-                      item['initial_trx_code'] ??
-                      '')
-                  .toString()
-                  .trim();
+              final invCode =
+                  (item['invitation_code'] ??
+                          item['visitor_code'] ??
+                          item['initial_trx_code'] ??
+                          '')
+                      .toString()
+                      .trim();
 
               if (controller.rxSelectMultiple.value) {
                 controller.rxSelectedItems.clear();
@@ -3217,9 +3502,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             } else {
               // 2. In Related Visitors tab:
               if (controller.rxSelectMultiple.value) {
-                final isAlreadySelected = keys.any((k) => controller.rxSelectedItems.contains(k));
+                final isAlreadySelected = keys.any(
+                  (k) => controller.rxSelectedItems.contains(k),
+                );
                 if (isAlreadySelected) {
-                  controller.rxSelectedItems.removeWhere((k) => keys.contains(k));
+                  controller.rxSelectedItems.removeWhere(
+                    (k) => keys.contains(k),
+                  );
                 } else {
                   controller.rxSelectedItems.add(itemId);
                 }
@@ -3241,10 +3530,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 100),
             height: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 4,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -3281,7 +3567,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: (faceImg.isNotEmpty &&
+                  child:
+                      (faceImg.isNotEmpty &&
                           faceImg != '-' &&
                           faceImg != 'null' &&
                           !faceImg.startsWith('assets/'))
@@ -3387,7 +3674,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   Widget _buildRightColumn() {
     return Obx(() {
       final visitor = controller.rxSelectedVisitor.value;
-      final host = controller.rxPrimaryHost.value ??
+      final host =
+          controller.rxPrimaryHost.value ??
           (visitor?['host_name'] != null ? visitor : null);
 
       return Column(
@@ -3419,13 +3707,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         // Circular Avatar with CDN Face Image
                         Builder(
                           builder: (context) {
-                            final hostFace = (host?['faceimage'] ??
-                                    host?['host_faceimage'] ??
-                                    host?['avatar'] ??
-                                    host?['photo'] ??
-                                    '')
-                                .toString()
-                                .trim();
+                            final hostFace =
+                                (host?['faceimage'] ??
+                                        host?['host_faceimage'] ??
+                                        host?['avatar'] ??
+                                        host?['photo'] ??
+                                        '')
+                                    .toString()
+                                    .trim();
 
                             return Container(
                               width: 58,
@@ -3433,23 +3722,28 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                                border: Border.all(
+                                  color: const Color(0xFFDBEAFE),
+                                  width: 1.5,
+                                ),
                               ),
                               clipBehavior: Clip.antiAlias,
-                              child: (hostFace.isNotEmpty &&
+                              child:
+                                  (hostFace.isNotEmpty &&
                                       hostFace != '-' &&
                                       hostFace != 'null' &&
                                       !hostFace.startsWith('assets/'))
                                   ? Image.network(
                                       AppConstants.getCdnImageUrl(hostFace),
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => const Center(
-                                        child: Icon(
-                                          Icons.person,
-                                          size: 34,
-                                          color: Color(0xFF003082),
-                                        ),
-                                      ),
+                                      errorBuilder: (_, __, ___) =>
+                                          const Center(
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 34,
+                                              color: Color(0xFF003082),
+                                            ),
+                                          ),
                                     )
                                   : const Center(
                                       child: Icon(
@@ -3468,9 +3762,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               if (host != null &&
-                                  (host['name'] != null || host['host_name'] != null)) ...[
+                                  (host['name'] != null ||
+                                      host['host_name'] != null)) ...[
                                 Text(
-                                  host['name'] ?? host['host_name'] ?? 'Host Name',
+                                  host['name'] ??
+                                      host['host_name'] ??
+                                      'Host Name',
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
@@ -3558,408 +3855,448 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             ),
           ),
 
-        const SizedBox(height: 5),
+          const SizedBox(height: 5),
 
-        // ── 2. Live Occupancy Card (Keyed for Tour Step 8) ─────────────────
-        Expanded(
-          flex: 6,
-          child: _buildCardContainer(
-            key: _keyLiveOccupancy,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Live Occupancy',
-                      style: GoogleFonts.inter(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F2B48),
-                      ),
-                    ),
-                    Container(
-                      height: 28,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF00529C), width: 1.2),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Today',
-                            style: GoogleFonts.inter(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1E293B),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.arrow_drop_down,
-                            size: 18,
-                            color: Color(0xFF64748B),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Obx(() {
-                      if (controller.rxIsOccupancyLoading.value && controller.rxUpcomingPurpose.isEmpty) {
-                        return const Center(
-                          child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFF003082),
-                            ),
-                          ),
-                        );
-                      }
-
-                      final items = controller.rxUpcomingPurpose;
-                      if (items.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No live occupancy data available.',
-                            style: GoogleFonts.inter(
-                              fontSize: 11.5,
-                              color: const Color(0xFF94A3B8),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final bgColors = [
-                        const Color(0xFF99D636), // Vibrant Lime Green (exact match from screenshot)
-                        const Color(0xFF38B6FF), // Sky Blue
-                        const Color(0xFFFFA726), // Warm Amber Orange
-                        const Color(0xFFAB47BC), // Purple
-                        const Color(0xFF10B981), // Emerald Green
-                      ];
-
-                      return ScrollConfiguration(
-                        behavior: ScrollConfiguration.of(context).copyWith(
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,
-                            PointerDeviceKind.stylus,
-                            PointerDeviceKind.trackpad,
-                          },
+          // ── 2. Live Occupancy Card (Keyed for Tour Step 8) ─────────────────
+          Expanded(
+            flex: 6,
+            child: _buildCardContainer(
+              key: _keyLiveOccupancy,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Live Occupancy',
+                        style: GoogleFonts.inter(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F2B48),
                         ),
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(
-                            parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      Container(
+                        height: 28,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFF00529C),
+                            width: 1.2,
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          itemCount: items.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 10),
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            final label = (item['name'] ?? item['purpose'] ?? 'Purpose').toString();
-                            final count = (item['count'] ?? item['total'] ?? 0).toString();
-                            final bgColor = bgColors[index % bgColors.length];
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Today',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.arrow_drop_down,
+                              size: 18,
+                              color: Color(0xFF64748B),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Obx(() {
+                        if (controller.rxIsOccupancyLoading.value &&
+                            controller.rxUpcomingPurpose.isEmpty) {
+                          return const Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF003082),
+                              ),
+                            ),
+                          );
+                        }
 
-                            return Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(10),
-                                onTap: () {
-                                  final categoryId = (item['id'] ?? item['visitor_type_id'] ?? '').toString();
-                                  final categoryName = (item['name'] ?? item['purpose'] ?? 'Visitors').toString();
-                                  final initialCount = int.tryParse((item['count'] ?? item['total'] ?? 0).toString());
-                                  _showUpcomingVisitorsDialog(
-                                    context,
-                                    categoryName: categoryName,
-                                    categoryId: categoryId,
-                                    initialCount: initialCount,
-                                  );
-                                },
-                                child: Container(
-                                  width: 135,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: bgColor,
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: bgColor.withValues(alpha: 0.35),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        label,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
+                        final items = controller.rxUpcomingPurpose;
+                        if (items.isEmpty) {
+                          return Center(
+                            child: Text(
+                              'No live occupancy data available.',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                color: const Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        }
+
+                        final bgColors = [
+                          const Color(
+                            0xFF99D636,
+                          ), // Vibrant Lime Green (exact match from screenshot)
+                          const Color(0xFF38B6FF), // Sky Blue
+                          const Color(0xFFFFA726), // Warm Amber Orange
+                          const Color(0xFFAB47BC), // Purple
+                          const Color(0xFF10B981), // Emerald Green
+                        ];
+
+                        return ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            dragDevices: {
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.mouse,
+                              PointerDeviceKind.stylus,
+                              PointerDeviceKind.trackpad,
+                            },
+                          ),
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            itemCount: items.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 10),
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              final label =
+                                  (item['name'] ?? item['purpose'] ?? 'Purpose')
+                                      .toString();
+                              final count =
+                                  (item['count'] ?? item['total'] ?? 0)
+                                      .toString();
+                              final bgColor = bgColors[index % bgColors.length];
+
+                              return Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () {
+                                    final categoryId =
+                                        (item['id'] ??
+                                                item['visitor_type_id'] ??
+                                                '')
+                                            .toString();
+                                    final categoryName =
+                                        (item['name'] ??
+                                                item['purpose'] ??
+                                                'Visitors')
+                                            .toString();
+                                    final initialCount = int.tryParse(
+                                      (item['count'] ?? item['total'] ?? 0)
+                                          .toString(),
+                                    );
+                                    _showUpcomingVisitorsDialog(
+                                      context,
+                                      categoryName: categoryName,
+                                      categoryId: categoryId,
+                                      initialCount: initialCount,
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 135,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: bgColor,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: bgColor.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        count,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.white,
-                                          height: 1.0,
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          label,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                    ],
+                                        Text(
+                                          count,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                            height: 1.0,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }),
+                              );
+                            },
+                          ),
+                        );
+                      }),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(height: 5),
+          const SizedBox(height: 5),
 
-        // ── 3. Identity Image Card (Keyed for Tour Step 9) ─────────────────
-        Expanded(
-          flex: 7,
-          child: _buildCardContainer(
-            key: _keyIdentityImage,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Identity Image',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F2B48),
+          // ── 3. Identity Image Card (Keyed for Tour Step 9) ─────────────────
+          Expanded(
+            flex: 7,
+            child: _buildCardContainer(
+              key: _keyIdentityImage,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Identity Image',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F2B48),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final rawKtpImg = (visitor?['identity_image'] ??
-                              visitor?['indentity_image'] ??
-                              visitor?['ktp_image'] ??
-                              visitor?['id_card_image'] ??
-                              visitor?['identity_file'] ??
-                              visitor?['document_image'] ??
-                              visitor?['visitor']?['indentity_image'] ??
-                              visitor?['visitor']?['identity_image'] ??
-                              visitor?['raw']?['identity_image'] ??
-                              visitor?['raw']?['indentity_image'] ??
-                              visitor?['raw']?['ktp_image'] ??
-                              visitor?['raw']?['identity_file'] ??
-                              '')
-                          .toString()
-                          .trim();
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final rawKtpImg =
+                            (visitor?['identity_image'] ??
+                                    visitor?['indentity_image'] ??
+                                    visitor?['ktp_image'] ??
+                                    visitor?['id_card_image'] ??
+                                    visitor?['identity_file'] ??
+                                    visitor?['document_image'] ??
+                                    visitor?['visitor']?['indentity_image'] ??
+                                    visitor?['visitor']?['identity_image'] ??
+                                    visitor?['raw']?['identity_image'] ??
+                                    visitor?['raw']?['indentity_image'] ??
+                                    visitor?['raw']?['ktp_image'] ??
+                                    visitor?['raw']?['identity_file'] ??
+                                    '')
+                                .toString()
+                                .trim();
 
-                      // Identity image strictly displays KTP / Identity Document ONLY (no selfie fallback)
-                      String resolvedImg = '';
-                      if (rawKtpImg.isNotEmpty &&
-                          rawKtpImg != '-' &&
-                          rawKtpImg != 'null' &&
-                          !rawKtpImg.startsWith('assets/')) {
-                        resolvedImg = rawKtpImg;
-                      }
+                        // Identity image strictly displays KTP / Identity Document ONLY (no selfie fallback)
+                        String resolvedImg = '';
+                        if (rawKtpImg.isNotEmpty &&
+                            rawKtpImg != '-' &&
+                            rawKtpImg != 'null' &&
+                            !rawKtpImg.startsWith('assets/')) {
+                          resolvedImg = rawKtpImg;
+                        }
 
-                      final hasImg = resolvedImg.isNotEmpty;
+                        final hasImg = resolvedImg.isNotEmpty;
 
-                      if (!hasImg) {
-                        return Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                        if (!hasImg) {
+                          return Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.badge_outlined,
+                                    size: 26,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'No Identity Image',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                      fontWeight: FontWeight.w500,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        final cdnUrl = AppConstants.getCdnImageUrl(resolvedImg);
+                        final visitorName =
+                            (visitor?['visitor_name'] ?? visitor?['name'] ?? '')
+                                .toString()
+                                .trim();
+
+                        return InkWell(
+                          onTap: () => _showIdentityImagePreview(
+                            context,
+                            cdnUrl,
+                            visitorName: visitorName,
                           ),
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Stack(
+                              fit: StackFit.expand,
                               children: [
-                                const Icon(
-                                  Icons.badge_outlined,
-                                  size: 26,
-                                  color: Color(0xFF94A3B8),
+                                Image.network(
+                                  cdnUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.broken_image_rounded,
+                                          size: 26,
+                                          color: Color(0xFF94A3B8),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Failed to load image',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            color: const Color(0xFF94A3B8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'No Identity Image',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF64748B),
+                                Positioned(
+                                  right: 6,
+                                  bottom: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.fullscreen_rounded,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         );
-                      }
-
-                      final cdnUrl = AppConstants.getCdnImageUrl(resolvedImg);
-                      final visitorName = (visitor?['visitor_name'] ?? visitor?['name'] ?? '').toString().trim();
-
-                      return InkWell(
-                        onTap: () => _showIdentityImagePreview(
-                          context,
-                          cdnUrl,
-                          visitorName: visitorName,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              Image.network(
-                                cdnUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.broken_image_rounded,
-                                        size: 26,
-                                        color: Color(0xFF94A3B8),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Failed to load image',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          color: const Color(0xFF94A3B8),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                right: 6,
-                                bottom: 6,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.5),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.fullscreen_rounded,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
 
-        const SizedBox(height: 5),
+          const SizedBox(height: 5),
 
-        // ── 4. Alerts Card (Keyed for Tour Step 10) ────────────────────────
-        Expanded(
-          flex: 6,
-          child: _buildCardContainer(
-            key: _keyAlerts,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Alerts',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F2B48),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
+          // ── 4. Alerts Card (Keyed for Tour Step 10) ────────────────────────
+          Expanded(
+            flex: 6,
+            child: _buildCardContainer(
+              key: _keyAlerts,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Alerts',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F2B48),
                     ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            size: 32,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'No alerts available',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF1E293B),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              size: 32,
+                              color: Color(0xFF94A3B8),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              'No alerts available',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  });
+        ],
+      );
+    });
   }
 
   void _showIdentityImagePreview(
@@ -3993,7 +4330,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.badge_rounded, color: Color(0xFF004385), size: 22),
+                    const Icon(
+                      Icons.badge_rounded,
+                      color: Color(0xFF004385),
+                      size: 22,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -4010,10 +4351,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: Color(0xFF64748B),
+                      ),
                       onPressed: () => Navigator.of(dialogCtx).pop(),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   ],
                 ),
@@ -4072,7 +4420,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
                 child: Row(
                   children: [
-                    const Icon(Icons.account_circle_rounded, color: Color(0xFF004385), size: 22),
+                    const Icon(
+                      Icons.account_circle_rounded,
+                      color: Color(0xFF004385),
+                      size: 22,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -4089,10 +4441,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: Color(0xFF64748B),
+                      ),
                       onPressed: () => Navigator.of(dialogCtx).pop(),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   ],
                 ),
@@ -4106,7 +4465,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     constraints: const BoxConstraints(maxHeight: 480),
                     child: isAsset
                         ? Image.asset(
-                            imageUrl.isNotEmpty ? imageUrl : 'assets/images/ai_image.jpeg',
+                            imageUrl.isNotEmpty
+                                ? imageUrl
+                                : 'assets/images/ai_image.jpeg',
                             fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => const SizedBox(
                               height: 200,
@@ -4169,7 +4530,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-
   // ─────────────────────────────────────────────────────────────────────────
   // Card Container Utility with Soft Shadow & Border
   // ─────────────────────────────────────────────────────────────────────────
@@ -4203,41 +4563,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildFooter() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Copyright © 2026 ',
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: _textMuted,
-            ),
-          ),
-          Image.asset(
-            'assets/images/logoOnlyBio.png',
-            height: 14,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Text(
-              'Bio Experience',
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: _textDark,
-              ),
-            ),
-          ),
-          Text(
-            ' . All Rights Reserved.',
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: _textMuted,
-            ),
-          ),
-        ],
+      width: double.infinity,
+      height: 20,
+      color: const Color(0xFF055499),
+      alignment: Alignment.center,
+      child: Text(
+        '© ${DateTime.now().year} Bank Indonesia',
+        style: GoogleFonts.inter(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }
@@ -4247,50 +4584,96 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // ─────────────────────────────────────────────────────────────────────────
   void _handleAction(String actionName) {
     final visitor = controller.rxSelectedVisitor.value;
-    final rawStatus = (visitor?['visitor_status'] ?? visitor?['status'] ?? '').toString().toLowerCase();
-    final isBlocked = visitor?['is_block'] == true ||
+    final rawStatus = (visitor?['visitor_status'] ?? visitor?['status'] ?? '')
+        .toString()
+        .toLowerCase();
+    final isBlocked =
+        visitor?['is_block'] == true ||
         rawStatus == 'block' ||
         rawStatus == 'blacklist';
 
     // --- Permission Enforcement Guards ---
     if (actionName == 'Check In' && !controller.canCheckIn) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Check In visitors.');
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to Check In visitors.',
+      );
       return;
     }
     if (actionName == 'Check Out' && !controller.canCheckOut) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Check Out visitors.');
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to Check Out visitors.',
+      );
       return;
     }
-    if ((actionName == 'Walk In' || actionName == 'Walk-In') && !controller.canWalkIn) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to create Walk-In visitors.');
+    if ((actionName == 'Walk In' || actionName == 'Walk-In') &&
+        !controller.canWalkIn) {
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to create Walk-In visitors.',
+      );
       return;
     }
-    if ((actionName == 'Pra Register' || actionName == 'Pra-Register' || actionName == 'Pre Register' || actionName == 'New Invitation') && !controller.canPraRegister) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to create Pra-Registrations.');
+    if ((actionName == 'Pra Register' ||
+            actionName == 'Pra-Register' ||
+            actionName == 'Pre Register' ||
+            actionName == 'New Invitation') &&
+        !controller.canPraRegister) {
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to create Pra-Registrations.',
+      );
       return;
     }
-    if ((actionName == 'Extend' || actionName == 'Extend Visit') && !controller.canExtend) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to extend visits.');
+    if ((actionName == 'Extend' || actionName == 'Extend Visit') &&
+        !controller.canExtend) {
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to extend visits.',
+      );
       return;
     }
     if (actionName == 'Arrival' && !controller.canArrival) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to send Arrival notifications.');
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to send Arrival notifications.',
+      );
       return;
     }
-    if ((actionName == 'Open' || actionName == 'Open Door') && !controller.canTriggerOpen) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to trigger Open Door.');
+    if ((actionName == 'Open' || actionName == 'Open Door') &&
+        !controller.canTriggerOpen) {
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to trigger Open Door.',
+      );
       return;
     }
     if (actionName == 'Parking' && !controller.canParking) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission for Parking issuance.');
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission for Parking issuance.',
+      );
       return;
     }
-    if ((actionName == 'Card Issue' || actionName == 'Card Issuance' || actionName == 'Choose Card' || actionName == 'Card Return' || actionName == 'Return Card') && !controller.canCardIssue) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission for Card operations.');
+    if ((actionName == 'Card Issue' ||
+            actionName == 'Card Issuance' ||
+            actionName == 'Choose Card' ||
+            actionName == 'Card Return' ||
+            actionName == 'Return Card') &&
+        !controller.canCardIssue) {
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission for Card operations.',
+      );
       return;
     }
-    if ((actionName == 'Block' || actionName == 'Blacklist') && !controller.canBlock) {
-      AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to Block/Blacklist visitors.');
+    if ((actionName == 'Block' || actionName == 'Blacklist') &&
+        !controller.canBlock) {
+      AppSnackbar.warning(
+        title: 'Permission Denied',
+        message: 'You do not have permission to Block/Blacklist visitors.',
+      );
       return;
     }
 
@@ -4315,17 +4698,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
     if (actionName == 'Check In') {
       if (visitor == null) {
-        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first.',
+        );
         return;
       }
-      final isPraregisterDone = visitor['is_praregister_done'] == true ||
+      final isPraregisterDone =
+          visitor['is_praregister_done'] == true ||
           visitor['raw']?['is_praregister_done'] == true ||
           visitor['is_complete_preregister'] == true ||
           visitor['raw']?['is_complete_preregister'] == true ||
           rawStatus.contains('waiting') ||
           rawStatus.contains('available') ||
           rawStatus.contains('done');
-      final bool isHost = visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
+      final bool isHost =
+          visitor['is_host'] == true || visitor['raw']?['is_host'] == true;
 
       // Rule 1: Blocked visitor
       if (isBlocked) {
@@ -4338,11 +4726,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       }
 
       // Rule 2: Preregis / Form incomplete (only if not yet completed)
-      if (!isHost && !isPraregisterDone && (rawStatus.contains('preregis') || rawStatus.contains('praregis'))) {
+      if (!isHost &&
+          !isPraregisterDone &&
+          (rawStatus.contains('preregis') || rawStatus.contains('praregis'))) {
         _showWarningNoticeDialog(
           context,
           title: 'Registration Form Required',
-          message: 'Please complete the visitor registration form first. The visitor will be automatically checked in upon form completion.',
+          message:
+              'Please complete the visitor registration form first. The visitor will be automatically checked in upon form completion.',
         );
         return;
       }
@@ -4352,17 +4743,25 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         _showWarningNoticeDialog(
           context,
           title: 'Already Checked In',
-          message: 'Visitor ${visitor['name'] ?? ''} has already completed check in.',
+          message:
+              'Visitor ${visitor['name'] ?? ''} has already completed check in.',
         );
         return;
       }
 
-      _showConfirmationActionDialog(context, action: 'Checkin', question: 'Do you want to check in?');
+      _showConfirmationActionDialog(
+        context,
+        action: 'Checkin',
+        question: 'Do you want to check in?',
+      );
       return;
     }
     if (actionName == 'Check Out') {
       if (visitor == null) {
-        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first.',
+        );
         return;
       }
       if (isBlocked) {
@@ -4377,7 +4776,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         _showWarningNoticeDialog(
           context,
           title: 'Action Denied',
-          message: 'Visitor is currently awaiting host confirmation and has not checked in yet. Please wait for approval and check in first.',
+          message:
+              'Visitor is currently awaiting host confirmation and has not checked in yet. Please wait for approval and check in first.',
         );
         return;
       }
@@ -4385,7 +4785,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         _showWarningNoticeDialog(
           context,
           title: 'Check In Required',
-          message: 'Visitor has not checked in yet. Please check in the visitor first before checking out.',
+          message:
+              'Visitor has not checked in yet. Please check in the visitor first before checking out.',
         );
         return;
       }
@@ -4393,7 +4794,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         _showWarningNoticeDialog(
           context,
           title: 'Check In Required',
-          message: 'Visitor has not completed registration or checked in. Please complete registration and check in first.',
+          message:
+              'Visitor has not completed registration or checked in. Please complete registration and check in first.',
         );
         return;
       }
@@ -4413,15 +4815,24 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         );
         return;
       }
-      _showConfirmationActionDialog(context, action: 'Checkout', question: 'Do you want to check out?');
+      _showConfirmationActionDialog(
+        context,
+        action: 'Checkout',
+        question: 'Do you want to check out?',
+      );
       return;
     }
     if (actionName == 'Blacklist') {
       if (visitor == null) {
-        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first.',
+        );
         return;
       }
-      final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '').toString().toLowerCase();
+      final rawStatus = (visitor['visitor_status'] ?? visitor['status'] ?? '')
+          .toString()
+          .toLowerCase();
       if (visitor['is_blacklist'] == true || rawStatus == 'blacklist') {
         _showWarningNoticeDialog(
           context,
@@ -4435,7 +4846,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
     if (actionName == 'Block') {
       if (visitor == null) {
-        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first.',
+        );
         return;
       }
       if (isBlocked) {
@@ -4451,13 +4865,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
     if (actionName == 'Card Return' || actionName == 'Return Card') {
       if (visitor == null) {
-        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first.',
+        );
         return;
       }
       _showReturnCardDialog(context, visitor);
       return;
     }
-    if (actionName == 'Card Issuance' || actionName == 'Choose Card' || actionName == 'Card Issue') {
+    if (actionName == 'Card Issuance' ||
+        actionName == 'Choose Card' ||
+        actionName == 'Card Issue') {
       if (visitor == null) {
         _showChangeCardDialog(context);
         return;
@@ -4467,13 +4886,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
     if (actionName == 'Whitelist' || actionName == 'Unblock') {
       if (visitor == null) {
-        AppSnackbar.warning(title: 'Warning', message: 'Please select a visitor first.');
+        AppSnackbar.warning(
+          title: 'Warning',
+          message: 'Please select a visitor first.',
+        );
         return;
       }
-      _showConfirmationActionDialog(context, action: 'Unblock', question: 'Do you want to unblock this visitor?');
+      _showConfirmationActionDialog(
+        context,
+        action: 'Unblock',
+        question: 'Do you want to unblock this visitor?',
+      );
       return;
     }
-    if (actionName == 'Access Issuance' || actionName == 'Access Alocation' || actionName == 'Access Allocation') {
+    if (actionName == 'Access Issuance' ||
+        actionName == 'Access Alocation' ||
+        actionName == 'Access Allocation') {
       if (visitor == null) {
         _showScanQrDialog(
           onVisitorLoaded: (loadedVisitor) {
@@ -4553,7 +4981,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   children: [
                     // Modal Header
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -4588,7 +5019,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                     // Content Body (Two Card Containers with Arrow in center)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
+                      ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -4599,7 +5033,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.02),
@@ -4624,7 +5060,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       ),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.contactless_outlined,
@@ -4650,7 +5087,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   // Input Field
                                   Container(
                                     height: 42,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(6),
@@ -4669,7 +5108,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           fontWeight: FontWeight.w600,
                                           color: const Color(0xFF1E293B),
                                         ),
-                                        textAlignVertical: TextAlignVertical.center,
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
                                         onChanged: (_) => setDialogState(() {}),
                                         decoration: InputDecoration(
                                           isDense: true,
@@ -4687,10 +5127,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                 ? const Color(0xFF10B981)
                                                 : const Color(0xFFCBD5E1),
                                           ),
-                                          suffixIconConstraints: const BoxConstraints(
-                                            minWidth: 24,
-                                            minHeight: 24,
-                                          ),
+                                          suffixIconConstraints:
+                                              const BoxConstraints(
+                                                minWidth: 24,
+                                                minHeight: 24,
+                                              ),
                                         ),
                                       ),
                                     ),
@@ -4724,7 +5165,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.02),
@@ -4749,7 +5192,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       ),
                                     ),
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.contactless_outlined,
@@ -4775,7 +5219,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   // Input Field
                                   Container(
                                     height: 42,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(6),
@@ -4794,7 +5240,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           fontWeight: FontWeight.w600,
                                           color: const Color(0xFF1E293B),
                                         ),
-                                        textAlignVertical: TextAlignVertical.center,
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
                                         onChanged: (_) => setDialogState(() {}),
                                         decoration: InputDecoration(
                                           isDense: true,
@@ -4812,10 +5259,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                 ? const Color(0xFF10B981)
                                                 : const Color(0xFFCBD5E1),
                                           ),
-                                          suffixIconConstraints: const BoxConstraints(
-                                            minWidth: 24,
-                                            minHeight: 24,
-                                          ),
+                                          suffixIconConstraints:
+                                              const BoxConstraints(
+                                                minWidth: 24,
+                                                minHeight: 24,
+                                              ),
                                         ),
                                       ),
                                     ),
@@ -4830,7 +5278,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                     // Bottom Action Buttons (Swipe & Give)
                     Padding(
-                      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 20),
+                      padding: const EdgeInsets.only(
+                        left: 24,
+                        right: 24,
+                        bottom: 20,
+                      ),
                       child: Row(
                         children: [
                           // Swipe Button
@@ -4852,11 +5304,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 ),
                                 onPressed: isReady
                                     ? () {
-                                        final oldCard = oldCardController.text.trim();
-                                        final newCard = newCardController.text.trim();
+                                        final oldCard = oldCardController.text
+                                            .trim();
+                                        final newCard = newCardController.text
+                                            .trim();
                                         AppSnackbar.info(
                                           title: 'Card Reader (Swipe)',
-                                          message: 'Ready for API reader integration (Old: $oldCard, New: $newCard)',
+                                          message:
+                                              'Ready for API reader integration (Old: $oldCard, New: $newCard)',
                                         );
                                       }
                                     : null,
@@ -4894,11 +5349,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 ),
                                 onPressed: isReady
                                     ? () {
-                                        final oldCard = oldCardController.text.trim();
-                                        final newCard = newCardController.text.trim();
+                                        final oldCard = oldCardController.text
+                                            .trim();
+                                        final newCard = newCardController.text
+                                            .trim();
                                         AppSnackbar.info(
                                           title: 'Card Reader (Give)',
-                                          message: 'Ready for API reader integration (Old: $oldCard, New: $newCard)',
+                                          message:
+                                              'Ready for API reader integration (Old: $oldCard, New: $newCard)',
                                         );
                                       }
                                     : null,
@@ -4931,24 +5389,31 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   void _showChooseCardDialog(BuildContext context) {
     controller.fetchAvailableCards();
     final visitor = controller.rxSelectedVisitor.value;
-    final visitorName = (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor').toString();
+    final visitorName =
+        (visitor?['name'] ?? visitor?['visitor_name'] ?? 'Visitor').toString();
 
     // Determine if multiple visitors are selected
-    final isMultiple = controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty;
+    final isMultiple =
+        controller.rxSelectMultiple.value &&
+        controller.rxSelectedItems.isNotEmpty;
     final selectedSet = controller.rxSelectedItems.toSet();
     final targetVisitors = isMultiple
         ? controller.rxRelatedVisitors.where((r) {
-            final keys = [
-              r['id'],
-              r['trx_id'],
-              r['transaction_visitor_id'],
-              r['visitor_id'],
-              r['invitation_code'],
-              r['visitor_code'],
-              r['visitor_number'],
-              r['name'],
-              r['visitor_name'],
-            ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+            final keys =
+                [
+                      r['id'],
+                      r['trx_id'],
+                      r['transaction_visitor_id'],
+                      r['visitor_id'],
+                      r['invitation_code'],
+                      r['visitor_code'],
+                      r['visitor_number'],
+                      r['name'],
+                      r['visitor_name'],
+                    ]
+                    .where((k) => k != null && k.toString().trim().isNotEmpty)
+                    .map((k) => k.toString().trim())
+                    .toList();
             return keys.any((k) => selectedSet.contains(k));
           }).toList()
         : (visitor != null ? [visitor] : <Map<String, dynamic>>[]);
@@ -4966,10 +5431,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       if (vCards.isNotEmpty) {
         activePhysicalCard = vCards.firstWhereOrNull((c) {
           final isCurrentUsed = (c['current_used'] == true);
-          final cardType = (c['card_type'] ?? c['type'] ?? '').toString().toLowerCase();
-          final isBarcode = cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
+          final cardType = (c['card_type'] ?? c['type'] ?? '')
+              .toString()
+              .toLowerCase();
+          final isBarcode =
+              cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
           final status = (c['card_status'] ?? '').toString().toLowerCase();
-          final isReturned = status == 'returned' || status == 'inactive' || status == 'revoked';
+          final isReturned =
+              status == 'returned' ||
+              status == 'inactive' ||
+              status == 'revoked';
           return isCurrentUsed && !isBarcode && !isReturned;
         });
       }
@@ -4982,15 +5453,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
     // Fallback if targetVisitorCurrentCards is empty and visitor is selected
     if (targetVisitorCurrentCards.isEmpty && visitor != null) {
-      final visitorCards = (visitor['cards'] as List?) ?? (visitor['card'] as List?) ?? [];
+      final visitorCards =
+          (visitor['cards'] as List?) ?? (visitor['card'] as List?) ?? [];
       Map<String, dynamic>? activePhysicalCard;
       if (visitorCards.isNotEmpty) {
         activePhysicalCard = visitorCards.firstWhereOrNull((c) {
           final isCurrentUsed = (c['current_used'] == true);
-          final cardType = (c['card_type'] ?? c['type'] ?? '').toString().toLowerCase();
-          final isBarcode = cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
+          final cardType = (c['card_type'] ?? c['type'] ?? '')
+              .toString()
+              .toLowerCase();
+          final isBarcode =
+              cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
           final status = (c['card_status'] ?? '').toString().toLowerCase();
-          final isReturned = status == 'returned' || status == 'inactive' || status == 'revoked';
+          final isReturned =
+              status == 'returned' ||
+              status == 'inactive' ||
+              status == 'revoked';
           return isCurrentUsed && !isBarcode && !isReturned;
         });
       }
@@ -5016,7 +5494,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             return Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 20,
+              ),
               child: Container(
                 width: 960,
                 height: MediaQuery.of(context).size.height * 0.88,
@@ -5036,7 +5517,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   children: [
                     // Header (Title + Close Button)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -5053,7 +5537,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             children: [
                               IconButton(
                                 padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                constraints: const BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ),
                                 tooltip: 'Refresh cards',
                                 icon: const Icon(
                                   Icons.refresh_rounded,
@@ -5064,20 +5551,25 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   await controller.fetchAvailableCards();
                                   AppSnackbar.success(
                                     title: 'Cards Refreshed',
-                                    message: 'Available card list is up to date.',
+                                    message:
+                                        'Available card list is up to date.',
                                   );
                                 },
                               ),
                               const SizedBox(width: 8),
                               IconButton(
                                 padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                                constraints: const BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ),
                                 icon: const Icon(
                                   Icons.close_rounded,
                                   size: 20,
                                   color: Color(0xFF64748B),
                                 ),
-                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(),
                               ),
                             ],
                           ),
@@ -5085,11 +5577,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
 
-                    const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFF1F5F9),
+                    ),
 
                     // Search and Select All row
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -5099,7 +5598,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
                             ),
                             child: Center(
                               child: TextField(
@@ -5120,7 +5621,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 },
                                 decoration: InputDecoration(
                                   isDense: true,
-                                  hintText: 'Search card number (e.g. 133, 3232)...',
+                                  hintText:
+                                      'Search card number (e.g. 133, 3232)...',
                                   hintStyle: GoogleFonts.inter(
                                     fontSize: 12.5,
                                     color: const Color(0xFF94A3B8),
@@ -5142,7 +5644,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             color: Color(0xFF94A3B8),
                                           ),
                                           padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(minWidth: 32, minHeight: 38),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 38,
+                                          ),
                                           onPressed: () {
                                             setDialogState(() {
                                               searchController.clear();
@@ -5173,52 +5678,94 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   final allCards = controller.rxAvailableCards;
                                   final filteredCards = allCards.where((c) {
                                     if (searchQuery.isEmpty) return true;
-                                    final numStr = (c['card_number'] ?? '').toString().replaceAll(' ', '');
-                                    final barcodeStr = (c['card_barcode'] ?? '').toString().replaceAll(' ', '');
-                                    final macStr = (c['card_mac'] ?? '').toString().replaceAll(' ', '');
-                                    final remarksStr = (c['remarks'] ?? '').toString().replaceAll(' ', '');
+                                    final numStr = (c['card_number'] ?? '')
+                                        .toString()
+                                        .replaceAll(' ', '');
+                                    final barcodeStr = (c['card_barcode'] ?? '')
+                                        .toString()
+                                        .replaceAll(' ', '');
+                                    final macStr = (c['card_mac'] ?? '')
+                                        .toString()
+                                        .replaceAll(' ', '');
+                                    final remarksStr = (c['remarks'] ?? '')
+                                        .toString()
+                                        .replaceAll(' ', '');
                                     return numStr.contains(searchQuery) ||
                                         barcodeStr.contains(searchQuery) ||
                                         macStr.contains(searchQuery) ||
                                         remarksStr.contains(searchQuery);
                                   }).toList();
 
-                                  final unusedCards = filteredCards.where((c) => c['is_used'] != true).toList();
+                                  final unusedCards = filteredCards
+                                      .where((c) => c['is_used'] != true)
+                                      .toList();
                                   selectedCardIds.clear();
                                   if (unusedCards.isNotEmpty) {
                                     final random = Random();
-                                    final shuffled = List<Map<String, dynamic>>.from(unusedCards)..shuffle(random);
-                                    final pickCount = shuffled.length < maxAllowedCards ? shuffled.length : maxAllowedCards;
-                                    final pickedList = shuffled.take(pickCount).toList();
+                                    final shuffled =
+                                        List<Map<String, dynamic>>.from(
+                                          unusedCards,
+                                        )..shuffle(random);
+                                    final pickCount =
+                                        shuffled.length < maxAllowedCards
+                                        ? shuffled.length
+                                        : maxAllowedCards;
+                                    final pickedList = shuffled
+                                        .take(pickCount)
+                                        .toList();
 
                                     for (final c in pickedList) {
-                                      final cId = (c['id'] ?? c['card_number'] ?? '').toString();
-                                      if (cId.isNotEmpty) selectedCardIds.add(cId);
+                                      final cId =
+                                          (c['id'] ?? c['card_number'] ?? '')
+                                              .toString();
+                                      if (cId.isNotEmpty)
+                                        selectedCardIds.add(cId);
                                     }
 
                                     // Smoothly drag / scroll down sequentially to each chosen card
-                                    WidgetsBinding.instance.addPostFrameCallback((_) async {
-                                      final baseOffset = targetVisitorCurrentCards.isNotEmpty ? 260.0 : 0.0;
+                                    WidgetsBinding.instance.addPostFrameCallback((
+                                      _,
+                                    ) async {
+                                      final baseOffset =
+                                          targetVisitorCurrentCards.isNotEmpty
+                                          ? 260.0
+                                          : 0.0;
                                       const rowHeight = 220.0;
 
-                                      for (int i = 0; i < pickedList.length; i++) {
-                                        if (!cardScrollController.hasClients) break;
+                                      for (
+                                        int i = 0;
+                                        i < pickedList.length;
+                                        i++
+                                      ) {
+                                        if (!cardScrollController.hasClients)
+                                          break;
                                         final card = pickedList[i];
-                                        final pickedIndex = filteredCards.indexOf(card);
+                                        final pickedIndex = filteredCards
+                                            .indexOf(card);
                                         if (pickedIndex != -1) {
                                           final rowIndex = pickedIndex ~/ 4;
-                                          final targetOffset = (baseOffset + (rowIndex * rowHeight) - 20.0).clamp(
-                                            0.0,
-                                            cardScrollController.position.maxScrollExtent,
-                                          );
+                                          final targetOffset =
+                                              (baseOffset +
+                                                      (rowIndex * rowHeight) -
+                                                      20.0)
+                                                  .clamp(
+                                                    0.0,
+                                                    cardScrollController
+                                                        .position
+                                                        .maxScrollExtent,
+                                                  );
                                           await cardScrollController.animateTo(
                                             targetOffset,
-                                            duration: const Duration(milliseconds: 600),
+                                            duration: const Duration(
+                                              milliseconds: 600,
+                                            ),
                                             curve: Curves.easeInOutCubic,
                                           );
                                           // If multiple cards, pause briefly so operator sees each highlighted card
                                           if (i < pickedList.length - 1) {
-                                            await Future.delayed(const Duration(milliseconds: 650));
+                                            await Future.delayed(
+                                              const Duration(milliseconds: 650),
+                                            );
                                           }
                                         }
                                       }
@@ -5227,16 +5774,21 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     isSelectAll = false;
                                     AppSnackbar.info(
                                       title: 'Notice',
-                                      message: 'No available unused cards to choose.',
+                                      message:
+                                          'No available unused cards to choose.',
                                     );
                                   }
                                 } else {
                                   selectedCardIds.clear();
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
                                     if (cardScrollController.hasClients) {
                                       cardScrollController.animateTo(
                                         0.0,
-                                        duration: const Duration(milliseconds: 350),
+                                        duration: const Duration(
+                                          milliseconds: 350,
+                                        ),
                                         curve: Curves.easeOutCubic,
                                       );
                                     }
@@ -5254,7 +5806,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     width: 17,
                                     height: 17,
                                     decoration: BoxDecoration(
-                                      color: isSelectAll ? const Color(0xFF003082) : Colors.white,
+                                      color: isSelectAll
+                                          ? const Color(0xFF003082)
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(4),
                                       border: Border.all(
                                         color: isSelectAll
@@ -5293,7 +5847,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     // Content Scroll Area
                     Expanded(
                       child: Obx(() {
-                        if (controller.rxIsAvailableCardsLoading.value && controller.rxAvailableCards.isEmpty) {
+                        if (controller.rxIsAvailableCardsLoading.value &&
+                            controller.rxAvailableCards.isEmpty) {
                           return const Center(
                             child: CircularProgressIndicator(
                               color: Color(0xFF003082),
@@ -5304,10 +5859,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         final allCards = controller.rxAvailableCards;
                         final filteredCards = allCards.where((c) {
                           if (searchQuery.isEmpty) return true;
-                          final numStr = (c['card_number'] ?? '').toString().replaceAll(' ', '');
-                          final barcodeStr = (c['card_barcode'] ?? '').toString().replaceAll(' ', '');
-                          final macStr = (c['card_mac'] ?? '').toString().replaceAll(' ', '');
-                          final remarksStr = (c['remarks'] ?? '').toString().replaceAll(' ', '');
+                          final numStr = (c['card_number'] ?? '')
+                              .toString()
+                              .replaceAll(' ', '');
+                          final barcodeStr = (c['card_barcode'] ?? '')
+                              .toString()
+                              .replaceAll(' ', '');
+                          final macStr = (c['card_mac'] ?? '')
+                              .toString()
+                              .replaceAll(' ', '');
+                          final remarksStr = (c['remarks'] ?? '')
+                              .toString()
+                              .replaceAll(' ', '');
                           return numStr.contains(searchQuery) ||
                               barcodeStr.contains(searchQuery) ||
                               macStr.contains(searchQuery) ||
@@ -5328,7 +5891,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -5337,13 +5903,19 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   Wrap(
                                     spacing: 16,
                                     runSpacing: 16,
-                                    children: targetVisitorCurrentCards.map((item) {
-                                      final vName = item['visitorName'] as String;
-                                      final c = item['card'] as Map<String, dynamic>?;
+                                    children: targetVisitorCurrentCards.map((
+                                      item,
+                                    ) {
+                                      final vName =
+                                          item['visitorName'] as String;
+                                      final c =
+                                          item['card'] as Map<String, dynamic>?;
 
                                       if (c == null) {
                                         return Padding(
-                                          padding: const EdgeInsets.only(bottom: 6),
+                                          padding: const EdgeInsets.only(
+                                            bottom: 6,
+                                          ),
                                           child: Text(
                                             'Current Card – $vName',
                                             style: GoogleFonts.inter(
@@ -5355,11 +5927,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         );
                                       }
 
-                                      final cId = (c['id'] ?? c['card_number']).toString();
-                                      final isSelected = selectedCardIds.contains(cId);
+                                      final cId = (c['id'] ?? c['card_number'])
+                                          .toString();
+                                      final isSelected = selectedCardIds
+                                          .contains(cId);
 
                                       return Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
@@ -5377,7 +5952,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             isSelected: isSelected,
                                             onTap: () {
                                               setDialogState(() {
-                                                if (selectedCardIds.contains(cId)) {
+                                                if (selectedCardIds.contains(
+                                                  cId,
+                                                )) {
                                                   selectedCardIds.remove(cId);
                                                   isSelectAll = false;
                                                 } else {
@@ -5385,16 +5962,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                     selectedCardIds.clear();
                                                     selectedCardIds.add(cId);
                                                   } else {
-                                                    if (selectedCardIds.length < maxAllowedCards) {
+                                                    if (selectedCardIds.length <
+                                                        maxAllowedCards) {
                                                       selectedCardIds.add(cId);
                                                     } else {
                                                       AppSnackbar.warning(
                                                         title: 'Limit Reached',
-                                                        message: 'Maximum $maxAllowedCards cards allowed for the selected visitors.',
+                                                        message:
+                                                            'Maximum $maxAllowedCards cards allowed for the selected visitors.',
                                                       );
                                                     }
                                                   }
-                                                  isSelectAll = selectedCardIds.length >= maxAllowedCards;
+                                                  isSelectAll =
+                                                      selectedCardIds.length >=
+                                                      maxAllowedCards;
                                                 }
                                               });
                                             },
@@ -5404,7 +5985,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     }).toList(),
                                   ),
                                   const SizedBox(height: 16),
-                                  const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                                  const Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: Color(0xFFF1F5F9),
+                                  ),
                                   const SizedBox(height: 16),
                                 ],
 
@@ -5412,7 +5997,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 if (filteredCards.isEmpty)
                                   Center(
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 40),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 40,
+                                      ),
                                       child: Text(
                                         searchQuery.isNotEmpty
                                             ? 'No card found matching "$searchQuery"'
@@ -5429,43 +6016,61 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     builder: (context, constraints) {
                                       return GridView.builder(
                                         shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
                                         itemCount: filteredCards.length,
-                                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 4,
-                                          crossAxisSpacing: 14,
-                                          mainAxisSpacing: 14,
-                                          childAspectRatio: 0.95,
-                                        ),
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 4,
+                                              crossAxisSpacing: 14,
+                                              mainAxisSpacing: 14,
+                                              childAspectRatio: 0.95,
+                                            ),
                                         itemBuilder: (context, index) {
                                           final card = filteredCards[index];
-                                          final cardId = (card['id'] ?? card['card_number'] ?? 'card_$index').toString();
-                                          final isSelected = selectedCardIds.contains(cardId);
+                                          final cardId =
+                                              (card['id'] ??
+                                                      card['card_number'] ??
+                                                      'card_$index')
+                                                  .toString();
+                                          final isSelected = selectedCardIds
+                                              .contains(cardId);
 
                                           return _buildAvailableCardItem(
                                             card: card,
                                             isSelected: isSelected,
                                             onTap: () {
-                                              if (card['is_used'] == true) return;
+                                              if (card['is_used'] == true)
+                                                return;
                                               setDialogState(() {
-                                                if (selectedCardIds.contains(cardId)) {
-                                                  selectedCardIds.remove(cardId);
+                                                if (selectedCardIds.contains(
+                                                  cardId,
+                                                )) {
+                                                  selectedCardIds.remove(
+                                                    cardId,
+                                                  );
                                                   isSelectAll = false;
                                                 } else {
                                                   if (maxAllowedCards == 1) {
                                                     selectedCardIds.clear();
                                                     selectedCardIds.add(cardId);
                                                   } else {
-                                                    if (selectedCardIds.length < maxAllowedCards) {
-                                                      selectedCardIds.add(cardId);
+                                                    if (selectedCardIds.length <
+                                                        maxAllowedCards) {
+                                                      selectedCardIds.add(
+                                                        cardId,
+                                                      );
                                                     } else {
                                                       AppSnackbar.warning(
                                                         title: 'Limit Reached',
-                                                        message: 'Maximum $maxAllowedCards cards allowed for the selected visitors.',
+                                                        message:
+                                                            'Maximum $maxAllowedCards cards allowed for the selected visitors.',
                                                       );
                                                     }
                                                   }
-                                                  isSelectAll = selectedCardIds.length >= maxAllowedCards;
+                                                  isSelectAll =
+                                                      selectedCardIds.length >=
+                                                      maxAllowedCards;
                                                 }
                                               });
                                             },
@@ -5486,7 +6091,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       final totalCards = controller.rxAvailableCards.length;
                       final chosenCount = selectedCardIds.length;
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
                         child: Text(
                           'Cards chosen: $chosenCount / $totalCards  Maximum cards allowed: $maxAllowedCards',
                           style: GoogleFonts.inter(
@@ -5500,7 +6108,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                     // Bottom Buttons Bar (Swipe & Give)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           // Swipe Button (Yellow/Amber)
@@ -5517,7 +6128,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                 ),
                                 onPressed: () async {
-                                  if (selectedCardIds.isEmpty || selectedCardIds.length < maxAllowedCards) {
+                                  if (selectedCardIds.isEmpty ||
+                                      selectedCardIds.length <
+                                          maxAllowedCards) {
                                     AppSnackbar.warning(
                                       title: 'Card Required',
                                       message: maxAllowedCards > 1
@@ -5528,9 +6141,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   }
 
                                   final allCards = controller.rxAvailableCards;
-                                  final pickedCardsList = allCards.where(
-                                    (c) => selectedCardIds.contains((c['id'] ?? c['card_number']).toString()),
-                                  ).toList();
+                                  final pickedCardsList = allCards
+                                      .where(
+                                        (c) => selectedCardIds.contains(
+                                          (c['id'] ?? c['card_number'])
+                                              .toString(),
+                                        ),
+                                      )
+                                      .toList();
 
                                   await _showSwipeCardModal(
                                     context: context,
@@ -5576,7 +6194,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                 ),
                                 onPressed: () async {
-                                  if (selectedCardIds.isEmpty || selectedCardIds.length < maxAllowedCards) {
+                                  if (selectedCardIds.isEmpty ||
+                                      selectedCardIds.length <
+                                          maxAllowedCards) {
                                     AppSnackbar.warning(
                                       title: 'Card Required',
                                       message: maxAllowedCards > 1
@@ -5587,42 +6207,70 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   }
 
                                   final allCards = controller.rxAvailableCards;
-                                  final pickedCardsList = allCards.where(
-                                    (c) => selectedCardIds.contains((c['id'] ?? c['card_number']).toString()),
-                                  ).toList();
+                                  final pickedCardsList = allCards
+                                      .where(
+                                        (c) => selectedCardIds.contains(
+                                          (c['id'] ?? c['card_number'])
+                                              .toString(),
+                                        ),
+                                      )
+                                      .toList();
 
                                   if (maxAllowedCards > 1) {
                                     final items = <Map<String, dynamic>>[];
-                                    for (int i = 0; i < targetVisitors.length; i++) {
+                                    for (
+                                      int i = 0;
+                                      i < targetVisitors.length;
+                                      i++
+                                    ) {
                                       final v = targetVisitors[i];
-                                      final c = (i < pickedCardsList.length) ? pickedCardsList[i] : pickedCardsList.first;
-                                      final cardNum = (c['card_number'] ?? c['card_barcode'] ?? c['card_mac'] ?? '').toString().trim();
+                                      final c = (i < pickedCardsList.length)
+                                          ? pickedCardsList[i]
+                                          : pickedCardsList.first;
+                                      final cardNum =
+                                          (c['card_number'] ??
+                                                  c['card_barcode'] ??
+                                                  c['card_mac'] ??
+                                                  '')
+                                              .toString()
+                                              .trim();
                                       items.add({
                                         'visitor': v,
                                         'card_number': cardNum,
-                                        'trx_visitor_id': (v['id'] ?? v['transaction_visitor_id'] ?? '').toString().trim(),
+                                        'trx_visitor_id':
+                                            (v['id'] ??
+                                                    v['transaction_visitor_id'] ??
+                                                    '')
+                                                .toString()
+                                                .trim(),
                                       });
                                     }
-                                    final success = await controller.grantAccessCardMultiple(
-                                      items: items,
-                                      isSwapCard: false,
-                                    );
+                                    final success = await controller
+                                        .grantAccessCardMultiple(
+                                          items: items,
+                                          isSwapCard: false,
+                                        );
                                     if (success && dialogContext.mounted) {
                                       Navigator.of(dialogContext).pop();
                                     }
                                   } else {
-                                    final pickedCard = pickedCardsList.isNotEmpty ? pickedCardsList.first : null;
-                                    final cardNum = (pickedCard?['card_number'] ??
-                                            pickedCard?['card_barcode'] ??
-                                            pickedCard?['card_mac'] ??
-                                            selectedCardIds.first)
-                                        .toString()
-                                        .trim();
+                                    final pickedCard =
+                                        pickedCardsList.isNotEmpty
+                                        ? pickedCardsList.first
+                                        : null;
+                                    final cardNum =
+                                        (pickedCard?['card_number'] ??
+                                                pickedCard?['card_barcode'] ??
+                                                pickedCard?['card_mac'] ??
+                                                selectedCardIds.first)
+                                            .toString()
+                                            .trim();
 
-                                    final success = await controller.grantAccessCard(
-                                      cardNumber: cardNum,
-                                      selectedCard: pickedCard,
-                                    );
+                                    final success = await controller
+                                        .grantAccessCard(
+                                          cardNumber: cardNum,
+                                          selectedCard: pickedCard,
+                                        );
 
                                     if (success && dialogContext.mounted) {
                                       Navigator.of(dialogContext).pop();
@@ -5630,7 +6278,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   }
                                 },
                                 child: Obx(() {
-                                  final isLoading = controller.rxIsActionLoading.value;
+                                  final isLoading =
+                                      controller.rxIsActionLoading.value;
                                   if (isLoading) {
                                     return const SizedBox(
                                       width: 20,
@@ -5752,39 +6401,53 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       if (visitorCards.isNotEmpty) {
         activeCard = visitorCards.firstWhereOrNull((c) {
           final isCurrentUsed = (c['current_used'] == true);
-          final cardType = (c['card_type'] ?? c['type'] ?? '').toString().toLowerCase();
-          final isBarcode = cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
+          final cardType = (c['card_type'] ?? c['type'] ?? '')
+              .toString()
+              .toLowerCase();
+          final isBarcode =
+              cardType == 'barcode' || cardType == 'qrcode' || cardType == 'qr';
           final status = (c['card_status'] ?? '').toString().toLowerCase();
-          final isReturned = status == 'returned' || status == 'inactive' || status == 'revoked';
+          final isReturned =
+              status == 'returned' ||
+              status == 'inactive' ||
+              status == 'revoked';
           return isCurrentUsed && !isBarcode && !isReturned;
         });
       }
 
       String defaultCardNum = '';
       if (activeCard != null) {
-        defaultCardNum = (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '').toString().trim();
+        defaultCardNum =
+            (activeCard['card_number'] ?? activeCard['card_barcode'] ?? '')
+                .toString()
+                .trim();
       }
       if (defaultCardNum.isEmpty) {
-        defaultCardNum = (v['visitor_card'] ??
-                v['visitor_code'] ??
-                v['visitor_ble_card'] ??
-                v['identity_id'] ??
-                '')
-            .toString()
-            .trim();
+        defaultCardNum =
+            (v['visitor_card'] ??
+                    v['visitor_code'] ??
+                    v['visitor_ble_card'] ??
+                    v['identity_id'] ??
+                    '')
+                .toString()
+                .trim();
       }
 
-      final identityId = (v['identity_id'] ??
-              v['id_number'] ??
-              v['visitor_identity_id'] ??
-              '')
-            .toString()
-            .trim();
+      final identityId =
+          (v['identity_id'] ?? v['id_number'] ?? v['visitor_identity_id'] ?? '')
+              .toString()
+              .trim();
 
       final bool isTypeLocked = activeCard != null;
       String initialType = 'Card Access';
       if (activeCard != null) {
-        final rawSwapType = (activeCard['swap_type'] ?? activeCard['type'] ?? activeCard['card_type'] ?? '').toString().trim();
+        final rawSwapType =
+            (activeCard['swap_type'] ??
+                    activeCard['type'] ??
+                    activeCard['card_type'] ??
+                    '')
+                .toString()
+                .trim();
         if (rawSwapType.isNotEmpty) {
           if (rawSwapType.toLowerCase().contains('ktp')) {
             initialType = 'KTP';
@@ -5823,11 +6486,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             final currentItem = stepStates[currentStep];
-            final currentVisitor = currentItem['visitor'] as Map<String, dynamic>;
-            final currentVisitorName = (currentVisitor['visitor_name'] ?? currentVisitor['name'] ?? 'Visitor').toString();
+            final currentVisitor =
+                currentItem['visitor'] as Map<String, dynamic>;
+            final currentVisitorName =
+                (currentVisitor['visitor_name'] ??
+                        currentVisitor['name'] ??
+                        'Visitor')
+                    .toString();
             final isLastStep = currentStep == totalSteps - 1;
             final isTypeLocked = currentItem['isTypeLocked'] == true;
-            final inputController = currentItem['controller'] as TextEditingController;
+            final inputController =
+                currentItem['controller'] as TextEditingController;
             final selectedType = currentItem['selectedType'] as String;
             final identityId = currentItem['identityId'] as String;
             final defaultCardNum = currentItem['defaultCardNum'] as String;
@@ -5856,7 +6525,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   children: [
                     // Header (Swipe Card + Close Button)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -5913,7 +6585,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                           // Manual Badge
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF005696),
                               borderRadius: BorderRadius.circular(6),
@@ -5944,7 +6619,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           isTypeLocked
                               ? Container(
                                   height: 42,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(6),
@@ -5954,7 +6631,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     ),
                                   ),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Card Access',
@@ -5979,7 +6657,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       surfaceTintColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
-                                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                        side: const BorderSide(
+                                          color: Color(0xFFE2E8F0),
+                                        ),
                                       ),
                                       elevation: 6,
                                     ),
@@ -5994,39 +6674,53 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
-                                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                      side: const BorderSide(
+                                        color: Color(0xFFE2E8F0),
+                                      ),
                                     ),
                                     elevation: 6,
                                     onSelected: (newVal) {
                                       setModalState(() {
                                         currentItem['selectedType'] = newVal;
-                                        if ((newVal == 'NIK' || newVal == 'KTP') && identityId.isNotEmpty) {
+                                        if ((newVal == 'NIK' ||
+                                                newVal == 'KTP') &&
+                                            identityId.isNotEmpty) {
                                           inputController.text = identityId;
-                                        } else if (newVal == 'Card Access' && defaultCardNum.isNotEmpty) {
+                                        } else if (newVal == 'Card Access' &&
+                                            defaultCardNum.isNotEmpty) {
                                           inputController.text = defaultCardNum;
                                         }
                                       });
                                     },
                                     itemBuilder: (context) {
                                       return typeOptions.map((type) {
-                                        final isItemPicked = type == selectedType;
+                                        final isItemPicked =
+                                            type == selectedType;
                                         return PopupMenuItem<String>(
                                           value: type,
                                           height: 38,
                                           padding: EdgeInsets.zero,
                                           child: Container(
                                             width: double.infinity,
-                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 8,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: isItemPicked ? const Color(0xFFCFE2FF) : Colors.transparent,
-                                              borderRadius: BorderRadius.circular(4),
+                                              color: isItemPicked
+                                                  ? const Color(0xFFCFE2FF)
+                                                  : Colors.transparent,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                             ),
                                             child: Text(
                                               type,
                                               style: GoogleFonts.inter(
                                                 fontSize: 13.5,
                                                 color: const Color(0xFF1E293B),
-                                                fontWeight: isItemPicked ? FontWeight.w600 : FontWeight.w500,
+                                                fontWeight: isItemPicked
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w500,
                                               ),
                                             ),
                                           ),
@@ -6035,7 +6729,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     },
                                     child: Container(
                                       height: 42,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(6),
@@ -6045,7 +6741,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             selectedType,
@@ -6134,25 +6831,46 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     final items = <Map<String, dynamic>>[];
                                     for (int i = 0; i < totalSteps; i++) {
                                       final s = stepStates[i];
-                                      final v = s['visitor'] as Map<String, dynamic>;
-                                      final c = (i < selectedCardsList.length) ? selectedCardsList[i] : selectedCardsList.first;
-                                      final cardNum = (c['card_number'] ?? c['card_barcode'] ?? c['card_mac'] ?? '').toString().trim();
-                                      final customSwapFrom = (s['controller'] as TextEditingController).text.trim();
-                                      final sType = mapSwapTypeToApi(s['selectedType'] as String);
+                                      final v =
+                                          s['visitor'] as Map<String, dynamic>;
+                                      final c = (i < selectedCardsList.length)
+                                          ? selectedCardsList[i]
+                                          : selectedCardsList.first;
+                                      final cardNum =
+                                          (c['card_number'] ??
+                                                  c['card_barcode'] ??
+                                                  c['card_mac'] ??
+                                                  '')
+                                              .toString()
+                                              .trim();
+                                      final customSwapFrom =
+                                          (s['controller']
+                                                  as TextEditingController)
+                                              .text
+                                              .trim();
+                                      final sType = mapSwapTypeToApi(
+                                        s['selectedType'] as String,
+                                      );
 
                                       items.add({
                                         'visitor': v,
                                         'card_number': cardNum,
-                                        'trx_visitor_id': (v['id'] ?? v['transaction_visitor_id'] ?? '').toString().trim(),
+                                        'trx_visitor_id':
+                                            (v['id'] ??
+                                                    v['transaction_visitor_id'] ??
+                                                    '')
+                                                .toString()
+                                                .trim(),
                                         'swap_card_from_card': customSwapFrom,
                                         'swap_type': sType,
                                       });
                                     }
 
-                                    final success = await controller.grantAccessCardMultiple(
-                                      items: items,
-                                      isSwapCard: true,
-                                    );
+                                    final success = await controller
+                                        .grantAccessCardMultiple(
+                                          items: items,
+                                          isSwapCard: true,
+                                        );
 
                                     if (success) {
                                       if (swipeDialogContext.mounted) {
@@ -6164,23 +6882,31 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     }
                                   } else {
                                     // Single Visitor Swipe
-                                    final pickedCard = selectedCardsList.isNotEmpty ? selectedCardsList.first : null;
-                                    final newCardNumber = (pickedCard?['card_number'] ??
-                                            pickedCard?['card_barcode'] ??
-                                            pickedCard?['card_mac'] ??
-                                            '')
-                                        .toString()
+                                    final pickedCard =
+                                        selectedCardsList.isNotEmpty
+                                        ? selectedCardsList.first
+                                        : null;
+                                    final newCardNumber =
+                                        (pickedCard?['card_number'] ??
+                                                pickedCard?['card_barcode'] ??
+                                                pickedCard?['card_mac'] ??
+                                                '')
+                                            .toString()
+                                            .trim();
+                                    final customSwapFrom = inputController.text
                                         .trim();
-                                    final customSwapFrom = inputController.text.trim();
-                                    final apiSwapType = mapSwapTypeToApi(selectedType);
-
-                                    final success = await controller.grantAccessCard(
-                                      cardNumber: newCardNumber,
-                                      selectedCard: pickedCard,
-                                      isSwapCard: true,
-                                      swapType: apiSwapType,
-                                      customSwapCardFrom: customSwapFrom,
+                                    final apiSwapType = mapSwapTypeToApi(
+                                      selectedType,
                                     );
+
+                                    final success = await controller
+                                        .grantAccessCard(
+                                          cardNumber: newCardNumber,
+                                          selectedCard: pickedCard,
+                                          isSwapCard: true,
+                                          swapType: apiSwapType,
+                                          customSwapCardFrom: customSwapFrom,
+                                        );
 
                                     if (success) {
                                       if (swipeDialogContext.mounted) {
@@ -6194,7 +6920,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 }
                               },
                               child: Obx(() {
-                                final isLoading = controller.rxIsActionLoading.value;
+                                final isLoading =
+                                    controller.rxIsActionLoading.value;
                                 if (isLoading && isLastStep) {
                                   return const SizedBox(
                                     width: 20,
@@ -6206,7 +6933,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   );
                                 }
                                 return Text(
-                                  !isLastStep ? 'Next (${currentStep + 1}/$totalSteps)' : 'Swipe',
+                                  !isLastStep
+                                      ? 'Next (${currentStep + 1}/$totalSteps)'
+                                      : 'Swipe',
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -6235,9 +6964,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final cardNum = (currentCard['card_number'] ?? currentCard['card_barcode'] ?? '-').toString();
-    final cardType = (currentCard['card_type'] ?? currentCard['type'] ?? 'BLE').toString();
-    final cardMac = (currentCard['card_mac'] ?? currentCard['card_barcode'] ?? cardNum).toString();
+    final cardNum =
+        (currentCard['card_number'] ?? currentCard['card_barcode'] ?? '-')
+            .toString();
+    final cardType = (currentCard['card_type'] ?? currentCard['type'] ?? 'BLE')
+        .toString();
+    final cardMac =
+        (currentCard['card_mac'] ?? currentCard['card_barcode'] ?? cardNum)
+            .toString();
 
     return Material(
       color: Colors.transparent,
@@ -6250,10 +6984,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           decoration: BoxDecoration(
             color: const Color(0xFFFFF9EE),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFFFA000),
-              width: 1.6,
-            ),
+            border: Border.all(color: const Color(0xFFFFA000), width: 1.6),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -6299,7 +7030,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             Clipboard.setData(ClipboardData(text: cardNum));
                             AppSnackbar.success(
                               title: 'Card Copied',
-                              message: 'Card number $cardNum copied to clipboard.',
+                              message:
+                                  'Card number $cardNum copied to clipboard.',
                             );
                           },
                           child: const Icon(
@@ -6365,7 +7097,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   color: isSelected ? const Color(0xFF003082) : Colors.white,
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF003082) : const Color(0xFF94A3B8),
+                    color: isSelected
+                        ? const Color(0xFF003082)
+                        : const Color(0xFF94A3B8),
                     width: 1.5,
                   ),
                 ),
@@ -6395,13 +7129,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     final name = (card['name'] ?? '').toString().trim();
     final cardNum = (card['card_number'] ?? '-').toString().trim();
     final cardType = (card['type'] ?? 'BLE').toString().trim();
-    final cardMac = (card['card_mac'] ?? card['card_barcode'] ?? '-').toString().trim();
+    final cardMac = (card['card_mac'] ?? card['card_barcode'] ?? '-')
+        .toString()
+        .trim();
     final isUsed = card['is_used'] == true;
 
     // Display title
     String displayTitle = remarks.isNotEmpty
         ? remarks
-        : (name.isNotEmpty ? name : (cardNum != '-' ? 'CARD $cardNum' : 'Card'));
+        : (name.isNotEmpty
+              ? name
+              : (cardNum != '-' ? 'CARD $cardNum' : 'Card'));
 
     return Material(
       color: Colors.transparent,
@@ -6418,7 +7156,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             border: Border.all(
               color: isUsed
                   ? const Color(0xFFCBD5E1)
-                  : (isSelected ? const Color(0xFF003082) : const Color(0xFFE2E8F0)),
+                  : (isSelected
+                        ? const Color(0xFF003082)
+                        : const Color(0xFFE2E8F0)),
               width: isSelected ? 1.8 : 1.2,
             ),
           ),
@@ -6430,7 +7170,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 alignment: Alignment.topLeft,
                 child: isUsed
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF94A3B8),
                           borderRadius: BorderRadius.circular(4),
@@ -6453,7 +7196,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 style: GoogleFonts.inter(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF334155),
+                  color: isUsed
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF334155),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -6472,7 +7217,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           'Card',
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isUsed
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                         Text(
@@ -6480,7 +7227,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                            color: isUsed
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF1E293B),
                           ),
                         ),
                       ],
@@ -6493,7 +7242,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           cardType,
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            color: isUsed
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF64748B),
                           ),
                         ),
                         Text(
@@ -6501,7 +7252,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                            color: isUsed
+                                ? const Color(0xFF94A3B8)
+                                : const Color(0xFF1E293B),
                           ),
                         ),
                       ],
@@ -6516,7 +7269,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: isUsed ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  color: isUsed
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF64748B),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -6534,7 +7289,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   border: Border.all(
                     color: isUsed
                         ? const Color(0xFFCBD5E1)
-                        : (isSelected ? const Color(0xFF003082) : const Color(0xFF94A3B8)),
+                        : (isSelected
+                              ? const Color(0xFF003082)
+                              : const Color(0xFF94A3B8)),
                     width: 1.5,
                   ),
                 ),
@@ -6568,7 +7325,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 400,
             decoration: BoxDecoration(
@@ -6588,7 +7348,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               children: [
                 // Header (Title + Close button)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -6602,7 +7365,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                       IconButton(
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                        constraints: const BoxConstraints(
+                          minWidth: 26,
+                          minHeight: 26,
+                        ),
                         icon: const Icon(
                           Icons.close_rounded,
                           size: 20,
@@ -6614,11 +7380,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ),
                 ),
 
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF1F5F9),
+                ),
 
                 // Body: Card Number field
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
@@ -6646,18 +7419,30 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             fontSize: 13,
                             color: const Color(0xFF94A3B8),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF004385),
+                              width: 1.5,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF004385),
+                              width: 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFF004385), width: 1.8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF004385),
+                              width: 1.8,
+                            ),
                           ),
                         ),
                       ),
@@ -6665,11 +7450,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   ),
                 ),
 
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF1F5F9),
+                ),
 
                 // Bottom Action Buttons (Cancel / Submit)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -6753,7 +7545,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 320,
             decoration: BoxDecoration(
@@ -6777,7 +7572,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     padding: const EdgeInsets.only(top: 8, right: 8),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
                       icon: const Icon(
                         Icons.close_rounded,
                         size: 22,
@@ -6870,7 +7668,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           ),
                           onPressed: () {
                             Navigator.of(dialogContext).pop();
-                            controller.performOperatorInvitationAction(action: action);
+                            controller.performOperatorInvitationAction(
+                              action: action,
+                            );
                           },
                           child: Text(
                             'Yes',
@@ -6892,10 +7692,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  void _showReasonActionDialog(
-    BuildContext context, {
-    required String action,
-  }) {
+  void _showReasonActionDialog(BuildContext context, {required String action}) {
     final reasonController = TextEditingController();
 
     showDialog(
@@ -6908,7 +7705,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 360,
             decoration: BoxDecoration(
@@ -6932,7 +7732,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     padding: const EdgeInsets.only(top: 8, right: 8),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
                       icon: const Icon(
                         Icons.close_rounded,
                         size: 22,
@@ -6985,8 +7788,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     isBlacklist
                         ? 'Please provide a reason for blacklisting this visitor:'
                         : (isBlock
-                            ? 'Please provide a reason for blocking this visitor:'
-                            : 'Please provide a reason for this action:'),
+                              ? 'Please provide a reason for blocking this visitor:'
+                              : 'Please provide a reason for this action:'),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 13,
@@ -7003,11 +7806,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   child: TextField(
                     controller: reasonController,
                     autofocus: true,
-                    style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B)),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: const Color(0xFF1E293B),
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Enter reason...',
-                      hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
                         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -7018,7 +7830,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF004385),
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
@@ -7119,7 +7934,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 330,
             decoration: BoxDecoration(
@@ -7143,7 +7961,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     padding: const EdgeInsets.only(top: 8, right: 8),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
                       icon: const Icon(
                         Icons.close_rounded,
                         size: 22,
@@ -7411,9 +8232,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         controller: searchInputController,
                         autofocus: true,
                         textCapitalization: TextCapitalization.characters,
-                        inputFormatters: [
-                          UpperCaseTextFormatter(),
-                        ],
+                        inputFormatters: [UpperCaseTextFormatter()],
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -7426,7 +8245,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           isDense: true,
                         ),
                         onSubmitted: (val) async {
-                          final code = searchInputController.text.trim().toUpperCase();
+                          final code = searchInputController.text
+                              .trim()
+                              .toUpperCase();
                           if (code.isEmpty) return;
                           setModalState(() => isSearching = true);
                           final success = await controller.searchInvitationCode(
@@ -7455,7 +8276,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     ),
                   ] else ...[
                     // Mode 1: Camera Scanner (Guarded for desktop platforms)
-                    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) ...[
+                    if (!kIsWeb &&
+                        (Platform.isWindows ||
+                            Platform.isLinux ||
+                            Platform.isMacOS)) ...[
                       Container(
                         height: 220,
                         width: double.infinity,
@@ -7464,7 +8288,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: const Color(0xFF1E293B)),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -7474,7 +8301,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 color: const Color(0xFF1E293B),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                                  color: const Color(
+                                    0xFF38BDF8,
+                                  ).withValues(alpha: 0.3),
                                 ),
                               ),
                               child: const Icon(
@@ -7505,7 +8334,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             const SizedBox(height: 10),
                             ElevatedButton.icon(
                               onPressed: () => setModalState(() => tabMode = 0),
-                              icon: const Icon(Icons.keyboard_outlined, size: 14),
+                              icon: const Icon(
+                                Icons.keyboard_outlined,
+                                size: 14,
+                              ),
                               label: const Text('Switch to Input Manual'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF004385),
@@ -7539,7 +8371,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           onDetect: (capture) async {
                             final barcodes = capture.barcodes;
                             for (final b in barcodes) {
-                              final code = b.rawValue?.trim().toUpperCase() ?? '';
+                              final code =
+                                  b.rawValue?.trim().toUpperCase() ?? '';
                               if (code.isNotEmpty) {
                                 setModalState(() => isSearching = true);
                                 final success = await controller
@@ -7547,8 +8380,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 setModalState(() => isSearching = false);
                                 if (success) {
                                   Get.back();
-                                  final loaded = controller.rxSelectedVisitor.value;
-                                  if (loaded != null && onVisitorLoaded != null) {
+                                  final loaded =
+                                      controller.rxSelectedVisitor.value;
+                                  if (loaded != null &&
+                                      onVisitorLoaded != null) {
                                     onVisitorLoaded(loaded);
                                   }
                                   AppSnackbar.success(
@@ -7614,7 +8449,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         onPressed: isSearching
                             ? null
                             : () async {
-                                final code = searchInputController.text.trim().toUpperCase();
+                                final code = searchInputController.text
+                                    .trim()
+                                    .toUpperCase();
                                 if (code.isEmpty) {
                                   AppSnackbar.error(
                                     title: 'Validation Error',
@@ -7628,8 +8465,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 setModalState(() => isSearching = false);
                                 if (success) {
                                   Get.back();
-                                  final loaded = controller.rxSelectedVisitor.value;
-                                  if (loaded != null && onVisitorLoaded != null) {
+                                  final loaded =
+                                      controller.rxSelectedVisitor.value;
+                                  if (loaded != null &&
+                                      onVisitorLoaded != null) {
                                     onVisitorLoaded(loaded);
                                   }
                                   AppSnackbar.success(
@@ -7674,7 +8513,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
   void _showExtendVisitDialog(BuildContext context) {
     final visitor = controller.rxSelectedVisitor.value;
-    final hasMultiple = controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty;
+    final hasMultiple =
+        controller.rxSelectMultiple.value &&
+        controller.rxSelectedItems.isNotEmpty;
     if (visitor == null && !hasMultiple) {
       AppSnackbar.warning(
         title: 'Warning',
@@ -7699,7 +8540,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             return Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 24,
+              ),
               child: Container(
                 width: 490,
                 decoration: BoxDecoration(
@@ -7773,7 +8617,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     },
                                     borderRadius: BorderRadius.circular(20),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 150),
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 18,
                                         vertical: 9,
@@ -7792,7 +8638,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFF004385).withValues(alpha: 0.25),
+                                                  color: const Color(
+                                                    0xFF004385,
+                                                  ).withValues(alpha: 0.25),
                                                   blurRadius: 6,
                                                   offset: const Offset(0, 2),
                                                 ),
@@ -7803,8 +8651,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         '$period min',
                                         style: GoogleFonts.inter(
                                           fontSize: 13,
-                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                                          color: isSelected ? Colors.white : const Color(0xFF334155),
+                                          fontWeight: isSelected
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : const Color(0xFF334155),
                                         ),
                                       ),
                                     ),
@@ -7833,10 +8685,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     width: 18,
                                     height: 18,
                                     decoration: BoxDecoration(
-                                      color: applyToAll ? const Color(0xFF004385) : Colors.white,
+                                      color: applyToAll
+                                          ? const Color(0xFF004385)
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(4),
                                       border: Border.all(
-                                        color: applyToAll ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                                        color: applyToAll
+                                            ? const Color(0xFF004385)
+                                            : const Color(0xFF94A3B8),
                                         width: 1.5,
                                       ),
                                     ),
@@ -7846,7 +8702,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                               Icons.check_rounded,
                                               size: 13,
                                               color: Colors.white,
-                                            )
+                                            ),
                                           )
                                         : null,
                                   ),
@@ -7883,15 +8739,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              onPressed: (selectedPeriod == null || isSubmitting)
+                              onPressed:
+                                  (selectedPeriod == null || isSubmitting)
                                   ? null
                                   : () async {
                                       setModalState(() => isSubmitting = true);
                                       final periodVal = selectedPeriod!;
-                                      final success = await controller.extendVisitorPeriod(
-                                        period: periodVal,
-                                        applyToAll: applyToAll,
-                                      );
+                                      final success = await controller
+                                          .extendVisitorPeriod(
+                                            period: periodVal,
+                                            applyToAll: applyToAll,
+                                          );
                                       setModalState(() => isSubmitting = false);
                                       if (success && dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();
@@ -8019,17 +8877,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           color: isChecked ? const Color(0xFF003082) : Colors.white,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isChecked ? const Color(0xFF003082) : const Color(0xFFCBD5E1),
+            color: isChecked
+                ? const Color(0xFF003082)
+                : const Color(0xFFCBD5E1),
             width: 1.5,
           ),
         ),
         child: isChecked
             ? const Center(
-                child: Icon(
-                  Icons.check_rounded,
-                  size: 13,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.check_rounded, size: 13, color: Colors.white),
               )
             : null,
       ),
@@ -8041,11 +8897,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     Map<String, dynamic> visitor,
   ) {
     final searchController = TextEditingController();
-    final visitorId = (visitor['id'] ??
-            visitor['transaction_visitor_id'] ??
-            visitor['visitor_id'] ??
-            '')
-        .toString();
+    final visitorId =
+        (visitor['id'] ??
+                visitor['transaction_visitor_id'] ??
+                visitor['visitor_id'] ??
+                '')
+            .toString();
 
     List<Map<String, dynamic>> cardList = List<Map<String, dynamic>>.from(
       (visitor['card'] as List?) ?? (visitor['cards'] as List?) ?? [],
@@ -8100,13 +8957,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
             final allCardsSelected =
                 cardList.isNotEmpty && selectedCards.length == cardList.length;
-            final allAccessSelected = filteredAccess.isNotEmpty &&
+            final allAccessSelected =
+                filteredAccess.isNotEmpty &&
                 selectedAccess.length == filteredAccess.length;
 
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 24,
+              ),
               child: Container(
                 width: 960,
                 constraints: const BoxConstraints(maxHeight: 560),
@@ -8173,8 +9033,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               ),
                             )
                           : Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(20, 14, 20, 16),
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                14,
+                                20,
+                                16,
+                              ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -8203,8 +9067,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFF8FAFC),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                             border: Border.all(
                                               color: const Color(0xFFE2E8F0),
                                             ),
@@ -8236,8 +9101,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
-                                                    color:
-                                                        const Color(0xFF64748B),
+                                                    color: const Color(
+                                                      0xFF64748B,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -8247,8 +9113,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
-                                                    color:
-                                                        const Color(0xFF64748B),
+                                                    color: const Color(
+                                                      0xFF64748B,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -8262,7 +9129,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       color: const Color(
-                                                          0xFF64748B),
+                                                        0xFF64748B,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -8281,7 +9149,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                     style: GoogleFonts.inter(
                                                       fontSize: 12.5,
                                                       color: const Color(
-                                                          0xFF94A3B8),
+                                                        0xFF94A3B8,
+                                                      ),
                                                     ),
                                                   ),
                                                 )
@@ -8289,23 +9158,25 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   itemCount: cardList.length,
                                                   separatorBuilder: (_, __) =>
                                                       const Divider(
-                                                    height: 1,
-                                                    color: Color(0xFFF1F5F9),
-                                                  ),
-                                                  itemBuilder:
-                                                      (context, index) {
+                                                        height: 1,
+                                                        color: Color(
+                                                          0xFFF1F5F9,
+                                                        ),
+                                                      ),
+                                                  itemBuilder: (context, index) {
                                                     final c = cardList[index];
                                                     final isSelected =
-                                                        selectedCards
-                                                            .contains(index);
-                                                    final cardNum = (c[
-                                                                'card_number'] ??
-                                                            c['card_barcode'] ??
-                                                            c['visitor_card'] ??
-                                                            '-')
-                                                        .toString();
-                                                    final isUsed = c[
-                                                                'current_used'] ==
+                                                        selectedCards.contains(
+                                                          index,
+                                                        );
+                                                    final cardNum =
+                                                        (c['card_number'] ??
+                                                                c['card_barcode'] ??
+                                                                c['visitor_card'] ??
+                                                                '-')
+                                                            .toString();
+                                                    final isUsed =
+                                                        c['current_used'] ==
                                                             true ||
                                                         c['is_employee_used'] ==
                                                             true ||
@@ -8319,61 +9190,63 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                             'issued';
 
                                                     return Container(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 10,
-                                                        vertical: 10,
-                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 10,
+                                                            vertical: 10,
+                                                          ),
                                                       child: Row(
                                                         children: [
                                                           _buildTableCheckbox(
                                                             isChecked:
                                                                 isSelected,
                                                             onTap: () {
-                                                              setDialogState(
-                                                                  () {
+                                                              setDialogState(() {
                                                                 if (isSelected) {
                                                                   selectedCards
                                                                       .remove(
-                                                                          index);
+                                                                        index,
+                                                                      );
                                                                 } else {
                                                                   selectedCards
                                                                       .add(
-                                                                          index);
+                                                                        index,
+                                                                      );
                                                                 }
                                                               });
                                                             },
                                                           ),
                                                           const SizedBox(
-                                                              width: 8),
+                                                            width: 8,
+                                                          ),
                                                           SizedBox(
                                                             width: 30,
                                                             child: Text(
                                                               '${index + 1}',
-                                                              style:
-                                                                  GoogleFonts
-                                                                      .inter(
+                                                              style: GoogleFonts.inter(
                                                                 fontSize: 12.5,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w500,
-                                                                color: const Color(
-                                                                    0xFF1E293B),
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF1E293B,
+                                                                    ),
                                                               ),
                                                             ),
                                                           ),
                                                           Expanded(
                                                             child: Text(
                                                               cardNum,
-                                                              style:
-                                                                  GoogleFonts
-                                                                      .inter(
+                                                              style: GoogleFonts.inter(
                                                                 fontSize: 12.5,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w500,
-                                                                color: const Color(
-                                                                    0xFF1E293B),
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF1E293B,
+                                                                    ),
                                                               ),
                                                             ),
                                                           ),
@@ -8386,14 +9259,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                                           .check_circle_rounded,
                                                                       size: 19,
                                                                       color: Color(
-                                                                          0xFF10B981),
+                                                                        0xFF10B981,
+                                                                      ),
                                                                     )
                                                                   : const Icon(
                                                                       Icons
                                                                           .cancel_rounded,
                                                                       size: 19,
                                                                       color: Color(
-                                                                          0xFFEF4444),
+                                                                        0xFFEF4444,
+                                                                      ),
                                                                     ),
                                                             ),
                                                           ),
@@ -8412,7 +9287,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     width: 1,
                                     color: const Color(0xFFE2E8F0),
                                     margin: const EdgeInsets.symmetric(
-                                        horizontal: 16),
+                                      horizontal: 16,
+                                    ),
                                   ),
 
                                   // Right Column: Access
@@ -8443,8 +9319,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   borderRadius:
                                                       BorderRadius.circular(6),
                                                   border: Border.all(
-                                                    color:
-                                                        const Color(0xFFCBD5E1),
+                                                    color: const Color(
+                                                      0xFFCBD5E1,
+                                                    ),
                                                   ),
                                                 ),
                                                 child: TextField(
@@ -8456,17 +9333,19 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   },
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12.5,
-                                                    color:
-                                                        const Color(0xFF1E293B),
+                                                    color: const Color(
+                                                      0xFF1E293B,
+                                                    ),
                                                   ),
                                                   decoration: InputDecoration(
                                                     hintText: 'Search...',
                                                     hintStyle:
                                                         GoogleFonts.inter(
-                                                      fontSize: 12.5,
-                                                      color: const Color(
-                                                          0xFF94A3B8),
-                                                    ),
+                                                          fontSize: 12.5,
+                                                          color: const Color(
+                                                            0xFF94A3B8,
+                                                          ),
+                                                        ),
                                                     prefixIcon: const Icon(
                                                       Icons.search_rounded,
                                                       size: 17,
@@ -8474,13 +9353,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                     ),
                                                     prefixIconConstraints:
                                                         const BoxConstraints(
-                                                      minWidth: 32,
-                                                      minHeight: 32,
-                                                    ),
+                                                          minWidth: 32,
+                                                          minHeight: 32,
+                                                        ),
                                                     border: InputBorder.none,
                                                     contentPadding:
                                                         const EdgeInsets.only(
-                                                            top: 6),
+                                                          top: 6,
+                                                        ),
                                                   ),
                                                 ),
                                               ),
@@ -8488,13 +9368,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             const SizedBox(width: 8),
                                             ElevatedButton(
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    const Color(0xFF003082),
+                                                backgroundColor: const Color(
+                                                  0xFF003082,
+                                                ),
                                                 foregroundColor: Colors.white,
                                                 elevation: 0,
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                        horizontal: 16),
+                                                      horizontal: 16,
+                                                    ),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(6),
@@ -8528,8 +9410,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           ),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFF8FAFC),
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                             border: Border.all(
                                               color: const Color(0xFFE2E8F0),
                                             ),
@@ -8561,8 +9444,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
-                                                    color:
-                                                        const Color(0xFF64748B),
+                                                    color: const Color(
+                                                      0xFF64748B,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -8572,8 +9456,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                   style: GoogleFonts.inter(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w600,
-                                                    color:
-                                                        const Color(0xFF64748B),
+                                                    color: const Color(
+                                                      0xFF64748B,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -8587,7 +9472,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       color: const Color(
-                                                          0xFF64748B),
+                                                        0xFF64748B,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -8606,7 +9492,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                     style: GoogleFonts.inter(
                                                       fontSize: 12.5,
                                                       color: const Color(
-                                                          0xFF94A3B8),
+                                                        0xFF94A3B8,
+                                                      ),
                                                     ),
                                                   ),
                                                 )
@@ -8615,102 +9502,109 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                       filteredAccess.length,
                                                   separatorBuilder: (_, __) =>
                                                       const Divider(
-                                                    height: 1,
-                                                    color: Color(0xFFF1F5F9),
-                                                  ),
-                                                  itemBuilder:
-                                                      (context, index) {
+                                                        height: 1,
+                                                        color: Color(
+                                                          0xFFF1F5F9,
+                                                        ),
+                                                      ),
+                                                  itemBuilder: (context, index) {
                                                     final a =
                                                         filteredAccess[index];
                                                     final isSelected =
-                                                        selectedAccess
-                                                            .contains(index);
-                                                    final accessName = (a[
-                                                                'access_control_name'] ??
-                                                            a['name'] ??
-                                                            a['access_name'] ??
-                                                            '-')
-                                                        .toString();
-                                                    final isEarlyAccess = a[
-                                                            'early_access'] ==
+                                                        selectedAccess.contains(
+                                                          index,
+                                                        );
+                                                    final accessName =
+                                                        (a['access_control_name'] ??
+                                                                a['name'] ??
+                                                                a['access_name'] ??
+                                                                '-')
+                                                            .toString();
+                                                    final isEarlyAccess =
+                                                        a['early_access'] ==
                                                         true;
 
                                                     return Container(
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 10,
-                                                        vertical: 10,
-                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 10,
+                                                            vertical: 10,
+                                                          ),
                                                       child: Row(
                                                         children: [
                                                           _buildTableCheckbox(
                                                             isChecked:
                                                                 isSelected,
                                                             onTap: () {
-                                                              setDialogState(
-                                                                  () {
+                                                              setDialogState(() {
                                                                 if (isSelected) {
                                                                   selectedAccess
                                                                       .remove(
-                                                                          index);
+                                                                        index,
+                                                                      );
                                                                 } else {
                                                                   selectedAccess
                                                                       .add(
-                                                                          index);
+                                                                        index,
+                                                                      );
                                                                 }
                                                               });
                                                             },
                                                           ),
                                                           const SizedBox(
-                                                              width: 8),
+                                                            width: 8,
+                                                          ),
                                                           SizedBox(
                                                             width: 30,
                                                             child: Text(
                                                               '${index + 1}',
-                                                              style:
-                                                                  GoogleFonts
-                                                                      .inter(
+                                                              style: GoogleFonts.inter(
                                                                 fontSize: 12.5,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w500,
-                                                                color: const Color(
-                                                                    0xFF1E293B),
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF1E293B,
+                                                                    ),
                                                               ),
                                                             ),
                                                           ),
                                                           Expanded(
                                                             child: Text(
                                                               accessName,
-                                                              style:
-                                                                  GoogleFonts
-                                                                      .inter(
+                                                              style: GoogleFonts.inter(
                                                                 fontSize: 12.5,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w500,
-                                                                color: const Color(
-                                                                    0xFF1E293B),
+                                                                color:
+                                                                    const Color(
+                                                                      0xFF1E293B,
+                                                                    ),
                                                               ),
                                                             ),
                                                           ),
                                                           SizedBox(
                                                             width: 90,
                                                             child: Center(
-                                                              child: isEarlyAccess
+                                                              child:
+                                                                  isEarlyAccess
                                                                   ? const Icon(
                                                                       Icons
                                                                           .check_circle_rounded,
                                                                       size: 19,
                                                                       color: Color(
-                                                                          0xFF10B981),
+                                                                        0xFF10B981,
+                                                                      ),
                                                                     )
                                                                   : const Icon(
                                                                       Icons
                                                                           .cancel_rounded,
                                                                       size: 19,
                                                                       color: Color(
-                                                                          0xFFEF4444),
+                                                                        0xFFEF4444,
+                                                                      ),
                                                                     ),
                                                             ),
                                                           ),
@@ -8727,13 +9621,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           height: 32,
                                           width: 85,
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8),
+                                            horizontal: 8,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(6),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
                                             border: Border.all(
-                                                color: const Color(0xFFCBD5E1)),
+                                              color: const Color(0xFFCBD5E1),
+                                            ),
                                           ),
                                           child: const Row(
                                             mainAxisAlignment:
@@ -8778,7 +9675,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   void _handleContactAction(String message) {
     AppSnackbar.info(title: 'Host Contact', message: message);
   }
-
 
   // ─────────────────────────────────────────────────────────────────────────
   // Custom Floating Site Selector Dropdown Menu (SPU, Gedung SINERGI, Resident)
@@ -8849,53 +9745,59 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       // Options: SPU, Gedung SINERGI, Resident (from API)
                       ...((controller.rxRegisteredSites.isNotEmpty)
                               ? controller.rxRegisteredSites
-                                  .map((s) => (s['name'] ?? '').toString())
-                                  .where((name) => name.isNotEmpty)
-                                  .toList()
+                                    .map((s) => (s['name'] ?? '').toString())
+                                    .where((name) => name.isNotEmpty)
+                                    .toList()
                               : ['SPU', 'Gedung SINERGI', 'Resident'])
                           .map((site) {
-                        final isSelected = _selectedSite == site;
-                        return Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedSite = site;
-                              });
-                              controller.rxSelectedSiteName.value = site;
-                              final match = controller.rxRegisteredSites.firstWhereOrNull(
-                                (s) => (s['name'] ?? '').toString().toLowerCase() == site.toLowerCase(),
-                              );
-                              if (match != null) {
-                                controller.rxSelectedSiteId.value = (match['id'] ?? '').toString();
-                              }
-                              _closeSiteMenu();
-                            },
-                            hoverColor: const Color(0xFFF1F5F9),
-                            child: Container(
-                              color: isSelected
-                                  ? const Color(0xFFEBF3FC)
-                                  : Colors.transparent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              child: Text(
-                                site,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.5,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
+                            final isSelected = _selectedSite == site;
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedSite = site;
+                                  });
+                                  controller.rxSelectedSiteName.value = site;
+                                  final match = controller.rxRegisteredSites
+                                      .firstWhereOrNull(
+                                        (s) =>
+                                            (s['name'] ?? '')
+                                                .toString()
+                                                .toLowerCase() ==
+                                            site.toLowerCase(),
+                                      );
+                                  if (match != null) {
+                                    controller.rxSelectedSiteId.value =
+                                        (match['id'] ?? '').toString();
+                                  }
+                                  _closeSiteMenu();
+                                },
+                                hoverColor: const Color(0xFFF1F5F9),
+                                child: Container(
                                   color: isSelected
-                                      ? const Color(0xFF003082)
-                                      : const Color(0xFF1E293B),
+                                      ? const Color(0xFFEBF3FC)
+                                      : Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Text(
+                                    site,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? const Color(0xFF003082)
+                                          : const Color(0xFF1E293B),
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        );
-                      }),
+                            );
+                          }),
                     ],
                   ),
                 ),
@@ -8926,23 +9828,28 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   // ─────────────────────────────────────────────────────────────────────────
   List<String> _getAvailableBulkActions() {
     // Bulk actions only exist when Select Multiple is active and at least one visitor is checked
-    if (!controller.rxSelectMultiple.value || controller.rxSelectedItems.isEmpty) {
+    if (!controller.rxSelectMultiple.value ||
+        controller.rxSelectedItems.isEmpty) {
       return [];
     }
 
     final selectedSet = controller.rxSelectedItems.toSet();
     final selectedList = controller.rxAllRelatedVisitors.where((v) {
-      final keys = [
-        v['id'],
-        v['trx_id'],
-        v['transaction_visitor_id'],
-        v['visitor_id'],
-        v['invitation_code'],
-        v['visitor_code'],
-        v['visitor_number'],
-        v['name'],
-        v['visitor_name'],
-      ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
+      final keys =
+          [
+                v['id'],
+                v['trx_id'],
+                v['transaction_visitor_id'],
+                v['visitor_id'],
+                v['invitation_code'],
+                v['visitor_code'],
+                v['visitor_number'],
+                v['name'],
+                v['visitor_name'],
+              ]
+              .where((k) => k != null && k.toString().trim().isNotEmpty)
+              .map((k) => k.toString().trim())
+              .toList();
       return keys.any((k) => selectedSet.contains(k));
     }).toList();
 
@@ -8952,8 +9859,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
     final actions = <String>{};
     for (final v in selectedList) {
-      final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
-      final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
+      final rawStatus = (v['visitor_status'] ?? v['status'] ?? '')
+          .toString()
+          .toLowerCase();
+      final isBlocked =
+          v['is_block'] == true ||
+          rawStatus == 'block' ||
+          rawStatus == 'blacklist';
       final isHost = v['is_host'] == true || v['raw']?['is_host'] == true;
 
       // 1. Blocked visitor -> can Unblock
@@ -8968,7 +9880,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           actions.add('Check Out');
         }
         // 4. Host or Available/Waiting -> can Check In
-        else if (isHost || rawStatus.contains('available') || rawStatus.contains('waiting')) {
+        else if (isHost ||
+            rawStatus.contains('available') ||
+            rawStatus.contains('waiting')) {
           actions.add('Check In');
         }
         // 5. Preregis regular visitor -> can Fill Form
@@ -8992,22 +9906,29 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     final action = _selectedBulkAction!;
 
     final selectedVisitors = <Map<String, dynamic>>[];
-    if (controller.rxSelectMultiple.value && controller.rxSelectedItems.isNotEmpty) {
+    if (controller.rxSelectMultiple.value &&
+        controller.rxSelectedItems.isNotEmpty) {
       final selectedSet = controller.rxSelectedItems.toSet();
-      selectedVisitors.addAll(controller.rxAllRelatedVisitors.where((v) {
-        final keys = [
-          v['id'],
-          v['trx_id'],
-          v['transaction_visitor_id'],
-          v['visitor_id'],
-          v['invitation_code'],
-          v['visitor_code'],
-          v['visitor_number'],
-          v['name'],
-          v['visitor_name'],
-        ].where((k) => k != null && k.toString().trim().isNotEmpty).map((k) => k.toString().trim()).toList();
-        return keys.any((k) => selectedSet.contains(k));
-      }));
+      selectedVisitors.addAll(
+        controller.rxAllRelatedVisitors.where((v) {
+          final keys =
+              [
+                    v['id'],
+                    v['trx_id'],
+                    v['transaction_visitor_id'],
+                    v['visitor_id'],
+                    v['invitation_code'],
+                    v['visitor_code'],
+                    v['visitor_number'],
+                    v['name'],
+                    v['visitor_name'],
+                  ]
+                  .where((k) => k != null && k.toString().trim().isNotEmpty)
+                  .map((k) => k.toString().trim())
+                  .toList();
+          return keys.any((k) => selectedSet.contains(k));
+        }),
+      );
     }
 
     if (selectedVisitors.isEmpty) {
@@ -9025,13 +9946,24 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
     final validVisitors = <Map<String, dynamic>>[];
     for (final v in selectedVisitors) {
-      final rawStatus = (v['visitor_status'] ?? v['status'] ?? '').toString().toLowerCase();
-      final isBlocked = v['is_block'] == true || rawStatus == 'block' || rawStatus == 'blacklist';
+      final rawStatus = (v['visitor_status'] ?? v['status'] ?? '')
+          .toString()
+          .toLowerCase();
+      final isBlocked =
+          v['is_block'] == true ||
+          rawStatus == 'block' ||
+          rawStatus == 'blacklist';
       final isHost = v['is_host'] == true || v['raw']?['is_host'] == true;
 
-      if ((action == 'Check In' || action == 'Checkin') && !isBlocked && (isHost || rawStatus.contains('available') || rawStatus.contains('waiting'))) {
+      if ((action == 'Check In' || action == 'Checkin') &&
+          !isBlocked &&
+          (isHost ||
+              rawStatus.contains('available') ||
+              rawStatus.contains('waiting'))) {
         validVisitors.add(v);
-      } else if ((action == 'Check Out' || action == 'Checkout') && !isBlocked && (rawStatus.contains('checkin') || rawStatus == 'in')) {
+      } else if ((action == 'Check Out' || action == 'Checkout') &&
+          !isBlocked &&
+          (rawStatus.contains('checkin') || rawStatus == 'in')) {
         validVisitors.add(v);
       } else if (action == 'Block' && !isBlocked) {
         validVisitors.add(v);
@@ -9051,9 +9983,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
 
     if (action == 'Blacklist' || action == 'Block') {
-      _showMultipleReasonActionDialog(context, action: action, validVisitors: validVisitors);
+      _showMultipleReasonActionDialog(
+        context,
+        action: action,
+        validVisitors: validVisitors,
+      );
     } else {
-      _showMultipleConfirmationActionDialog(context, action: action, validVisitors: validVisitors);
+      _showMultipleConfirmationActionDialog(
+        context,
+        action: action,
+        validVisitors: validVisitors,
+      );
     }
   }
 
@@ -9069,7 +10009,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 360,
             decoration: BoxDecoration(
@@ -9092,7 +10035,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     padding: const EdgeInsets.only(top: 8, right: 8),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
                       icon: const Icon(
                         Icons.close_rounded,
                         size: 22,
@@ -9220,7 +10166,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 24,
+          ),
           child: Container(
             width: 360,
             decoration: BoxDecoration(
@@ -9243,7 +10192,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     padding: const EdgeInsets.only(top: 8, right: 8),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                      constraints: const BoxConstraints(
+                        minWidth: 28,
+                        minHeight: 28,
+                      ),
                       icon: const Icon(
                         Icons.close_rounded,
                         size: 22,
@@ -9300,11 +10252,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   child: TextField(
                     controller: reasonController,
                     autofocus: true,
-                    style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B)),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: const Color(0xFF1E293B),
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Enter reason...',
-                      hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
                         borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -9315,7 +10276,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF004385),
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
@@ -9368,7 +10332,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             if (reason.isEmpty) {
                               AppSnackbar.warning(
                                 title: 'Reason Required',
-                                message: 'Please enter a reason before submitting.',
+                                message:
+                                    'Please enter a reason before submitting.',
                               );
                               return;
                             }
@@ -9524,11 +10489,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(
-                                    itemIcon,
-                                    size: 16,
-                                    color: itemColor,
-                                  ),
+                                  Icon(itemIcon, size: 16, color: itemColor),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -9619,7 +10580,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 20,
+          ),
           child: Container(
             width: (screenWidth * 0.94).clamp(750.0, 1150.0),
             height: (screenHeight * 0.88).clamp(460.0, 680.0),
@@ -9640,7 +10604,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               children: [
                 // ── Dialog Header & Toolbar ────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 16,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
@@ -9668,7 +10635,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF003082).withValues(alpha: 0.25),
+                                  color: const Color(
+                                    0xFF003082,
+                                  ).withValues(alpha: 0.25),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -9687,11 +10656,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               Row(
                                 children: [
                                   Text(
-                                    categoryName.toLowerCase().endsWith('visitors')
+                                    categoryName.toLowerCase().endsWith(
+                                          'visitors',
+                                        )
                                         ? categoryName
-                                        : (categoryName.toLowerCase().endsWith('visitor')
-                                            ? '${categoryName}s'
-                                            : '$categoryName Visitors'),
+                                        : (categoryName.toLowerCase().endsWith(
+                                                'visitor',
+                                              )
+                                              ? '${categoryName}s'
+                                              : '$categoryName Visitors'),
                                     style: GoogleFonts.inter(
                                       fontSize: 17,
                                       fontWeight: FontWeight.w800,
@@ -9701,13 +10674,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                   const SizedBox(width: 10),
                                   Obx(() {
-                                    final total = controller.rxUpcomingVisitorsTotal.value;
+                                    final total = controller
+                                        .rxUpcomingVisitorsTotal
+                                        .value;
                                     return Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 3,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFEFF6FF),
                                         borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(color: const Color(0xFF93C5FD)),
+                                        border: Border.all(
+                                          color: const Color(0xFF93C5FD),
+                                        ),
                                       ),
                                       child: Text(
                                         '$total ${total == 1 ? "Visitor" : "Visitors"}',
@@ -9747,7 +10727,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                  border: Border.all(
+                                    color: const Color(0xFFCBD5E1),
+                                  ),
                                 ),
                                 alignment: Alignment.center,
                                 child: TextField(
@@ -9784,7 +10766,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             onPressed: () {
                                               searchDebounce?.cancel();
                                               searchController.clear();
-                                              controller.rxUpcomingVisitorsSearch.value = '';
+                                              controller
+                                                      .rxUpcomingVisitorsSearch
+                                                      .value =
+                                                  '';
                                               controller.fetchUpcomingVisitors(
                                                 visitorTypeId: categoryId,
                                                 page: 1,
@@ -9793,7 +10778,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             },
                                             splashRadius: 14,
                                             padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(minWidth: 30, minHeight: 36),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 30,
+                                              minHeight: 36,
+                                            ),
                                           )
                                         : null,
                                     border: InputBorder.none,
@@ -9802,26 +10790,36 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   onChanged: (query) {
                                     searchDebounce?.cancel();
                                     if (query.trim().isEmpty) {
-                                      controller.rxUpcomingVisitorsSearch.value = '';
+                                      controller
+                                              .rxUpcomingVisitorsSearch
+                                              .value =
+                                          '';
                                       controller.fetchUpcomingVisitors(
                                         visitorTypeId: categoryId,
                                         page: 1,
                                         search: '',
                                       );
                                     } else {
-                                      searchDebounce = Timer(const Duration(milliseconds: 350), () {
-                                        controller.rxUpcomingVisitorsSearch.value = query.trim();
-                                        controller.fetchUpcomingVisitors(
-                                          visitorTypeId: categoryId,
-                                          page: 1,
-                                          search: query.trim(),
-                                        );
-                                      });
+                                      searchDebounce = Timer(
+                                        const Duration(milliseconds: 350),
+                                        () {
+                                          controller
+                                              .rxUpcomingVisitorsSearch
+                                              .value = query
+                                              .trim();
+                                          controller.fetchUpcomingVisitors(
+                                            visitorTypeId: categoryId,
+                                            page: 1,
+                                            search: query.trim(),
+                                          );
+                                        },
+                                      );
                                     }
                                   },
                                   onSubmitted: (query) {
                                     searchDebounce?.cancel();
-                                    controller.rxUpcomingVisitorsSearch.value = query.trim();
+                                    controller.rxUpcomingVisitorsSearch.value =
+                                        query.trim();
                                     controller.fetchUpcomingVisitors(
                                       visitorTypeId: categoryId,
                                       page: 1,
@@ -9861,7 +10859,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 // ── Table Column Headers (Fixed 100% Width, Zero Scroll) ──
                 Container(
                   margin: const EdgeInsets.fromLTRB(18, 14, 18, 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(10),
@@ -9964,11 +10965,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF003082)),
+                            CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFF003082),
+                            ),
                             SizedBox(height: 12),
                             Text(
                               'Loading upcoming visitors...',
-                              style: TextStyle(color: Color(0xFF64748B), fontSize: 12, fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -9988,7 +10996,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 color: Color(0xFFF1F5F9),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.people_outline_rounded, size: 28, color: Color(0xFF94A3B8)),
+                              child: const Icon(
+                                Icons.people_outline_rounded,
+                                size: 28,
+                                color: Color(0xFF94A3B8),
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -10029,28 +11041,79 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         physics: const BouncingScrollPhysics(
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 4,
+                        ),
                         itemCount: list.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 6),
                         itemBuilder: (context, index) {
                           final item = list[index];
                           final no = startIndex + index + 1;
-                          final name = (item['visitor_name'] ?? item['name'] ?? item['visitor']?['name'] ?? '-').toString();
-                          final host = (item['host_name'] ?? item['host'] ?? '-').toString();
-                          final invCode = (item['invitation_code'] ?? item['visitor_code'] ?? item['initial_trx_code'] ?? '-').toString();
-                          final org = (item['visitor_organization_name'] ?? item['organization'] ?? '').toString();
-                          final agenda = (item['agenda'] ?? item['purpose'] ?? item['remarks'] ?? 'Meeting').toString();
-                          final periodStart = _formatUpcomingDate(item['visitor_period_start']?.toString());
-                          final periodEnd = _formatUpcomingDate(item['visitor_period_end']?.toString());
-                          final rawStatus = (item['visitor_status'] ?? item['status'] ?? '-').toString();
-                          final plate = (item['vehicle_plate_number'] ?? item['plate_number'] ?? '').toString();
-                          final rawSelfie = (item['selfie_image'] ?? item['visitor_face'] ?? item['faceimage'] ?? item['photo'] ?? '').toString().trim();
+                          final name =
+                              (item['visitor_name'] ??
+                                      item['name'] ??
+                                      item['visitor']?['name'] ??
+                                      '-')
+                                  .toString();
+                          final host =
+                              (item['host_name'] ?? item['host'] ?? '-')
+                                  .toString();
+                          final invCode =
+                              (item['invitation_code'] ??
+                                      item['visitor_code'] ??
+                                      item['initial_trx_code'] ??
+                                      '-')
+                                  .toString();
+                          final org =
+                              (item['visitor_organization_name'] ??
+                                      item['organization'] ??
+                                      '')
+                                  .toString();
+                          final agenda =
+                              (item['agenda'] ??
+                                      item['purpose'] ??
+                                      item['remarks'] ??
+                                      'Meeting')
+                                  .toString();
+                          final periodStart = _formatUpcomingDate(
+                            item['visitor_period_start']?.toString(),
+                          );
+                          final periodEnd = _formatUpcomingDate(
+                            item['visitor_period_end']?.toString(),
+                          );
+                          final rawStatus =
+                              (item['visitor_status'] ?? item['status'] ?? '-')
+                                  .toString();
+                          final plate =
+                              (item['vehicle_plate_number'] ??
+                                      item['plate_number'] ??
+                                      '')
+                                  .toString();
+                          final rawSelfie =
+                              (item['selfie_image'] ??
+                                      item['visitor_face'] ??
+                                      item['faceimage'] ??
+                                      item['photo'] ??
+                                      '')
+                                  .toString()
+                                  .trim();
                           final cdnUrl = AppConstants.getCdnImageUrl(rawSelfie);
-                          final hasSelfie = rawSelfie.isNotEmpty && rawSelfie != '-' && rawSelfie != 'null' && cdnUrl.isNotEmpty;
+                          final hasSelfie =
+                              rawSelfie.isNotEmpty &&
+                              rawSelfie != '-' &&
+                              rawSelfie != 'null' &&
+                              cdnUrl.isNotEmpty;
 
-                          final isCheckin = rawStatus.toLowerCase().contains('checkin') || rawStatus.toLowerCase() == 'in';
-                          final isCheckout = rawStatus.toLowerCase().contains('checkout') || rawStatus.toLowerCase() == 'out';
-                          final isBlocked = rawStatus.toLowerCase().contains('block') || rawStatus.toLowerCase().contains('black');
+                          final isCheckin =
+                              rawStatus.toLowerCase().contains('checkin') ||
+                              rawStatus.toLowerCase() == 'in';
+                          final isCheckout =
+                              rawStatus.toLowerCase().contains('checkout') ||
+                              rawStatus.toLowerCase() == 'out';
+                          final isBlocked =
+                              rawStatus.toLowerCase().contains('block') ||
+                              rawStatus.toLowerCase().contains('black');
 
                           Color statusBg = const Color(0xFFEFF6FF);
                           Color statusColor = const Color(0xFF003082);
@@ -10071,11 +11134,18 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           }
 
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
-                              color: index % 2 == 0 ? Colors.white : const Color(0xFFF8FAFC),
+                              color: index % 2 == 0
+                                  ? Colors.white
+                                  : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                              border: Border.all(
+                                color: const Color(0xFFF1F5F9),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -10101,7 +11171,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       Material(
                                         color: Colors.transparent,
                                         child: InkWell(
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
                                           onTap: () {
                                             _showVisitorImageModal(
                                               context,
@@ -10116,20 +11188,27 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFEFF6FF),
                                               shape: BoxShape.circle,
-                                              border: Border.all(color: const Color(0xFFDBEAFE), width: 1.5),
+                                              border: Border.all(
+                                                color: const Color(0xFFDBEAFE),
+                                                width: 1.5,
+                                              ),
                                             ),
                                             clipBehavior: Clip.antiAlias,
                                             child: hasSelfie
                                                 ? Image.network(
                                                     cdnUrl,
                                                     fit: BoxFit.cover,
-                                                    errorBuilder: (_, __, ___) => const Center(
-                                                      child: Icon(
-                                                        Icons.person,
-                                                        size: 20,
-                                                        color: Color(0xFF003082),
-                                                      ),
-                                                    ),
+                                                    errorBuilder:
+                                                        (_, __, ___) =>
+                                                            const Center(
+                                                              child: Icon(
+                                                                Icons.person,
+                                                                size: 20,
+                                                                color: Color(
+                                                                  0xFF003082,
+                                                                ),
+                                                              ),
+                                                            ),
                                                   )
                                                 : const Center(
                                                     child: Icon(
@@ -10144,8 +11223,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       const SizedBox(width: 10),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               name,
@@ -10163,7 +11244,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                                 style: GoogleFonts.inter(
                                                   fontSize: 10.5,
                                                   fontWeight: FontWeight.w500,
-                                                  color: const Color(0xFF64748B),
+                                                  color: const Color(
+                                                    0xFF64748B,
+                                                  ),
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
@@ -10202,11 +11285,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       children: [
                                         Flexible(
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 3,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFEFF6FF),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: const Color(0xFFBFDBFE),
+                                              ),
                                             ),
                                             child: Text(
                                               invCode,
@@ -10221,17 +11310,22 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             ),
                                           ),
                                         ),
-                                        if (invCode.isNotEmpty && invCode != '-') ...[
+                                        if (invCode.isNotEmpty &&
+                                            invCode != '-') ...[
                                           const SizedBox(width: 4),
                                           Material(
                                             color: Colors.transparent,
                                             child: InkWell(
-                                              borderRadius: BorderRadius.circular(4),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                               onTap: () {
-                                                Clipboard.setData(ClipboardData(text: invCode));
+                                                Clipboard.setData(
+                                                  ClipboardData(text: invCode),
+                                                );
                                                 AppSnackbar.success(
                                                   title: 'Copied',
-                                                  message: 'Invitation code copied to clipboard',
+                                                  message:
+                                                      'Invitation code copied to clipboard',
                                                 );
                                               },
                                               child: const Padding(
@@ -10249,93 +11343,102 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     ),
                                   ),
                                 ),
-                              const SizedBox(width: 8),
+                                const SizedBox(width: 8),
 
-                              // 5. Agenda & Schedule
-                              Expanded(
-                                flex: 5,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      agenda,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF1E293B),
+                                // 5. Agenda & Schedule
+                                Expanded(
+                                  flex: 5,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        agenda,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      '$periodStart - $periodEnd',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w400,
-                                        color: const Color(0xFF64748B),
+                                      Text(
+                                        '$periodStart - $periodEnd',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w400,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // 6. Vehicle Plate
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  plate.isNotEmpty && plate != '-' ? plate : '-',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF475569),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // 7. Status
-                              Expanded(
-                                flex: 3,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
-                                    decoration: BoxDecoration(
-                                      color: statusBg,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: statusBorder),
-                                    ),
-                                    child: Text(
-                                      rawStatus,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: statusColor,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }),
-              ),
+                                const SizedBox(width: 8),
+
+                                // 6. Vehicle Plate
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    plate.isNotEmpty && plate != '-'
+                                        ? plate
+                                        : '-',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF475569),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+
+                                // 7. Status
+                                Expanded(
+                                  flex: 3,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 3.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: statusBg,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: statusBorder),
+                                      ),
+                                      child: Text(
+                                        rawStatus,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: statusColor,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }),
+                ),
 
                 // ── Dialog Bottom Pagination Footer ────────────────────────
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 12,
+                  ),
                   decoration: const BoxDecoration(
                     color: Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.only(
@@ -10370,11 +11473,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
                               ),
                               child: Text(
                                 'Max rows: $length',
@@ -10387,11 +11495,16 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             ),
                             const SizedBox(width: 10),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                                border: Border.all(
+                                  color: const Color(0xFFBFDBFE),
+                                ),
                               ),
                               child: Text(
                                 'Page $page of $totalPages',
@@ -10407,7 +11520,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFCBD5E1)),
+                                border: Border.all(
+                                  color: const Color(0xFFCBD5E1),
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.03),
@@ -10419,8 +11534,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               child: Row(
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                                    color: hasPrev ? const Color(0xFF003082) : const Color(0xFFCBD5E1),
+                                    icon: const Icon(
+                                      Icons.chevron_left_rounded,
+                                      size: 20,
+                                    ),
+                                    color: hasPrev
+                                        ? const Color(0xFF003082)
+                                        : const Color(0xFFCBD5E1),
                                     onPressed: hasPrev
                                         ? () {
                                             controller.fetchUpcomingVisitors(
@@ -10431,7 +11551,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         : null,
                                     tooltip: hasPrev ? 'Previous Page' : null,
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(minWidth: 34, minHeight: 30),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 34,
+                                      minHeight: 30,
+                                    ),
                                   ),
                                   Container(
                                     width: 1,
@@ -10439,8 +11562,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     color: const Color(0xFFE2E8F0),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.chevron_right_rounded, size: 20),
-                                    color: hasNext ? const Color(0xFF003082) : const Color(0xFFCBD5E1),
+                                    icon: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 20,
+                                    ),
+                                    color: hasNext
+                                        ? const Color(0xFF003082)
+                                        : const Color(0xFFCBD5E1),
                                     onPressed: hasNext
                                         ? () {
                                             controller.fetchUpcomingVisitors(
@@ -10451,7 +11579,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         : null,
                                     tooltip: hasNext ? 'Next Page' : null,
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(minWidth: 34, minHeight: 30),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 34,
+                                      minHeight: 30,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -10475,12 +11606,27 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     try {
       DateTime dt;
       final clean = raw.trim();
-      if (clean.endsWith('Z') || clean.contains('+') || (clean.length > 19 && clean.substring(19).contains('-'))) {
+      if (clean.endsWith('Z') ||
+          clean.contains('+') ||
+          (clean.length > 19 && clean.substring(19).contains('-'))) {
         dt = DateTime.parse(clean).toLocal();
       } else {
         dt = DateTime.parse('${clean}Z').toLocal();
       }
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       final day = dt.day.toString().padLeft(2, '0');
       final month = months[dt.month - 1];
       final hour = dt.hour.toString().padLeft(2, '0');
@@ -10508,7 +11654,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         return Dialog(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
