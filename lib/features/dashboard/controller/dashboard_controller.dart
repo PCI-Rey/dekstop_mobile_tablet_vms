@@ -19,10 +19,12 @@ class DashboardController extends GetxController {
   final rxIsPermissionsLoaded = false.obs;
 
   bool can(String permission) {
-    if (!rxIsPermissionsLoaded.value)
+    if (!rxIsPermissionsLoaded.value) {
       return true; // Safe fallback during initial load
-    if (rxUserPermissions.isEmpty)
+    }
+    if (rxUserPermissions.isEmpty) {
       return true; // Safe fallback if no permissions configured
+    }
     return rxUserPermissions.contains(permission);
   }
 
@@ -994,8 +996,9 @@ class DashboardController extends GetxController {
             if (selectedCatName.isNotEmpty &&
                 (vTypeName == selectedCatName ||
                     vTypeName.contains(selectedCatName) ||
-                    selectedCatName.contains(vTypeName)))
+                    selectedCatName.contains(vTypeName))) {
               return true;
+            }
             return false;
           }).toList();
 
@@ -2874,7 +2877,7 @@ class DashboardController extends GetxController {
       item['site_place_name'] ?? item['site'],
       fallback: 'Gedung SINERGI',
     );
-    if (!rawSiteName.contains(',') && rxPraRegSites.isNotEmpty) {
+    if (rxPraRegSites.isNotEmpty) {
       final matchedSite = rxPraRegSites.firstWhereOrNull(
         (s) =>
             (s['name'] ?? '').toString().trim().toLowerCase() ==
@@ -2882,16 +2885,22 @@ class DashboardController extends GetxController {
             (s['id'] ?? '').toString().trim().toLowerCase() ==
                 rawSiteName.toLowerCase(),
       );
-      if (matchedSite != null && matchedSite['is_child'] == true) {
-        final pId = (matchedSite['parent'] ?? '')
-            .toString()
-            .trim()
-            .toLowerCase();
-        final parent = rxPraRegSites.firstWhereOrNull(
-          (p) => (p['id'] ?? '').toString().trim().toLowerCase() == pId,
+      if (matchedSite != null) {
+        rawSiteName = (matchedSite['name'] ?? rawSiteName).toString();
+      } else if (rawSiteName.contains(',')) {
+        // If an invitation had "Child, Parent" or "Parent, Child", display just the child site name
+        final parts = rawSiteName.split(',').map((e) => e.trim()).toList();
+        final childMatch = rxPraRegSites.firstWhereOrNull(
+          (s) =>
+              (s['is_child'] == true || s['is_child'] == 1) &&
+              parts.any((p) =>
+                  p.toLowerCase() ==
+                  (s['name'] ?? '').toString().trim().toLowerCase()),
         );
-        if (parent != null) {
-          rawSiteName = '${matchedSite['name']}, ${parent['name']}';
+        if (childMatch != null) {
+          rawSiteName = (childMatch['name'] ?? parts.first).toString();
+        } else {
+          rawSiteName = parts.first;
         }
       }
     }
