@@ -36,7 +36,8 @@ class UploadedFileData {
 
   String get sizeFormatted {
     if (sizeBytes < 1024) return '$sizeBytes B';
-    if (sizeBytes < 1024 * 1024) return '${(sizeBytes / 1024).toStringAsFixed(1)} KB';
+    if (sizeBytes < 1024 * 1024)
+      return '${(sizeBytes / 1024).toStringAsFixed(1)} KB';
     return '${(sizeBytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 }
@@ -141,6 +142,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
   // --- Step 3 State: Purpose Visit ---
   Map<String, dynamic>? _selectedDestination;
+  Map<String, dynamic>? _selectedParentSite;
+  bool _isParentSiteChecked = true;
+  Map<String, dynamic>? _selectedChildBuilding;
+  bool _isChildBuildingChecked = false;
   Map<String, dynamic>? _selectedPicHost;
   String? _selectedAgenda;
   final TextEditingController _otherAgendaController = TextEditingController();
@@ -161,8 +166,6 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   bool _singleIsDriving = false;
   String? _singleVehicleType;
   final TextEditingController _singleVehiclePlateCtrl = TextEditingController();
-
-
 
   // --- Step 5 & 6 State: Documents ---
   UploadedFileData? _singleSelfieImage;
@@ -216,7 +219,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // ─────────────────────────────────────────────────────────────────────────
   List<String> _getDynamicStepTitles() {
     final titles = ['User Type', 'Visitor Information', 'Purpose Visit'];
-    final sections = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sections =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
 
     if (sections != null && sections.isNotEmpty) {
       bool hasVehicle = false;
@@ -228,11 +232,16 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         final name = (sec['name'] ?? '').toString().toLowerCase();
         final isDoc = sec['is_document'] == true;
 
-        if (name.contains('vehicle') || name.contains('parking') || sec['sort'] == 2) {
+        if (name.contains('vehicle') ||
+            name.contains('parking') ||
+            sec['sort'] == 2) {
           hasVehicle = true;
         } else if (isDoc && (name.contains('selfie') || sec['sort'] == 3)) {
           hasSelfie = true;
-        } else if (isDoc && (name.contains('ktp') || name.contains('identity') || sec['sort'] == 4)) {
+        } else if (isDoc &&
+            (name.contains('ktp') ||
+                name.contains('identity') ||
+                sec['sort'] == 4)) {
           hasKtp = true;
         }
       }
@@ -257,7 +266,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // Form Field Readers (Matching Pra-Register logic from /visitor-type/{id})
   // ─────────────────────────────────────────────────────────────────────────
   List<Map<String, dynamic>> _getVisitorInfoPraFormFields() {
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sectionsRaw =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       for (var s in sectionsRaw) {
         final sec = Map<String, dynamic>.from(s as Map);
@@ -265,7 +275,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         if (isDoc) continue;
         final secName = (sec['name'] ?? '').toString().toLowerCase();
         if (secName.contains('visitor info') || sec['sort'] == 0) {
-          final form = (sec['visit_form'] as List<dynamic>?) ?? (sec['pra_form'] as List<dynamic>?) ?? [];
+          final form =
+              (sec['visit_form'] as List<dynamic>?) ??
+              (sec['pra_form'] as List<dynamic>?) ??
+              [];
           return form
               .where((f) => f['is_enable'] == true)
               .map((f) => Map<String, dynamic>.from(f as Map))
@@ -274,17 +287,48 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       }
     }
     return [
-      {'remarks': 'is_employee', 'long_display_text': 'Are you Employee?', 'mandatory': true, 'field_type': 5},
-      {'remarks': 'name', 'long_display_text': 'Full Name', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'email', 'long_display_text': 'Email', 'mandatory': true, 'field_type': 2},
-      {'remarks': 'organization', 'long_display_text': 'Department / Organization / Company', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'phone', 'long_display_text': 'Phone', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'indentity_id', 'long_display_text': 'Identity (KTP)', 'mandatory': true, 'field_type': 0},
+      {
+        'remarks': 'is_employee',
+        'long_display_text': 'Are you Employee?',
+        'mandatory': true,
+        'field_type': 5,
+      },
+      {
+        'remarks': 'name',
+        'long_display_text': 'Full Name',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'email',
+        'long_display_text': 'Email',
+        'mandatory': true,
+        'field_type': 2,
+      },
+      {
+        'remarks': 'organization',
+        'long_display_text': 'Department / Organization / Company',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'phone',
+        'long_display_text': 'Phone',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'indentity_id',
+        'long_display_text': 'Identity (KTP)',
+        'mandatory': true,
+        'field_type': 0,
+      },
     ];
   }
 
   List<Map<String, dynamic>> _getPurposeVisitPraFormFields() {
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sectionsRaw =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       for (var s in sectionsRaw) {
         final sec = Map<String, dynamic>.from(s as Map);
@@ -292,7 +336,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         if (isDoc) continue;
         final secName = (sec['name'] ?? '').toString().toLowerCase();
         if (secName.contains('purpose') || sec['sort'] == 1) {
-          final form = (sec['visit_form'] as List<dynamic>?) ?? (sec['pra_form'] as List<dynamic>?) ?? [];
+          final form =
+              (sec['visit_form'] as List<dynamic>?) ??
+              (sec['pra_form'] as List<dynamic>?) ??
+              [];
           return form
               .where((f) => f['is_enable'] == true)
               .map((f) => Map<String, dynamic>.from(f as Map))
@@ -301,17 +348,44 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       }
     }
     return [
-      {'remarks': 'site_place', 'long_display_text': 'Destination', 'mandatory': true, 'field_type': 3},
-      {'remarks': 'host', 'long_display_text': 'PIC Host', 'mandatory': true, 'field_type': 3},
-      {'remarks': 'agenda', 'long_display_text': 'Agenda', 'mandatory': true, 'field_type': 0},
-      {'remarks': 'visitor_period_start', 'long_display_text': 'Visit Start', 'mandatory': true, 'field_type': 9},
-      {'remarks': 'visitor_period_end', 'long_display_text': 'Visit End', 'mandatory': true, 'field_type': 9},
+      {
+        'remarks': 'site_place',
+        'long_display_text': 'Destination',
+        'mandatory': true,
+        'field_type': 3,
+      },
+      {
+        'remarks': 'host',
+        'long_display_text': 'PIC Host',
+        'mandatory': true,
+        'field_type': 3,
+      },
+      {
+        'remarks': 'agenda',
+        'long_display_text': 'Agenda',
+        'mandatory': true,
+        'field_type': 0,
+      },
+      {
+        'remarks': 'visitor_period_start',
+        'long_display_text': 'Visit Start',
+        'mandatory': true,
+        'field_type': 9,
+      },
+      {
+        'remarks': 'visitor_period_end',
+        'long_display_text': 'Visit End',
+        'mandatory': true,
+        'field_type': 9,
+      },
     ];
   }
 
   List<String> _getRolesForSelectedType() {
-    final rolesRaw = (_visitorTypeDetail?['visitor_roles'] ??
-        _selectedVisitorType?['visitor_roles']) as List<dynamic>?;
+    final rolesRaw =
+        (_visitorTypeDetail?['visitor_roles'] ??
+                _selectedVisitorType?['visitor_roles'])
+            as List<dynamic>?;
     if (rolesRaw != null && rolesRaw.isNotEmpty) {
       final roles = rolesRaw
           .map((r) => (r['role'] ?? '').toString())
@@ -324,8 +398,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   }
 
   List<DropdownMenuItemData<String>> _getVehicleTypeOptions() {
-    final sectionsRaw = (_visitorTypeDetail?['section_page_visitor_types'] ??
-            _selectedVisitorType?['section_page_visitor_types']) as List<dynamic>?;
+    final sectionsRaw =
+        (_visitorTypeDetail?['section_page_visitor_types'] ??
+                _selectedVisitorType?['section_page_visitor_types'])
+            as List<dynamic>?;
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       for (final s in sectionsRaw) {
         if (s is! Map) continue;
@@ -337,19 +413,28 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         for (final f in forms) {
           if (f is! Map) continue;
           final field = Map<String, dynamic>.from(f);
-          final remarks = (field['remarks'] ?? '').toString().toLowerCase().trim();
-          final shortName = (field['short_name'] ?? '').toString().toLowerCase().trim();
+          final remarks = (field['remarks'] ?? '')
+              .toString()
+              .toLowerCase()
+              .trim();
+          final shortName = (field['short_name'] ?? '')
+              .toString()
+              .toLowerCase()
+              .trim();
           if (remarks == 'vehicle_type' || shortName.contains('vehicle type')) {
-            final multipleOptions = field['multiple_option_fields'] as List<dynamic>?;
+            final multipleOptions =
+                field['multiple_option_fields'] as List<dynamic>?;
             if (multipleOptions != null && multipleOptions.isNotEmpty) {
               return multipleOptions.map((opt) {
                 final optMap = Map<String, dynamic>.from(opt as Map);
-                final val = (optMap['value'] ?? optMap['name'] ?? '').toString();
-                final name = (optMap['name'] ?? optMap['value'] ?? '').toString();
+                final val = (optMap['value'] ?? optMap['name'] ?? '')
+                    .toString();
+                final name = (optMap['name'] ?? optMap['value'] ?? '')
+                    .toString();
                 final displayLabel = name.isNotEmpty
                     ? (name.length > 1
-                        ? '${name[0].toUpperCase()}${name.substring(1)}'
-                        : name.toUpperCase())
+                          ? '${name[0].toUpperCase()}${name.substring(1)}'
+                          : name.toUpperCase())
                     : val;
                 return DropdownMenuItemData<String>(
                   value: val,
@@ -398,12 +483,18 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     setState(() {
       _singleSelectedData = item;
       _singleIsSearchOpen = false;
-      _singleSearchCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
-      _singleFullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
+      _singleSearchCtrl.text = (item['name'] ?? item['visitor_name'] ?? '')
+          .toString();
+      _singleFullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '')
+          .toString();
       _singleEmailCtrl.text = (item['email'] ?? '').toString();
       _singlePhoneCtrl.text = (item['phone'] ?? '').toString();
-      _singleOrgCtrl.text = _extractOrganizationName(item['Organization'] ?? item['organization'], item['company']);
-      _singleIdentityCtrl.text = (item['identity_id'] ?? item['indentity_id'] ?? '').toString();
+      _singleOrgCtrl.text = _extractOrganizationName(
+        item['Organization'] ?? item['organization'],
+        item['company'],
+      );
+      _singleIdentityCtrl.text =
+          (item['identity_id'] ?? item['indentity_id'] ?? '').toString();
     });
   }
 
@@ -428,12 +519,18 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       final v = _groupVisitors[index];
       v.selectedData = item;
       v.isSearchOpen = false;
-      v.searchCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
-      v.fullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '').toString();
+      v.searchCtrl.text = (item['name'] ?? item['visitor_name'] ?? '')
+          .toString();
+      v.fullNameCtrl.text = (item['name'] ?? item['visitor_name'] ?? '')
+          .toString();
       v.emailCtrl.text = (item['email'] ?? '').toString();
       v.phoneCtrl.text = (item['phone'] ?? '').toString();
-      v.orgCtrl.text = _extractOrganizationName(item['Organization'] ?? item['organization'], item['company']);
-      v.identityCtrl.text = (item['identity_id'] ?? item['indentity_id'] ?? '').toString();
+      v.orgCtrl.text = _extractOrganizationName(
+        item['Organization'] ?? item['organization'],
+        item['company'],
+      );
+      v.identityCtrl.text = (item['identity_id'] ?? item['indentity_id'] ?? '')
+          .toString();
     });
   }
 
@@ -495,12 +592,21 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           if (!isMandatory) continue;
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
           if (remarks == 'is_employee' && v.isEmployee == null) return false;
-          if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty) return false;
-          if (remarks == 'email' && v.emailCtrl.text.trim().isEmpty) return false;
-          if (remarks == 'phone' && v.phoneCtrl.text.trim().isEmpty) return false;
-          if ((remarks == 'organization' || remarks == 'company') && v.orgCtrl.text.trim().isEmpty) return false;
-          if ((remarks == 'identity_id' || remarks == 'indentity_id') && v.identityCtrl.text.trim().isEmpty) return false;
-          if ((remarks == 'visitor_role' || remarks == 'role') && (v.role == null || v.role!.isEmpty)) return false;
+          if (remarks == 'name' && v.fullNameCtrl.text.trim().isEmpty)
+            return false;
+          if (remarks == 'email' && v.emailCtrl.text.trim().isEmpty)
+            return false;
+          if (remarks == 'phone' && v.phoneCtrl.text.trim().isEmpty)
+            return false;
+          if ((remarks == 'organization' || remarks == 'company') &&
+              v.orgCtrl.text.trim().isEmpty)
+            return false;
+          if ((remarks == 'identity_id' || remarks == 'indentity_id') &&
+              v.identityCtrl.text.trim().isEmpty)
+            return false;
+          if ((remarks == 'visitor_role' || remarks == 'role') &&
+              (v.role == null || v.role!.isEmpty))
+            return false;
           if (remarks != 'name' &&
               remarks != 'email' &&
               remarks != 'phone' &&
@@ -512,7 +618,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               remarks != 'role' &&
               remarks != 'is_employee' &&
               remarks != 'employee') {
-            if (v.extraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+            if (v.extraControllers[remarks]?.text.trim().isEmpty ?? true)
+              return false;
           }
         }
       }
@@ -523,12 +630,21 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         if (!isMandatory) continue;
         final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
         if (remarks == 'is_employee' && _singleIsEmployee == null) return false;
-        if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty) return false;
-        if (remarks == 'email' && _singleEmailCtrl.text.trim().isEmpty) return false;
-        if (remarks == 'phone' && _singlePhoneCtrl.text.trim().isEmpty) return false;
-        if ((remarks == 'organization' || remarks == 'company') && _singleOrgCtrl.text.trim().isEmpty) return false;
-        if ((remarks == 'identity_id' || remarks == 'indentity_id') && _singleIdentityCtrl.text.trim().isEmpty) return false;
-        if ((remarks == 'visitor_role' || remarks == 'role') && (_singleRole == null || _singleRole!.isEmpty)) return false;
+        if (remarks == 'name' && _singleFullNameCtrl.text.trim().isEmpty)
+          return false;
+        if (remarks == 'email' && _singleEmailCtrl.text.trim().isEmpty)
+          return false;
+        if (remarks == 'phone' && _singlePhoneCtrl.text.trim().isEmpty)
+          return false;
+        if ((remarks == 'organization' || remarks == 'company') &&
+            _singleOrgCtrl.text.trim().isEmpty)
+          return false;
+        if ((remarks == 'identity_id' || remarks == 'indentity_id') &&
+            _singleIdentityCtrl.text.trim().isEmpty)
+          return false;
+        if ((remarks == 'visitor_role' || remarks == 'role') &&
+            (_singleRole == null || _singleRole!.isEmpty))
+          return false;
         if (remarks != 'name' &&
             remarks != 'email' &&
             remarks != 'phone' &&
@@ -540,7 +656,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             remarks != 'role' &&
             remarks != 'is_employee' &&
             remarks != 'employee') {
-          if (_singleExtraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+          if (_singleExtraControllers[remarks]?.text.trim().isEmpty ?? true)
+            return false;
         }
       }
       return true;
@@ -553,10 +670,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       if (_selectedDestination == null) return false;
       if (_selectedPicHost == null) return false;
       if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
-      if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
+      if (_selectedAgenda == 'Others' &&
+          _otherAgendaController.text.trim().isEmpty)
+        return false;
       if (_visitStart == null) return false;
       if (_visitEnd == null) return false;
-      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
+      if (_visitEnd!.isBefore(_visitStart!) ||
+          _visitEnd!.isAtSameMomentAs(_visitStart!))
+        return false;
       return true;
     }
 
@@ -564,13 +685,20 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       final isMandatory = f['mandatory'] == true;
       if (!isMandatory) continue;
       final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-      if ((remarks == 'site_place' || remarks == 'destination') && _selectedDestination == null) return false;
-      if ((remarks == 'host' || remarks == 'pic_host') && _selectedPicHost == null) return false;
+      if ((remarks == 'site_place' || remarks == 'destination') &&
+          _selectedDestination == null)
+        return false;
+      if ((remarks == 'host' || remarks == 'pic_host') &&
+          _selectedPicHost == null)
+        return false;
       if (remarks == 'agenda') {
         if (_selectedAgenda == null || _selectedAgenda!.isEmpty) return false;
-        if (_selectedAgenda == 'Others' && _otherAgendaController.text.trim().isEmpty) return false;
+        if (_selectedAgenda == 'Others' &&
+            _otherAgendaController.text.trim().isEmpty)
+          return false;
       }
-      if (remarks == 'visitor_period_start' && _visitStart == null) return false;
+      if (remarks == 'visitor_period_start' && _visitStart == null)
+        return false;
       if (remarks == 'visitor_period_end' && _visitEnd == null) return false;
       if (remarks != 'site_place' &&
           remarks != 'destination' &&
@@ -579,11 +707,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           remarks != 'agenda' &&
           remarks != 'visitor_period_start' &&
           remarks != 'visitor_period_end') {
-        if (_purposeExtraControllers[remarks]?.text.trim().isEmpty ?? true) return false;
+        if (_purposeExtraControllers[remarks]?.text.trim().isEmpty ?? true)
+          return false;
       }
     }
     if (_visitStart != null && _visitEnd != null) {
-      if (_visitEnd!.isBefore(_visitStart!) || _visitEnd!.isAtSameMomentAs(_visitStart!)) return false;
+      if (_visitEnd!.isBefore(_visitStart!) ||
+          _visitEnd!.isAtSameMomentAs(_visitStart!))
+        return false;
     }
     return true;
   }
@@ -591,7 +722,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   bool _isBicycle(String? vehicleType) {
     if (vehicleType == null) return false;
     final t = vehicleType.toLowerCase().trim();
-    return t == 'bicycle' || t == 'sepeda' || t.contains('bicycle') || t.contains('sepeda') || t == 'bike';
+    return t == 'bicycle' ||
+        t == 'sepeda' ||
+        t.contains('bicycle') ||
+        t.contains('sepeda') ||
+        t == 'bike';
   }
 
   bool get _isStep4Valid {
@@ -599,14 +734,19 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       for (final v in _groupVisitors) {
         if (v.isDriving == true) {
           if (v.vehicleType == null || v.vehicleType!.isEmpty) return false;
-          if (!_isBicycle(v.vehicleType) && v.vehiclePlateCtrl.text.trim().isEmpty) return false;
+          if (!_isBicycle(v.vehicleType) &&
+              v.vehiclePlateCtrl.text.trim().isEmpty)
+            return false;
         }
       }
       return true;
     } else {
       if (_singleIsDriving == true) {
-        if (_singleVehicleType == null || _singleVehicleType!.isEmpty) return false;
-        if (!_isBicycle(_singleVehicleType) && _singleVehiclePlateCtrl.text.trim().isEmpty) return false;
+        if (_singleVehicleType == null || _singleVehicleType!.isEmpty)
+          return false;
+        if (!_isBicycle(_singleVehicleType) &&
+            _singleVehiclePlateCtrl.text.trim().isEmpty)
+          return false;
       }
       return true;
     }
@@ -660,13 +800,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           }
         }
       } catch (filePickerErr) {
-        debugPrint('FilePicker error, attempting ImagePicker fallback: $filePickerErr');
+        debugPrint(
+          'FilePicker error, attempting ImagePicker fallback: $filePickerErr',
+        );
       }
 
       // 2. Fallback to ImagePicker if FilePicker did not obtain a file
       if (fileBytes == null && fileName == null) {
         try {
-          final photo = await _imagePicker.pickImage(source: ImageSource.gallery);
+          final photo = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+          );
           if (photo != null) {
             fileBytes = await photo.readAsBytes();
             fileName = photo.name;
@@ -697,7 +841,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       if (size > _maxFileSizeBytes) {
         AppSnackbar.error(
           title: 'File Too Large',
-          message: 'File size exceeds the 5 MB limit. Please choose a smaller image.',
+          message:
+              'File size exceeds the 5 MB limit. Please choose a smaller image.',
         );
         return;
       }
@@ -728,7 +873,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
       AppSnackbar.success(
         title: 'Image Uploaded',
-        message: '${isKtp ? 'KTP' : 'Selfie'} image uploaded successfully (${uploaded.sizeFormatted}).',
+        message:
+            '${isKtp ? 'KTP' : 'Selfie'} image uploaded successfully (${uploaded.sizeFormatted}).',
       );
     } catch (e) {
       debugPrint('Error picking file: $e');
@@ -755,7 +901,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       final size = bytes.length;
       final ext = photo.name.split('.').last.toLowerCase();
 
-      if (!_allowedExtensions.contains(ext) && ext != 'jpg' && ext != 'jpeg' && ext != 'png') {
+      if (!_allowedExtensions.contains(ext) &&
+          ext != 'jpg' &&
+          ext != 'jpeg' &&
+          ext != 'png') {
         AppSnackbar.error(
           title: 'Invalid Image Format',
           message: 'Camera image format is not supported (JPG/PNG only).',
@@ -797,12 +946,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
       AppSnackbar.success(
         title: 'Photo Captured',
-        message: '${isKtp ? 'KTP' : 'Selfie'} photo captured successfully (${uploaded.sizeFormatted}).',
+        message:
+            '${isKtp ? 'KTP' : 'Selfie'} photo captured successfully (${uploaded.sizeFormatted}).',
       );
     } catch (e) {
       debugPrint('Error capturing photo: $e');
       // If camera plugin is not available on Windows, open file dialog as graceful fallback
-      _pickImageFile(isKtp: isKtp, isGroupMember: isGroupMember, groupIndex: groupIndex);
+      _pickImageFile(
+        isKtp: isKtp,
+        isGroupMember: isGroupMember,
+        groupIndex: groupIndex,
+      );
     }
   }
 
@@ -902,9 +1056,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             _buildStepper(),
             const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
           ],
-          Expanded(
-            child: _buildCurrentStepContent(),
-          ),
+          Expanded(child: _buildCurrentStepContent()),
           const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
           _buildFooter(),
         ],
@@ -929,7 +1081,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF64748B)),
+            icon: const Icon(
+              Icons.close_rounded,
+              size: 22,
+              color: Color(0xFF64748B),
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -940,12 +1096,38 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   bool _isStepCompleted(int stepNum) {
     if (stepNum == _currentStep) return false;
     if (stepNum > _maxStepReached) return false;
-    if (stepNum == 1) return _isStep1Valid && (_currentStep > 1 || _maxStepReached > 1);
-    if (stepNum == 2) return _isStep1Valid && _isStep2Valid && (_currentStep > 2 || _maxStepReached > 2);
-    if (stepNum == 3) return _isStep1Valid && _isStep2Valid && _isStep3Valid && (_currentStep > 3 || _maxStepReached > 3);
-    if (stepNum == 4) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && (_currentStep > 4 || _maxStepReached > 4);
-    if (stepNum == 5) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid && (_currentStep > 5 || _maxStepReached > 5);
-    if (stepNum == 6) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid && _isStep6Valid && (_currentStep > 6 || _maxStepReached > 6);
+    if (stepNum == 1)
+      return _isStep1Valid && (_currentStep > 1 || _maxStepReached > 1);
+    if (stepNum == 2)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          (_currentStep > 2 || _maxStepReached > 2);
+    if (stepNum == 3)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          _isStep3Valid &&
+          (_currentStep > 3 || _maxStepReached > 3);
+    if (stepNum == 4)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          _isStep3Valid &&
+          _isStep4Valid &&
+          (_currentStep > 4 || _maxStepReached > 4);
+    if (stepNum == 5)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          _isStep3Valid &&
+          _isStep4Valid &&
+          _isStep5Valid &&
+          (_currentStep > 5 || _maxStepReached > 5);
+    if (stepNum == 6)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          _isStep3Valid &&
+          _isStep4Valid &&
+          _isStep5Valid &&
+          _isStep6Valid &&
+          (_currentStep > 6 || _maxStepReached > 6);
     return false;
   }
 
@@ -955,8 +1137,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     if (stepNum == 2) return _isStep1Valid;
     if (stepNum == 3) return _isStep1Valid && _isStep2Valid;
     if (stepNum == 4) return _isStep1Valid && _isStep2Valid && _isStep3Valid;
-    if (stepNum == 5) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid;
-    if (stepNum == 6) return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid;
+    if (stepNum == 5)
+      return _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid;
+    if (stepNum == 6)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          _isStep3Valid &&
+          _isStep4Valid &&
+          _isStep5Valid;
     return false;
   }
 
@@ -977,22 +1165,43 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             final stepBefore = (index ~/ 2) + 1;
             bool isConnectorCompleted = false;
             if (stepBefore == 1) {
-              isConnectorCompleted = _isStep1Valid && (_currentStep >= 2 || _maxStepReached >= 2);
+              isConnectorCompleted =
+                  _isStep1Valid && (_currentStep >= 2 || _maxStepReached >= 2);
             } else if (stepBefore == 2) {
-              isConnectorCompleted = _isStep1Valid && _isStep2Valid && (_currentStep >= 3 || _maxStepReached >= 3);
+              isConnectorCompleted =
+                  _isStep1Valid &&
+                  _isStep2Valid &&
+                  (_currentStep >= 3 || _maxStepReached >= 3);
             } else if (stepBefore == 3) {
-              isConnectorCompleted = _isStep1Valid && _isStep2Valid && _isStep3Valid && (_currentStep >= 4 || _maxStepReached >= 4);
+              isConnectorCompleted =
+                  _isStep1Valid &&
+                  _isStep2Valid &&
+                  _isStep3Valid &&
+                  (_currentStep >= 4 || _maxStepReached >= 4);
             } else if (stepBefore == 4) {
-              isConnectorCompleted = _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && (_currentStep >= 5 || _maxStepReached >= 5);
+              isConnectorCompleted =
+                  _isStep1Valid &&
+                  _isStep2Valid &&
+                  _isStep3Valid &&
+                  _isStep4Valid &&
+                  (_currentStep >= 5 || _maxStepReached >= 5);
             } else if (stepBefore == 5) {
-              isConnectorCompleted = _isStep1Valid && _isStep2Valid && _isStep3Valid && _isStep4Valid && _isStep5Valid && (_currentStep >= 6 || _maxStepReached >= 6);
+              isConnectorCompleted =
+                  _isStep1Valid &&
+                  _isStep2Valid &&
+                  _isStep3Valid &&
+                  _isStep4Valid &&
+                  _isStep5Valid &&
+                  (_currentStep >= 6 || _maxStepReached >= 6);
             }
 
             return Container(
               width: 50,
               height: 2,
               margin: const EdgeInsets.only(top: 12, left: 10, right: 10),
-              color: isConnectorCompleted ? const Color(0xFF004385) : const Color(0xFFE2E8F0),
+              color: isConnectorCompleted
+                  ? const Color(0xFF004385)
+                  : const Color(0xFFE2E8F0),
             );
           }
 
@@ -1003,7 +1212,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           final showCheckmark = isCompleted && !isActive;
 
           return MouseRegion(
-            cursor: canJump ? SystemMouseCursors.click : SystemMouseCursors.basic,
+            cursor: canJump
+                ? SystemMouseCursors.click
+                : SystemMouseCursors.basic,
             child: InkWell(
               onTap: canJump
                   ? () => setState(() {
@@ -1027,11 +1238,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         shape: BoxShape.circle,
                         color: isActive || isCompleted
                             ? const Color(0xFF004385)
-                            : (canJump ? const Color(0xFF94A3B8) : const Color(0xFFCBD5E1)),
+                            : (canJump
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFFCBD5E1)),
                       ),
                       child: Center(
                         child: showCheckmark
-                            ? const Icon(Icons.check, size: 14, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 14,
+                                color: Colors.white,
+                              )
                             : Text(
                                 '$stepNum',
                                 style: GoogleFonts.inter(
@@ -1049,12 +1266,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                       maxLines: 2,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isActive
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isActive
                             ? const Color(0xFF004385)
                             : (isCompleted || canJump
-                                ? const Color(0xFF1E293B)
-                                : const Color(0xFF64748B)),
+                                  ? const Color(0xFF1E293B)
+                                  : const Color(0xFF64748B)),
                       ),
                     ),
                   ],
@@ -1070,7 +1289,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   Widget _buildCurrentStepContent() {
     if (_currentStep == 0) return _buildStep0SelfOrOthers();
     if (_currentStep == 1) return _buildStep1UserType();
-    if (_currentStep == 2) return (_isGroup == true) ? _buildStep2GroupVisitorInfo() : _buildStep2SingleVisitorInfo();
+    if (_currentStep == 2)
+      return (_isGroup == true)
+          ? _buildStep2GroupVisitorInfo()
+          : _buildStep2SingleVisitorInfo();
     if (_currentStep == 3) return _buildStep3PurposeVisit();
     if (_currentStep == 4) return _buildStep4VehicleInfo();
     if (_currentStep == 5) return _buildStep5SelfieImage();
@@ -1152,7 +1374,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                       child: _buildSelfOthersCard(
                         keyName: 'self',
                         title: 'Self',
-                        subtitle: 'Use this option if you are registering yourself.',
+                        subtitle:
+                            'Use this option if you are registering yourself.',
                         isSelected: _invitationTarget == 'self',
                         onTap: () => setState(() => _invitationTarget = 'self'),
                       ),
@@ -1162,9 +1385,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                       child: _buildSelfOthersCard(
                         keyName: 'others',
                         title: 'Others',
-                        subtitle: 'Use this option if you are creating an invitation for someone else.',
+                        subtitle:
+                            'Use this option if you are creating an invitation for someone else.',
                         isSelected: _invitationTarget == 'others',
-                        onTap: () => setState(() => _invitationTarget = 'others'),
+                        onTap: () =>
+                            setState(() => _invitationTarget = 'others'),
                       ),
                     ),
                   ],
@@ -1196,7 +1421,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+              color: isSelected
+                  ? const Color(0xFF004385)
+                  : const Color(0xFFCBD5E1),
               width: isSelected ? 1.8 : 1.2,
             ),
             boxShadow: isSelected
@@ -1219,7 +1446,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                    color: isSelected
+                        ? const Color(0xFF004385)
+                        : const Color(0xFF94A3B8),
                     width: 2,
                   ),
                 ),
@@ -1282,18 +1511,34 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   // Step 1: User Type
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildStep1UserType() {
-    final List<Map<String, dynamic>> visitorTypes = controller.rxPraRegVisitorTypes.isNotEmpty
+    final List<Map<String, dynamic>> visitorTypes =
+        controller.rxPraRegVisitorTypes.isNotEmpty
         ? controller.rxPraRegVisitorTypes.toList()
         : <Map<String, dynamic>>[
-            {'name': 'All Access (VIP)', 'id': '29b12a27-cff3-44dc-be0f-4a743510b836'},
+            {
+              'name': 'All Access (VIP)',
+              'id': '29b12a27-cff3-44dc-be0f-4a743510b836',
+            },
             {'name': 'CIT', 'id': '0eac503e-d0c9-4ba5-afac-99a0b94e44f3'},
-            {'name': 'General Visitor', 'id': '1e7ab7a0-1fdd-4546-b65f-6a8dcc345148'},
-            {'name': 'Non Remise', 'id': '3e903b97-bb4a-42bb-a840-b2316202ea7d'},
+            {
+              'name': 'General Visitor',
+              'id': '1e7ab7a0-1fdd-4546-b65f-6a8dcc345148',
+            },
+            {
+              'name': 'Non Remise',
+              'id': '3e903b97-bb4a-42bb-a840-b2316202ea7d',
+            },
             {'name': 'Remise', 'id': 'f0bd33a4-427a-4110-ab19-6e423dafa3e5'},
             {'name': 'Staff', 'id': '2e8a7639-84f9-42ab-8096-304c259245db'},
             {'name': 'Umum', 'id': 'e0533de1-52a7-4b47-8e80-79239d8f723d'},
-            {'name': 'Utility Maintenance', 'id': 'b3618bd5-b6f0-4329-9cf5-6c853970217d'},
-            {'name': 'Visitor Resident', 'id': '4bd22555-12fc-4aea-84a3-2163fe7dadc7'},
+            {
+              'name': 'Utility Maintenance',
+              'id': 'b3618bd5-b6f0-4329-9cf5-6c853970217d',
+            },
+            {
+              'name': 'Visitor Resident',
+              'id': '4bd22555-12fc-4aea-84a3-2163fe7dadc7',
+            },
           ];
 
     return SingleChildScrollView(
@@ -1307,17 +1552,23 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             spacing: 12,
             runSpacing: 12,
             children: visitorTypes.map((type) {
-              final isSelected = _selectedVisitorType != null &&
+              final isSelected =
+                  _selectedVisitorType != null &&
                   _selectedVisitorType!['id'] == type['id'];
               return InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: () => _onVisitorTypeSelected(type),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+                      color: isSelected
+                          ? const Color(0xFF004385)
+                          : const Color(0xFFCBD5E1),
                       width: isSelected ? 1.5 : 1,
                     ),
                     borderRadius: BorderRadius.circular(8),
@@ -1326,17 +1577,25 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
                         size: 18,
-                        color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                        color: isSelected
+                            ? const Color(0xFF004385)
+                            : const Color(0xFF94A3B8),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         type['name']?.toString() ?? '',
                         style: GoogleFonts.inter(
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? const Color(0xFF004385) : const Color(0xFF1E293B),
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFF004385)
+                              : const Color(0xFF1E293B),
                         ),
                       ),
                     ],
@@ -1352,7 +1611,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           const SizedBox(height: 4),
           Text(
             'Is this visit for one or more than one visitor?',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -1399,7 +1661,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
           border: Border.all(
-            color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+            color: isSelected
+                ? const Color(0xFF004385)
+                : const Color(0xFFCBD5E1),
             width: isSelected ? 1.5 : 1,
           ),
           borderRadius: BorderRadius.circular(10),
@@ -1411,7 +1675,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               height: 38,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? const Color(0xFF004385) : const Color(0xFFF1F5F9),
+                color: isSelected
+                    ? const Color(0xFF004385)
+                    : const Color(0xFFF1F5F9),
               ),
               child: Icon(
                 icon,
@@ -1436,18 +1702,27 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B)),
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: const Color(0xFF64748B),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF94A3B8)),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: Color(0xFF94A3B8),
+            ),
             const SizedBox(width: 8),
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
               size: 20,
-              color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+              color: isSelected
+                  ? const Color(0xFF004385)
+                  : const Color(0xFF94A3B8),
             ),
           ],
         ),
@@ -1467,7 +1742,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
     final filtered = searchList.where((it) {
       if (searchQuery.isEmpty) return true;
-      final name = (it['name'] ?? it['visitor_name'] ?? '').toString().toLowerCase();
+      final name = (it['name'] ?? it['visitor_name'] ?? '')
+          .toString()
+          .toLowerCase();
       final email = (it['email'] ?? '').toString().toLowerCase();
       final phone = (it['phone'] ?? '').toString().toLowerCase();
       return name.contains(searchQuery) ||
@@ -1482,14 +1759,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         children: [
           // Top Search Bar (Search Employee / Search Visitor with instant autofill)
           _buildSearchInput(
-            hint: _singleIsEmployee == true ? 'Search Employee' : 'Search Visitor',
+            hint: _singleIsEmployee == true
+                ? 'Search Employee'
+                : 'Search Visitor',
             controller: _singleSearchCtrl,
             isSearchOpen: _singleIsSearchOpen,
             selectedData: _singleSelectedData,
             filteredItems: filtered,
             isEmployeeMode: _singleIsEmployee == true,
             onTap: () => setState(() => _singleIsSearchOpen = true),
-            onToggleOpen: () => setState(() => _singleIsSearchOpen = !_singleIsSearchOpen),
+            onToggleOpen: () =>
+                setState(() => _singleIsSearchOpen = !_singleIsSearchOpen),
             onChanged: (val) => setState(() => _singleIsSearchOpen = true),
             onClear: _clearSingle,
             onSelect: _onSingleSelect,
@@ -1499,8 +1779,12 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
           // Dynamic fields according to /visitor-type/{id} configuration
           ...fields.map((f) {
-            final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-            var label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+            final remarks = (f['remarks'] ?? '')
+                .toString()
+                .toLowerCase()
+                .trim();
+            var label = (f['long_display_text'] ?? f['short_name'] ?? '')
+                .toString();
             final isMandatory = f['mandatory'] == true;
 
             if (remarks == 'is_employee') {
@@ -1509,7 +1793,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFormFieldLabel(label.isNotEmpty ? label : 'Are you Employee?', isRequired: isMandatory),
+                    _buildFormFieldLabel(
+                      label.isNotEmpty ? label : 'Are you Employee?',
+                      isRequired: isMandatory,
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1560,7 +1847,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildFormFieldLabel(label.isNotEmpty ? label : 'Role', isRequired: isMandatory),
+                    _buildFormFieldLabel(
+                      label.isNotEmpty ? label : 'Role',
+                      isRequired: isMandatory,
+                    ),
                     const SizedBox(height: 6),
                     _buildCleanDropdownField<String>(
                       hint: 'Select ${label.isNotEmpty ? label : 'Role'}',
@@ -1575,7 +1865,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               );
             }
 
-            if (remarks == 'organization' || remarks == 'company' || label.toLowerCase().contains('inst')) {
+            if (remarks == 'organization' ||
+                remarks == 'company' ||
+                label.toLowerCase().contains('inst')) {
               label = 'Department / Organization / Company';
             }
 
@@ -1584,7 +1876,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
             if (remarks == 'name') {
               targetCtrl = _singleFullNameCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
             } else if (remarks == 'email') {
               targetCtrl = _singleEmailCtrl;
               hintText = 'Example: name@gmail.com';
@@ -1593,14 +1886,20 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               hintText = 'Enter your department / organization / company';
             } else if (remarks == 'phone') {
               targetCtrl = _singlePhoneCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
             } else if (remarks == 'indentity_id' || remarks == 'identity_id') {
               targetCtrl = _singleIdentityCtrl;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
             } else {
-              _singleExtraControllers.putIfAbsent(remarks, () => TextEditingController());
+              _singleExtraControllers.putIfAbsent(
+                remarks,
+                () => TextEditingController(),
+              );
               targetCtrl = _singleExtraControllers[remarks]!;
-              hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
+              hintText =
+                  'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
             }
 
             return Padding(
@@ -1720,14 +2019,22 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF004385),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
                 onPressed: _addGroupVisitor,
                 icon: const Icon(Icons.add_rounded, size: 16),
                 label: Text(
                   'Add Visitor',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -1742,11 +2049,15 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             separatorBuilder: (context, idx) => const SizedBox(height: 14),
             itemBuilder: (context, idx) {
               final visitor = _groupVisitors[idx];
-              final searchList = visitor.isEmployee == true ? employees : visitors;
+              final searchList = visitor.isEmployee == true
+                  ? employees
+                  : visitors;
               final searchQuery = visitor.searchCtrl.text.trim().toLowerCase();
               final filtered = searchList.where((it) {
                 if (searchQuery.isEmpty) return true;
-                final name = (it['name'] ?? it['visitor_name'] ?? '').toString().toLowerCase();
+                final name = (it['name'] ?? it['visitor_name'] ?? '')
+                    .toString()
+                    .toLowerCase();
                 final email = (it['email'] ?? '').toString().toLowerCase();
                 final phone = (it['phone'] ?? '').toString().toLowerCase();
                 return name.contains(searchQuery) ||
@@ -1791,8 +2102,15 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         if (_groupVisitors.length > 1)
                           IconButton(
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444), size: 18),
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Color(0xFFEF4444),
+                              size: 18,
+                            ),
                             onPressed: () => _removeGroupVisitor(idx),
                           ),
                       ],
@@ -1802,15 +2120,20 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
                     // Search Bar
                     _buildSearchInput(
-                      hint: visitor.isEmployee == true ? 'Search Employee' : 'Search Visitor',
+                      hint: visitor.isEmployee == true
+                          ? 'Search Employee'
+                          : 'Search Visitor',
                       controller: visitor.searchCtrl,
                       isSearchOpen: visitor.isSearchOpen,
                       selectedData: visitor.selectedData,
                       filteredItems: filtered,
                       isEmployeeMode: visitor.isEmployee == true,
                       onTap: () => setState(() => visitor.isSearchOpen = true),
-                      onToggleOpen: () => setState(() => visitor.isSearchOpen = !visitor.isSearchOpen),
-                      onChanged: (val) => setState(() => visitor.isSearchOpen = true),
+                      onToggleOpen: () => setState(
+                        () => visitor.isSearchOpen = !visitor.isSearchOpen,
+                      ),
+                      onChanged: (val) =>
+                          setState(() => visitor.isSearchOpen = true),
                       onClear: () => _clearGroup(idx),
                       onSelect: (item) => _onGroupSelect(idx, item),
                     ),
@@ -1818,8 +2141,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     const SizedBox(height: 12),
 
                     ...fields.map((f) {
-                      final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-                      var label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+                      final remarks = (f['remarks'] ?? '')
+                          .toString()
+                          .toLowerCase()
+                          .trim();
+                      var label =
+                          (f['long_display_text'] ?? f['short_name'] ?? '')
+                              .toString();
                       final isMandatory = f['mandatory'] == true;
 
                       if (remarks == 'is_employee') {
@@ -1828,7 +2156,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildFormFieldLabel(label.isNotEmpty ? label : 'Are you Employee?', isRequired: isMandatory),
+                              _buildFormFieldLabel(
+                                label.isNotEmpty ? label : 'Are you Employee?',
+                                isRequired: isMandatory,
+                              ),
                               const SizedBox(height: 6),
                               Row(
                                 children: [
@@ -1879,22 +2210,32 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildFormFieldLabel(label.isNotEmpty ? label : 'Role', isRequired: isMandatory),
+                              _buildFormFieldLabel(
+                                label.isNotEmpty ? label : 'Role',
+                                isRequired: isMandatory,
+                              ),
                               const SizedBox(height: 6),
                               _buildCleanDropdownField<String>(
-                                hint: 'Select ${label.isNotEmpty ? label : 'Role'}',
+                                hint:
+                                    'Select ${label.isNotEmpty ? label : 'Role'}',
                                 selectedValue: visitor.role,
                                 items: roles.map((r) {
-                                  return DropdownMenuItemData<String>(value: r, label: r);
+                                  return DropdownMenuItemData<String>(
+                                    value: r,
+                                    label: r,
+                                  );
                                 }).toList(),
-                                onSelected: (val) => setState(() => visitor.role = val),
+                                onSelected: (val) =>
+                                    setState(() => visitor.role = val),
                               ),
                             ],
                           ),
                         );
                       }
 
-                      if (remarks == 'organization' || remarks == 'company' || label.toLowerCase().contains('inst')) {
+                      if (remarks == 'organization' ||
+                          remarks == 'company' ||
+                          label.toLowerCase().contains('inst')) {
                         label = 'Department / Organization / Company';
                       }
 
@@ -1903,23 +2244,33 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
                       if (remarks == 'name') {
                         targetCtrl = visitor.fullNameCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'full name'}';
                       } else if (remarks == 'email') {
                         targetCtrl = visitor.emailCtrl;
                         hintText = 'Example: name@gmail.com';
-                      } else if (remarks == 'organization' || remarks == 'company') {
+                      } else if (remarks == 'organization' ||
+                          remarks == 'company') {
                         targetCtrl = visitor.orgCtrl;
-                        hintText = 'Enter your department / organization / company';
+                        hintText =
+                            'Enter your department / organization / company';
                       } else if (remarks == 'phone') {
                         targetCtrl = visitor.phoneCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
-                      } else if (remarks == 'indentity_id' || remarks == 'identity_id') {
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'phone'}';
+                      } else if (remarks == 'indentity_id' ||
+                          remarks == 'identity_id') {
                         targetCtrl = visitor.identityCtrl;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : 'identity (ktp)'}';
                       } else {
-                        visitor.extraControllers.putIfAbsent(remarks, () => TextEditingController());
+                        visitor.extraControllers.putIfAbsent(
+                          remarks,
+                          () => TextEditingController(),
+                        );
                         targetCtrl = visitor.extraControllers[remarks]!;
-                        hintText = 'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
+                        hintText =
+                            'Enter your ${label.isNotEmpty ? label.toLowerCase() : remarks}';
                       }
 
                       return Padding(
@@ -1927,7 +2278,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildFormFieldLabel(label, isRequired: isMandatory),
+                            _buildFormFieldLabel(
+                              label,
+                              isRequired: isMandatory,
+                            ),
                             const SizedBox(height: 6),
                             _buildTextInputField(
                               controller: targetCtrl,
@@ -1963,28 +2317,292 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: purposeFields.map((f) {
           final remarks = (f['remarks'] ?? '').toString().toLowerCase().trim();
-          final label = (f['long_display_text'] ?? f['short_name'] ?? '').toString();
+          final label = (f['long_display_text'] ?? f['short_name'] ?? '')
+              .toString();
           final isMandatory = f['mandatory'] == true;
 
           if (remarks == 'site_place' || remarks == 'destination') {
+            final isChildSite = _selectedDestination?['is_child'] == true;
+            final parentId = (_selectedDestination?['parent'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            final parentSite = isChildSite && parentId.isNotEmpty
+                ? sites.firstWhereOrNull(
+                    (s) =>
+                        (s['id'] ?? '').toString().trim().toLowerCase() ==
+                        parentId,
+                  )
+                : null;
+
+            final currentSiteId = (_selectedDestination?['id'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            final childBuildings = (!isChildSite && currentSiteId.isNotEmpty)
+                ? sites
+                    .where(
+                      (s) =>
+                          (s['parent'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase() ==
+                          currentSiteId,
+                    )
+                    .toList()
+                : <Map<String, dynamic>>[];
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Destination', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Destination',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<Map<String, dynamic>>(
-                    hint: 'Select Site or type at least 3 characters to search',
+                    hint: 'Select Site',
                     selectedValue: _selectedDestination,
                     items: sites.map((s) {
+                      final isChild = s['is_child'] == true;
+                      final pId = (s['parent'] ?? '')
+                          .toString()
+                          .trim()
+                          .toLowerCase();
+                      final parent = isChild && pId.isNotEmpty
+                          ? sites.firstWhereOrNull(
+                              (p) =>
+                                  (p['id'] ?? '')
+                                      .toString()
+                                      .trim()
+                                      .toLowerCase() ==
+                                  pId,
+                            )
+                          : null;
+                      final sName = s['name']?.toString() ?? 'Site';
+                      final displayLabel = (isChild && parent != null)
+                          ? '$sName, ${parent['name']}'
+                          : sName;
+
                       return DropdownMenuItemData<Map<String, dynamic>>(
                         value: s,
-                        label: s['name']?.toString() ?? 'Site',
+                        label: displayLabel,
                       );
                     }).toList(),
-                    onSelected: (val) => setState(() => _selectedDestination = val),
+                    onSelected: (val) {
+                      setState(() {
+                        _selectedDestination = val;
+                        if (val['is_child'] == true) {
+                          final pId = (val['parent'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase();
+                          _selectedParentSite = sites.firstWhereOrNull(
+                            (s) =>
+                                (s['id'] ?? '')
+                                    .toString()
+                                    .trim()
+                                    .toLowerCase() ==
+                                pId,
+                          );
+                          _isParentSiteChecked = true;
+                          _selectedChildBuilding = null;
+                          _isChildBuildingChecked = false;
+                        } else {
+                          final cId = (val['id'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase();
+                          final children = sites
+                              .where(
+                                (s) =>
+                                    (s['parent'] ?? '')
+                                        .toString()
+                                        .trim()
+                                        .toLowerCase() ==
+                                    cId,
+                              )
+                              .toList();
+                          _selectedParentSite = null;
+                          _isParentSiteChecked = false;
+                          _selectedChildBuilding =
+                              children.isNotEmpty ? children.first : null;
+                          _isChildBuildingChecked = false;
+                        }
+                      });
+                    },
                   ),
+                  if (isChildSite && parentSite != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _isParentSiteChecked
+                              ? const Color(0xFF004385).withValues(alpha: 0.35)
+                              : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              setState(
+                                () =>
+                                    _isParentSiteChecked =
+                                        !_isParentSiteChecked,
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value: _isParentSiteChecked,
+                                    activeColor: const Color(0xFF004385),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    onChanged: (val) {
+                                      setState(
+                                        () =>
+                                            _isParentSiteChecked =
+                                                val ?? true,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Parent Site',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isParentSiteChecked) ...[
+                            const SizedBox(height: 8),
+                            _buildCleanDropdownField<Map<String, dynamic>>(
+                              hint: 'Select Parent Site',
+                              selectedValue: _selectedParentSite ?? parentSite,
+                              showSearch: false,
+                              items: [
+                                DropdownMenuItemData<Map<String, dynamic>>(
+                                  value: parentSite,
+                                  label:
+                                      parentSite['name']?.toString() ??
+                                      'Parent Site',
+                                ),
+                              ],
+                              onSelected: (val) {
+                                setState(() => _selectedParentSite = val);
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ] else if (!isChildSite && childBuildings.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _isChildBuildingChecked
+                              ? const Color(0xFF004385).withValues(alpha: 0.35)
+                              : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              setState(
+                                () =>
+                                    _isChildBuildingChecked =
+                                        !_isChildBuildingChecked,
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value: _isChildBuildingChecked,
+                                    activeColor: const Color(0xFF004385),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    onChanged: (val) {
+                                      setState(
+                                        () =>
+                                            _isChildBuildingChecked =
+                                                val ?? false,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Building / Sub-Location',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isChildBuildingChecked) ...[
+                            const SizedBox(height: 8),
+                            _buildCleanDropdownField<Map<String, dynamic>>(
+                              hint: 'Select Building',
+                              selectedValue:
+                                  _selectedChildBuilding ?? childBuildings.first,
+                              showSearch: false,
+                              items: childBuildings.map((b) {
+                                return DropdownMenuItemData<
+                                  Map<String, dynamic>
+                                >(
+                                  value: b,
+                                  label: b['name']?.toString() ?? 'Building',
+                                );
+                              }).toList(),
+                              onSelected: (val) {
+                                setState(() => _selectedChildBuilding = val);
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -1996,24 +2614,35 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'PIC Host', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'PIC Host',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<Map<String, dynamic>>(
-                    hint: 'Select PIC Host or type at least 3 characters to search',
+                    hint: 'Select PIC Host',
                     selectedValue: _selectedPicHost,
+                    showSearch: false,
                     items: hosts.map((e) {
                       final eName = (e['name'] ?? 'Host').toString();
                       String orgName = '';
                       final rawOrg = e['Organization'] ?? e['organization'];
                       if (rawOrg is Map) {
-                        orgName = (rawOrg['name'] ?? rawOrg['code'] ?? '').toString();
+                        orgName = (rawOrg['name'] ?? rawOrg['code'] ?? '')
+                            .toString();
                       } else if (rawOrg is String && !rawOrg.startsWith('{')) {
                         orgName = rawOrg;
                       } else if (e['organization_name'] != null) {
                         orgName = e['organization_name'].toString();
                       }
-                      final itemLabel = orgName.isNotEmpty ? '$eName ($orgName)' : eName;
-                      return DropdownMenuItemData<Map<String, dynamic>>(value: e, label: itemLabel);
+                      final itemLabel = orgName.isNotEmpty
+                          ? '$eName ($orgName)'
+                          : eName;
+                      return DropdownMenuItemData<Map<String, dynamic>>(
+                        value: e,
+                        label: itemLabel,
+                      );
                     }).toList(),
                     onSelected: (val) => setState(() => _selectedPicHost = val),
                   ),
@@ -2023,18 +2652,37 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           }
 
           if (remarks == 'agenda') {
+            final dynamicOpts = (f['multiple_option_fields'] as List?)
+                ?.map((e) => (e is Map ? (e['name'] ?? e['value'] ?? '') : e.toString()).toString().trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+            final agendaList = (dynamicOpts != null && dynamicOpts.isNotEmpty)
+                ? dynamicOpts
+                : List<String>.from(_agendaOptions);
+            if (!agendaList.contains('Others')) {
+              agendaList.add('Others');
+            }
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Agenda', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Agenda',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<String>(
-                    hint: 'Select agenda',
+                    hint: 'Select Agenda',
                     selectedValue: _selectedAgenda,
-                    items: _agendaOptions.map((agenda) {
-                      return DropdownMenuItemData<String>(value: agenda, label: agenda);
+                    showSearch: false,
+                    items: agendaList.map((agenda) {
+                      return DropdownMenuItemData<String>(
+                        value: agenda,
+                        label: agenda,
+                      );
                     }).toList(),
                     onSelected: (val) => setState(() => _selectedAgenda = val),
                   ),
@@ -2056,7 +2704,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Visit Start', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Visit Start',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildDateTimePickerField(
                     value: _visitStart,
@@ -2064,7 +2716,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     onChanged: (dt) {
                       setState(() {
                         _visitStart = dt;
-                        if (_visitEnd != null && (_visitEnd!.isBefore(dt) || _visitEnd!.isAtSameMomentAs(dt))) {
+                        if (_visitEnd != null &&
+                            (_visitEnd!.isBefore(dt) ||
+                                _visitEnd!.isAtSameMomentAs(dt))) {
                           _visitEnd = dt.add(const Duration(hours: 2));
                         }
                       });
@@ -2081,7 +2735,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFormFieldLabel(label.isNotEmpty ? label : 'Visit End', isRequired: isMandatory, showInfo: true),
+                  _buildFormFieldLabel(
+                    label.isNotEmpty ? label : 'Visit End',
+                    isRequired: isMandatory,
+                    showInfo: true,
+                  ),
                   const SizedBox(height: 6),
                   _buildDateTimePickerField(
                     value: _visitEnd,
@@ -2095,7 +2753,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             );
           }
 
-          final ctrl = _purposeExtraControllers.putIfAbsent(remarks, () => TextEditingController());
+          final ctrl = _purposeExtraControllers.putIfAbsent(
+            remarks,
+            () => TextEditingController(),
+          );
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Column(
@@ -2103,10 +2764,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               children: [
                 _buildFormFieldLabel(label, isRequired: isMandatory),
                 const SizedBox(height: 6),
-                _buildTextInputField(
-                  controller: ctrl,
-                  hint: 'Enter $label',
-                ),
+                _buildTextInputField(controller: ctrl, hint: 'Enter $label'),
               ],
             ),
           );
@@ -2131,7 +2789,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildFormFieldLabel('Are you driving or riding a vehicle?', isRequired: false),
+          _buildFormFieldLabel(
+            'Are you driving or riding a vehicle?',
+            isRequired: false,
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -2269,7 +2930,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                       ),
                       if (!_isBicycle(v.vehicleType)) ...[
                         const SizedBox(height: 10),
-                        _buildFormFieldLabel('Vehicle License Plate', isRequired: true),
+                        _buildFormFieldLabel(
+                          'Vehicle License Plate',
+                          isRequired: true,
+                        ),
                         const SizedBox(height: 6),
                         _buildTextInputField(
                           controller: v.vehiclePlateCtrl,
@@ -2328,14 +2992,18 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           if (image == null)
             _buildUploadCard(
               isKtp: isKtp,
-              onTapGallery: () => _pickImageFile(isKtp: isKtp, isGroupMember: false),
-              onTapCamera: () => _captureImageFromCamera(isKtp: isKtp, isGroupMember: false),
+              onTapGallery: () =>
+                  _pickImageFile(isKtp: isKtp, isGroupMember: false),
+              onTapCamera: () =>
+                  _captureImageFromCamera(isKtp: isKtp, isGroupMember: false),
             )
           else
             _buildImagePreviewCard(
               image: image,
-              onRemove: () => _removeUploadedImage(isKtp: isKtp, isGroupMember: false),
-              onReUpload: () => _pickImageFile(isKtp: isKtp, isGroupMember: false),
+              onRemove: () =>
+                  _removeUploadedImage(isKtp: isKtp, isGroupMember: false),
+              onReUpload: () =>
+                  _pickImageFile(isKtp: isKtp, isGroupMember: false),
             ),
         ],
       ),
@@ -2348,7 +3016,12 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildFormFieldLabel(isKtp ? 'Upload Identity (KTP) for Group' : 'Selfie Image for Group', isRequired: false),
+          _buildFormFieldLabel(
+            isKtp
+                ? 'Upload Identity (KTP) for Group'
+                : 'Selfie Image for Group',
+            isRequired: false,
+          ),
           const SizedBox(height: 14),
 
           SingleChildScrollView(
@@ -2356,29 +3029,41 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             child: Row(
               children: List.generate(_groupVisitors.length, (idx) {
                 final v = _groupVisitors[idx];
-                final name = v.fullNameCtrl.text.trim().isNotEmpty ? v.fullNameCtrl.text.trim() : 'Visitor ${idx + 1}';
+                final name = v.fullNameCtrl.text.trim().isNotEmpty
+                    ? v.fullNameCtrl.text.trim()
+                    : 'Visitor ${idx + 1}';
                 final isSelected = _selectedGroupMemberIndex == idx;
                 final hasImage = (isKtp ? v.ktpImage : v.selfieImage) != null;
 
                 return Padding(
                   padding: const EdgeInsets.only(right: 10.0),
                   child: InkWell(
-                    onTap: () => setState(() => _selectedGroupMemberIndex = idx),
+                    onTap: () =>
+                        setState(() => _selectedGroupMemberIndex = idx),
                     borderRadius: BorderRadius.circular(8),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF004385) : Colors.white,
+                        color: isSelected
+                            ? const Color(0xFF004385)
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+                          color: isSelected
+                              ? const Color(0xFF004385)
+                              : const Color(0xFFCBD5E1),
                           width: isSelected ? 1.5 : 1,
                         ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFF004385).withValues(alpha: 0.15),
+                                  color: const Color(
+                                    0xFF004385,
+                                  ).withValues(alpha: 0.15),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -2391,19 +3076,27 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           Icon(
                             hasImage
                                 ? Icons.check_circle_rounded
-                                : (isSelected ? Icons.person_rounded : Icons.person_outline_rounded),
+                                : (isSelected
+                                      ? Icons.person_rounded
+                                      : Icons.person_outline_rounded),
                             size: 16,
                             color: hasImage
                                 ? const Color(0xFF10B981)
-                                : (isSelected ? Colors.white : const Color(0xFF64748B)),
+                                : (isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF64748B)),
                           ),
                           const SizedBox(width: 6),
                           Text(
                             name,
                             style: GoogleFonts.inter(
                               fontSize: 12.5,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(0xFF1E293B),
                             ),
                           ),
                         ],
@@ -2417,39 +3110,41 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           const SizedBox(height: 16),
 
           if (_selectedGroupMemberIndex < _groupVisitors.length) ...[
-            Builder(builder: (_) {
-              final v = _groupVisitors[_selectedGroupMemberIndex];
-              final img = isKtp ? v.ktpImage : v.selfieImage;
+            Builder(
+              builder: (_) {
+                final v = _groupVisitors[_selectedGroupMemberIndex];
+                final img = isKtp ? v.ktpImage : v.selfieImage;
 
-              if (img == null) {
-                return _buildUploadCard(
-                  isKtp: isKtp,
-                  onTapGallery: () => _pickImageFile(
+                if (img == null) {
+                  return _buildUploadCard(
+                    isKtp: isKtp,
+                    onTapGallery: () => _pickImageFile(
+                      isKtp: isKtp,
+                      isGroupMember: true,
+                      groupIndex: _selectedGroupMemberIndex,
+                    ),
+                    onTapCamera: () => _captureImageFromCamera(
+                      isKtp: isKtp,
+                      isGroupMember: true,
+                      groupIndex: _selectedGroupMemberIndex,
+                    ),
+                  );
+                }
+                return _buildImagePreviewCard(
+                  image: img,
+                  onRemove: () => _removeUploadedImage(
                     isKtp: isKtp,
                     isGroupMember: true,
                     groupIndex: _selectedGroupMemberIndex,
                   ),
-                  onTapCamera: () => _captureImageFromCamera(
+                  onReUpload: () => _pickImageFile(
                     isKtp: isKtp,
                     isGroupMember: true,
                     groupIndex: _selectedGroupMemberIndex,
                   ),
                 );
-              }
-              return _buildImagePreviewCard(
-                image: img,
-                onRemove: () => _removeUploadedImage(
-                  isKtp: isKtp,
-                  isGroupMember: true,
-                  groupIndex: _selectedGroupMemberIndex,
-                ),
-                onReUpload: () => _pickImageFile(
-                  isKtp: isKtp,
-                  isGroupMember: true,
-                  groupIndex: _selectedGroupMemberIndex,
-                ),
-              );
-            }),
+              },
+            ),
           ],
         ],
       ),
@@ -2467,10 +3162,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF90CAF9),
-          width: 1.5,
-        ),
+        border: Border.all(color: const Color(0xFF90CAF9), width: 1.5),
       ),
       child: Material(
         color: Colors.transparent,
@@ -2529,10 +3221,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     onTap: onTapCamera,
                     borderRadius: BorderRadius.circular(4),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.camera_alt_outlined, size: 16, color: Color(0xFF004385)),
+                          const Icon(
+                            Icons.camera_alt_outlined,
+                            size: 16,
+                            color: Color(0xFF004385),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Use Camera',
@@ -2578,8 +3277,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               child: image.bytes != null
                   ? Image.memory(image.bytes!, fit: BoxFit.cover)
                   : (image.localPath != null && !kIsWeb
-                      ? Image.file(File(image.localPath!), fit: BoxFit.cover)
-                      : Container(color: Colors.grey.shade200, child: const Icon(Icons.image, size: 40))),
+                        ? Image.file(File(image.localPath!), fit: BoxFit.cover)
+                        : Container(
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.image, size: 40),
+                          )),
             ),
           ),
           const SizedBox(width: 16),
@@ -2601,20 +3303,30 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE0F2FE),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         image.extension.toUpperCase(),
-                        style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF0284C7)),
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0284C7),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       image.sizeFormatted,
-                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
@@ -2624,16 +3336,29 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           OutlinedButton.icon(
             onPressed: onReUpload,
             icon: const Icon(Icons.refresh, size: 14, color: Color(0xFF004385)),
-            label: Text('Replace', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF004385))),
+            label: Text(
+              'Replace',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF004385),
+              ),
+            ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: Color(0xFF004385)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           IconButton(
             onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+            icon: const Icon(
+              Icons.delete_outline_rounded,
+              color: Colors.red,
+              size: 20,
+            ),
             splashRadius: 20,
           ),
         ],
@@ -2644,10 +3369,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   bool _isSubmitting = false;
 
   String _getDefaultVisitorRole() {
-    final rolesRaw = (_visitorTypeDetail?['visitor_roles'] ??
-        _selectedVisitorType?['visitor_roles']) as List<dynamic>?;
+    final rolesRaw =
+        (_visitorTypeDetail?['visitor_roles'] ??
+                _selectedVisitorType?['visitor_roles'])
+            as List<dynamic>?;
     if (rolesRaw != null && rolesRaw.isNotEmpty) {
-      final defaultRole = rolesRaw.firstWhereOrNull((r) => r['is_default'] == true);
+      final defaultRole = rolesRaw.firstWhereOrNull(
+        (r) => r['is_default'] == true,
+      );
       if (defaultRole != null && defaultRole['role'] != null) {
         return defaultRole['role'].toString();
       }
@@ -2684,7 +3413,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     // Upload Selfie Image to CDN if present
     String? uploadedSelfiePath;
     if (selfieImage != null && selfieImage.bytes != null) {
-      debugPrint('==> Uploading Selfie Image (${selfieImage.name}, ${selfieImage.bytes!.length} bytes)...');
+      debugPrint(
+        '==> Uploading Selfie Image (${selfieImage.name}, ${selfieImage.bytes!.length} bytes)...',
+      );
       uploadedSelfiePath = await controller.uploadCdnFile(
         selfieImage.bytes!,
         selfieImage.name,
@@ -2696,7 +3427,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     // Upload KTP Image to CDN if present
     String? uploadedKtpPath;
     if (ktpImage != null && ktpImage.bytes != null) {
-      debugPrint('==> Uploading KTP Image (${ktpImage.name}, ${ktpImage.bytes!.length} bytes)...');
+      debugPrint(
+        '==> Uploading KTP Image (${ktpImage.name}, ${ktpImage.bytes!.length} bytes)...',
+      );
       uploadedKtpPath = await controller.uploadCdnFile(
         ktpImage.bytes!,
         ktpImage.name,
@@ -2705,7 +3438,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       debugPrint('==> Uploaded KTP Result: $uploadedKtpPath');
     }
 
-    final sectionsRaw = _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
+    final sectionsRaw =
+        _visitorTypeDetail?['section_page_visitor_types'] as List<dynamic>?;
 
     if (sectionsRaw != null && sectionsRaw.isNotEmpty) {
       final List<Map<String, dynamic>> questionPages = [];
@@ -2721,7 +3455,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         final selfOnly = sec['self_only'] ?? false;
         final foreignId = sec['foreign_id']?.toString() ?? '';
 
-        final formListRaw = (sec['visit_form'] as List<dynamic>?) ??
+        final formListRaw =
+            (sec['visit_form'] as List<dynamic>?) ??
             (sec['pra_form'] as List<dynamic>?) ??
             (sec['form'] as List<dynamic>?) ??
             [];
@@ -2730,7 +3465,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
         for (var f in formListRaw) {
           final field = Map<String, dynamic>.from(f as Map);
-          final remarks = (field['remarks'] ?? '').toString().toLowerCase().trim();
+          final remarks = (field['remarks'] ?? '')
+              .toString()
+              .toLowerCase()
+              .trim();
           final fieldType = field['field_type'] ?? 0;
           final customFieldId = field['custom_field_id']?.toString() ?? '';
           final shortName = field['short_name']?.toString() ?? '';
@@ -2759,7 +3497,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             // Document section (Selfie / KTP)
             if (remarks.contains('selfie') || fieldType == 10) {
               formItem['answer_file'] = uploadedSelfiePath;
-            } else if (remarks.contains('identity') || remarks.contains('ktp') || fieldType == 12) {
+            } else if (remarks.contains('identity') ||
+                remarks.contains('ktp') ||
+                fieldType == 12) {
               formItem['answer_file'] = uploadedKtpPath;
             } else {
               formItem['answer_file'] = null;
@@ -2800,11 +3540,15 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             } else if (remarks == 'is_driving') {
               formItem['answer_text'] = isDriving ? 'true' : 'false';
             } else if (remarks == 'vehicle_type') {
-              formItem['answer_text'] = isDriving ? (vehicleType?.isNotEmpty == true ? vehicleType : null) : null;
+              formItem['answer_text'] = isDriving
+                  ? (vehicleType?.isNotEmpty == true ? vehicleType : null)
+                  : null;
             } else if (remarks == 'vehicle_plate') {
               formItem['answer_text'] = (!isDriving || _isBicycle(vehicleType))
                   ? null
-                  : (vehiclePlate.trim().isNotEmpty ? vehiclePlate.trim() : null);
+                  : (vehiclePlate.trim().isNotEmpty
+                        ? vehiclePlate.trim()
+                        : null);
             } else {
               formItem['answer_text'] = extraCtrls[remarks]?.text.trim() ?? '';
             }
@@ -3034,7 +3778,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             'custom_field_id': '6ec27b6a-016e-4aa8-94e7-fa37292bed4a',
             'multiple_option_fields': [],
             'visitor_form_type': 1,
-            'answer_text': isDriving ? (vehicleType?.isNotEmpty == true ? vehicleType : null) : null,
+            'answer_text': isDriving
+                ? (vehicleType?.isNotEmpty == true ? vehicleType : null)
+                : null,
           },
           {
             'sort': 2,
@@ -3137,12 +3883,23 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     try {
       final visitorTypeId = (_selectedVisitorType?['id'] ?? '').toString();
       final siteId = (_selectedDestination?['id'] ?? '').toString();
+      final isChildDestination = _selectedDestination?['is_child'] == true;
+      final parentSiteId = (_selectedParentSite?['id'] ??
+              _selectedDestination?['parent'] ??
+              '')
+          .toString();
+      final registeredSiteId =
+          (isChildDestination && _isParentSiteChecked && parentSiteId.isNotEmpty)
+              ? parentSiteId
+              : siteId;
       final hostId = (_selectedPicHost?['id'] ?? '').toString();
       final resolvedAgenda = _selectedAgenda == 'Others'
           ? _otherAgendaController.text.trim()
           : _selectedAgenda!;
 
-      _visitorTypeDetail ??= await controller.fetchVisitorTypeDetail(visitorTypeId);
+      _visitorTypeDetail ??= await controller.fetchVisitorTypeDetail(
+        visitorTypeId,
+      );
       final resolvedRole = _getDefaultVisitorRole();
       final isSelf = _invitationTarget == 'self';
 
@@ -3152,14 +3909,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         // Group Mode -> POST /api/operator-invitation/new-visit-group
         final List<Map<String, dynamic>> dataVisitors = [];
 
-        final primaryVisitor = _groupVisitors.isNotEmpty ? _groupVisitors.first : null;
+        final primaryVisitor = _groupVisitors.isNotEmpty
+            ? _groupVisitors.first
+            : null;
         final primaryName = primaryVisitor?.fullNameCtrl.text.trim() ?? '';
         final primaryEmail = primaryVisitor?.emailCtrl.text.trim() ?? '';
         final primaryPhone = primaryVisitor?.phoneCtrl.text.trim() ?? '';
 
         for (final v in _groupVisitors) {
           final memberEmployeeId = (v.isEmployee == true)
-              ? (v.selectedData?['id'] ?? v.selectedData?['employee_id'] ?? '').toString()
+              ? (v.selectedData?['id'] ?? v.selectedData?['employee_id'] ?? '')
+                    .toString()
               : '';
 
           final memberQuestionPages = await _buildDynamicQuestionPage(
@@ -3184,9 +3944,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             ktpImage: v.ktpImage,
           );
 
-          dataVisitors.add({
-            'question_page': memberQuestionPages,
-          });
+          dataVisitors.add({'question_page': memberQuestionPages});
         }
 
         final groupObject = {
@@ -3194,7 +3952,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           'is_group': true,
           'type_registered': 1,
           'tz': 'Asia/Jakarta',
-          if (siteId.isNotEmpty) 'registered_site': siteId,
+          if (registeredSiteId.isNotEmpty) 'registered_site': registeredSiteId,
           'group_code': _groupCode,
           'group_name': _groupNameController.text.trim(),
           'is_self_registered': isSelf,
@@ -3214,7 +3972,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
       } else {
         // Single Mode -> POST /api/operator-invitation/new-visit
         final singleEmployeeId = (_singleIsEmployee == true)
-            ? (_singleSelectedData?['id'] ?? _singleSelectedData?['employee_id'] ?? '').toString()
+            ? (_singleSelectedData?['id'] ??
+                      _singleSelectedData?['employee_id'] ??
+                      '')
+                  .toString()
             : '';
 
         final singleQuestionPages = await _buildDynamicQuestionPage(
@@ -3244,11 +4005,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           'type_registered': 1,
           'is_group': false,
           'tz': 'Asia/Jakarta',
-          if (siteId.isNotEmpty) 'registered_site': siteId,
+          if (registeredSiteId.isNotEmpty) 'registered_site': registeredSiteId,
           'flow': 'Invitation',
           'visitor_role': _singleRole ?? resolvedRole,
           'data_visitor': [
-            {'question_page': singleQuestionPages}
+            {'question_page': singleQuestionPages},
           ],
         };
       }
@@ -3292,7 +4053,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               side: const BorderSide(color: Color(0xFFCBD5E1)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: !_isSubmitting
                 ? () {
@@ -3303,7 +4066,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     }
                   }
                 : null,
-            icon: const Icon(Icons.arrow_back, size: 16, color: Color(0xFF004385)),
+            icon: const Icon(
+              Icons.arrow_back,
+              size: 16,
+              color: Color(0xFF004385),
+            ),
             label: Text(
               'Back',
               style: GoogleFonts.inter(
@@ -3315,11 +4082,15 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isValid ? const Color(0xFF004385) : const Color(0xFFE2E8F0),
+              backgroundColor: isValid
+                  ? const Color(0xFF004385)
+                  : const Color(0xFFE2E8F0),
               foregroundColor: isValid ? Colors.white : const Color(0xFF94A3B8),
               elevation: isValid ? 2 : 0,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: isValid
                 ? () {
@@ -3350,7 +4121,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isValid ? Colors.white : const Color(0xFF94A3B8),
+                          color: isValid
+                              ? Colors.white
+                              : const Color(0xFF94A3B8),
                         ),
                       ),
                       if (!isFinalStep) ...[
@@ -3358,7 +4131,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         Icon(
                           Icons.arrow_forward,
                           size: 16,
-                          color: isValid ? Colors.white : const Color(0xFF94A3B8),
+                          color: isValid
+                              ? Colors.white
+                              : const Color(0xFF94A3B8),
                         ),
                       ],
                     ],
@@ -3399,7 +4174,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     );
   }
 
-  Widget _buildFormFieldLabel(String label, {bool isRequired = false, bool showInfo = false}) {
+  Widget _buildFormFieldLabel(
+    String label, {
+    bool isRequired = false,
+    bool showInfo = false,
+  }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -3452,7 +4231,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
         },
         style: GoogleFonts.inter(
           fontSize: 13,
-          color: isFieldDisabled ? const Color(0xFF64748B) : const Color(0xFF1E293B),
+          color: isFieldDisabled
+              ? const Color(0xFF64748B)
+              : const Color(0xFF1E293B),
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
@@ -3465,14 +4246,25 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             color: const Color(0xFF94A3B8),
             fontWeight: FontWeight.w400,
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: isFieldDisabled ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
+            borderSide: BorderSide(
+              color: isFieldDisabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFCBD5E1),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: isFieldDisabled ? const Color(0xFFE2E8F0) : const Color(0xFFCBD5E1)),
+            borderSide: BorderSide(
+              color: isFieldDisabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFCBD5E1),
+            ),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -3481,7 +4273,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
-              color: isFieldDisabled ? const Color(0xFFE2E8F0) : const Color(0xFF004385),
+              color: isFieldDisabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFF004385),
               width: isFieldDisabled ? 1.0 : 1.5,
             ),
           ),
@@ -3504,7 +4298,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           Icon(
             isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
             size: 18,
-            color: isSelected ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+            color: isSelected
+                ? const Color(0xFF004385)
+                : const Color(0xFF94A3B8),
           ),
           const SizedBox(width: 6),
           Text(
@@ -3512,7 +4308,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? const Color(0xFF004385) : const Color(0xFF1E293B),
+              color: isSelected
+                  ? const Color(0xFF004385)
+                  : const Color(0xFF1E293B),
             ),
           ),
         ],
@@ -3525,6 +4323,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     required T? selectedValue,
     required List<DropdownMenuItemData<T>> items,
     required ValueChanged<T> onSelected,
+    bool showSearch = true,
   }) {
     String displayLabel = hint;
     if (selectedValue != null) {
@@ -3544,6 +4343,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           title: hint,
           items: items,
           selectedValue: selectedValue,
+          showSearch: showSearch,
         );
         if (result != null) {
           onSelected(result);
@@ -3568,11 +4368,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: isSet ? FontWeight.w500 : FontWeight.w400,
-                  color: isSet ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                  color: isSet
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
                 ),
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 20, color: Color(0xFF64748B)),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 20,
+              color: Color(0xFF64748B),
+            ),
           ],
         ),
       ),
@@ -3584,6 +4390,7 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
     required String title,
     required List<DropdownMenuItemData<T>> items,
     required T? selectedValue,
+    bool showSearch = true,
   }) {
     final searchCtrl = TextEditingController();
 
@@ -3602,10 +4409,14 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
 
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 24,
+              ),
               child: Container(
                 width: 440,
                 constraints: const BoxConstraints(maxHeight: 460),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -3638,38 +4449,66 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           ),
                           IconButton(
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                            icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
-                            onPressed: () => Navigator.of(dialogContext).pop(null),
+                            constraints: const BoxConstraints(
+                              minWidth: 28,
+                              minHeight: 28,
+                            ),
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              size: 20,
+                              color: Color(0xFF64748B),
+                            ),
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(null),
                           ),
                         ],
                       ),
                     ),
                     const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    if (items.length > 5)
+                    if (showSearch && items.length > 5)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
                         child: TextField(
                           controller: searchCtrl,
                           onChanged: (v) => setPopupState(() {}),
-                          style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF1E293B)),
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            color: const Color(0xFF1E293B),
+                          ),
                           decoration: InputDecoration(
                             hintText: 'Type to filter...',
-                            hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
-                            prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF64748B)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF94A3B8),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              size: 18,
+                              color: Color(0xFF64748B),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                             isDense: true,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
-                              borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF004385),
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),
@@ -3677,18 +4516,25 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     Flexible(
                       child: ListView.separated(
                         shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.only(top: 4, bottom: 8),
                         itemCount: filtered.length,
-                        separatorBuilder: (context, idx) => const Divider(height: 1, color: Color(0xFFF8FAFC)),
+                        separatorBuilder: (context, idx) =>
+                            const Divider(height: 1, color: Color(0xFFF8FAFC)),
                         itemBuilder: (context, idx) {
                           final item = filtered[idx];
                           final isSelected = item.value == selectedValue;
 
                           return InkWell(
-                            onTap: () => Navigator.of(dialogContext).pop(item.value),
+                            onTap: () =>
+                                Navigator.of(dialogContext).pop(item.value),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                              color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 11,
+                              ),
+                              color: isSelected
+                                  ? const Color(0xFFEFF6FF)
+                                  : Colors.white,
                               child: Row(
                                 children: [
                                   Expanded(
@@ -3696,7 +4542,9 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                       item.label,
                                       style: GoogleFonts.inter(
                                         fontSize: 13,
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
                                         color: isSelected
                                             ? const Color(0xFF004385)
                                             : const Color(0xFF1E293B),
@@ -3704,7 +4552,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                     ),
                                   ),
                                   if (isSelected)
-                                    const Icon(Icons.check_rounded, size: 18, color: Color(0xFF004385)),
+                                    const Icon(
+                                      Icons.check_rounded,
+                                      size: 18,
+                                      color: Color(0xFF004385),
+                                    ),
                                 ],
                               ),
                             ),
@@ -3760,18 +4612,29 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 color: const Color(0xFF94A3B8),
                 fontWeight: FontWeight.w400,
               ),
-              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF64748B)),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: Color(0xFF64748B),
+              ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (selectedData != null || controller.text.isNotEmpty)
                     IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Color(0xFF64748B),
+                      ),
                       tooltip: 'Clear',
                       onPressed: onClear,
                       splashRadius: 18,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   IconButton(
                     icon: Icon(
@@ -3785,11 +4648,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                     onPressed: onToggleOpen,
                     splashRadius: 18,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
                   ),
                 ],
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -3800,7 +4669,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF004385), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF004385),
+                  width: 1.5,
+                ),
               ),
             ),
           ),
@@ -3824,25 +4696,35 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: filteredItems.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
               itemBuilder: (context, index) {
                 final it = filteredItems[index];
-                final name = (it['name'] ?? it['visitor_name'] ?? 'User').toString();
+                final name = (it['name'] ?? it['visitor_name'] ?? 'User')
+                    .toString();
                 final email = (it['email'] ?? '-').toString();
                 final phone = (it['phone'] ?? '-').toString();
-                final org = _extractOrganizationName(it['Organization'] ?? it['organization'], it['company']);
+                final org = _extractOrganizationName(
+                  it['Organization'] ?? it['organization'],
+                  it['company'],
+                );
 
                 return InkWell(
                   onTap: () => onSelect(it),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 14,
                           backgroundColor: const Color(0xFFE2E8F0),
                           child: Icon(
-                            isEmployeeMode ? Icons.badge_outlined : Icons.person_outline,
+                            isEmployeeMode
+                                ? Icons.badge_outlined
+                                : Icons.person_outline,
                             size: 16,
                             color: const Color(0xFF64748B),
                           ),
@@ -3861,8 +4743,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 ),
                               ),
                               Text(
-                                org.isNotEmpty ? '$email | $phone ($org)' : '$email | $phone',
-                                style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                                org.isNotEmpty
+                                    ? '$email | $phone ($org)'
+                                    : '$email | $phone',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: const Color(0xFF64748B),
+                                ),
                               ),
                             ],
                           ),
@@ -3921,11 +4808,17 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: value != null ? FontWeight.w500 : FontWeight.w400,
-                  color: value != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                  color: value != null
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
                 ),
               ),
             ),
-            const Icon(Icons.calendar_month_rounded, size: 18, color: Color(0xFF64748B)),
+            const Icon(
+              Icons.calendar_month_rounded,
+              size: 18,
+              color: Color(0xFF64748B),
+            ),
           ],
         ),
       ),
@@ -3933,10 +4826,28 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   }
 
   String _formatDateTime(DateTime dt) {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
 
     final dayName = days[dt.weekday - 1];
@@ -3962,11 +4873,19 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
   }) {
     DateTime liveTime = _getGmt7Now();
     DateTime selectedDate = initialDateTime != null
-        ? DateTime(initialDateTime.year, initialDateTime.month, initialDateTime.day)
+        ? DateTime(
+            initialDateTime.year,
+            initialDateTime.month,
+            initialDateTime.day,
+          )
         : DateTime(liveTime.year, liveTime.month, liveTime.day);
 
     if (minDateTime != null) {
-      final minDate = DateTime(minDateTime.year, minDateTime.month, minDateTime.day);
+      final minDate = DateTime(
+        minDateTime.year,
+        minDateTime.month,
+        minDateTime.day,
+      );
       if (selectedDate.isBefore(minDate)) {
         selectedDate = minDate;
       }
@@ -4010,18 +4929,30 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
           final m = selectedMinute;
           if (h != null && hourScrollController.hasClients) {
             final targetH = (h * 38.0) - 92.0;
-            hourScrollController.jumpTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent));
+            hourScrollController.jumpTo(
+              targetH.clamp(0.0, hourScrollController.position.maxScrollExtent),
+            );
           } else if (hourScrollController.hasClients) {
             if (minDateTime != null && isSameDayAsMin(selectedDate)) {
               final targetH = minDateTime.hour * 38.0;
-              hourScrollController.jumpTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent));
+              hourScrollController.jumpTo(
+                targetH.clamp(
+                  0.0,
+                  hourScrollController.position.maxScrollExtent,
+                ),
+              );
             } else {
               hourScrollController.jumpTo(0.0);
             }
           }
           if (m != null && minuteScrollController.hasClients) {
             final targetM = (m * 38.0) - 92.0;
-            minuteScrollController.jumpTo(targetM.clamp(0.0, minuteScrollController.position.maxScrollExtent));
+            minuteScrollController.jumpTo(
+              targetM.clamp(
+                0.0,
+                minuteScrollController.position.maxScrollExtent,
+              ),
+            );
           } else if (minuteScrollController.hasClients) {
             minuteScrollController.jumpTo(0.0);
           }
@@ -4040,7 +4971,8 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
             });
 
             final isSameDay = isSameDayAsMin(selectedDate);
-            final hasSelectedTime = selectedHour != null && selectedMinute != null;
+            final hasSelectedTime =
+                selectedHour != null && selectedMinute != null;
 
             final currentPreview = hasSelectedTime
                 ? DateTime(
@@ -4052,20 +4984,40 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                   )
                 : null;
 
-            final isSelectionValid = hasSelectedTime &&
+            final isSelectionValid =
+                hasSelectedTime &&
                 (minDateTime == null || currentPreview!.isAfter(minDateTime));
 
-            final days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            final days = [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday',
+            ];
             final months = [
-              'January', 'February', 'March', 'April', 'May', 'June',
-              'July', 'August', 'September', 'October', 'November', 'December'
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December',
             ];
             final liveDayName = days[liveTime.weekday % 7];
             final liveMonthName = months[liveTime.month - 1];
             final liveHourStr = liveTime.hour.toString().padLeft(2, '0');
             final liveMinStr = liveTime.minute.toString().padLeft(2, '0');
             final liveSecStr = liveTime.second.toString().padLeft(2, '0');
-            final liveClockDisplay = '$liveDayName, ${liveTime.day} $liveMonthName ${liveTime.year}, $liveHourStr:$liveMinStr:$liveSecStr';
+            final liveClockDisplay =
+                '$liveDayName, ${liveTime.day} $liveMonthName ${liveTime.year}, $liveHourStr:$liveMinStr:$liveSecStr';
 
             return Dialog(
               backgroundColor: Colors.transparent,
@@ -4088,15 +5040,26 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded, size: 18, color: Color(0xFF004385)),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: Color(0xFF004385),
+                          ),
                           const SizedBox(width: 10),
                           Text(
                             title,
@@ -4108,16 +5071,25 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                           ),
                           const Spacer(),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFEFF6FF),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.access_time_filled_rounded, size: 14, color: Color(0xFF004385)),
+                                const Icon(
+                                  Icons.access_time_filled_rounded,
+                                  size: 14,
+                                  color: Color(0xFF004385),
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   liveClockDisplay,
@@ -4149,39 +5121,66 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 ),
                               ),
                               child: CalendarDatePicker(
-                                key: ValueKey('${selectedDate.year}-${selectedDate.month}-${selectedDate.day}'),
+                                key: ValueKey(
+                                  '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
+                                ),
                                 initialDate: selectedDate,
                                 firstDate: minDateTime != null
-                                    ? DateTime(minDateTime.year, minDateTime.month, minDateTime.day)
+                                    ? DateTime(
+                                        minDateTime.year,
+                                        minDateTime.month,
+                                        minDateTime.day,
+                                      )
                                     : DateTime(2020),
                                 lastDate: DateTime(2035),
                                 onDateChanged: (newDate) {
-                                    setDialogState(() {
-                                      selectedDate = newDate;
-                                      if (selectedHour != null && isSameDayAsMin(newDate)) {
-                                        if (selectedHour! < minDateTime!.hour) {
-                                          selectedHour = minDateTime.hour;
-                                        }
-                                        if (selectedMinute != null &&
-                                            selectedHour == minDateTime.hour &&
-                                            selectedMinute! <= minDateTime.minute) {
-                                          selectedMinute = minDateTime.minute + 1;
-                                          if (selectedMinute! >= 60) {
-                                            selectedHour = selectedHour! + 1;
-                                            selectedMinute = 0;
-                                          }
-                                        }
+                                  setDialogState(() {
+                                    selectedDate = newDate;
+                                    if (selectedHour != null &&
+                                        isSameDayAsMin(newDate)) {
+                                      if (selectedHour! < minDateTime!.hour) {
+                                        selectedHour = minDateTime.hour;
                                       }
-                                    });
-                                    if (selectedHour == null && hourScrollController.hasClients) {
-                                      if (minDateTime != null && isSameDayAsMin(newDate)) {
-                                        final targetH = minDateTime.hour * 38.0;
-                                        hourScrollController.animateTo(targetH.clamp(0.0, hourScrollController.position.maxScrollExtent), duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic);
-                                      } else {
-                                        hourScrollController.animateTo(0.0, duration: const Duration(milliseconds: 250), curve: Curves.easeOutCubic);
+                                      if (selectedMinute != null &&
+                                          selectedHour == minDateTime.hour &&
+                                          selectedMinute! <=
+                                              minDateTime.minute) {
+                                        selectedMinute = minDateTime.minute + 1;
+                                        if (selectedMinute! >= 60) {
+                                          selectedHour = selectedHour! + 1;
+                                          selectedMinute = 0;
+                                        }
                                       }
                                     }
-                                  },
+                                  });
+                                  if (selectedHour == null &&
+                                      hourScrollController.hasClients) {
+                                    if (minDateTime != null &&
+                                        isSameDayAsMin(newDate)) {
+                                      final targetH = minDateTime.hour * 38.0;
+                                      hourScrollController.animateTo(
+                                        targetH.clamp(
+                                          0.0,
+                                          hourScrollController
+                                              .position
+                                              .maxScrollExtent,
+                                        ),
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    } else {
+                                      hourScrollController.animateTo(
+                                        0.0,
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    }
+                                  }
+                                },
                               ),
                             ),
                           ),
@@ -4197,7 +5196,10 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(8),
@@ -4220,8 +5222,12 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                             : '-- : -- (Not selected)',
                                         style: GoogleFonts.inter(
                                           fontSize: hasSelectedTime ? 15 : 12.5,
-                                          fontWeight: hasSelectedTime ? FontWeight.w800 : FontWeight.w600,
-                                          color: hasSelectedTime ? const Color(0xFF004385) : const Color(0xFF94A3B8),
+                                          fontWeight: hasSelectedTime
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          color: hasSelectedTime
+                                              ? const Color(0xFF004385)
+                                              : const Color(0xFF94A3B8),
                                         ),
                                       ),
                                     ],
@@ -4259,93 +5265,163 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 SizedBox(
                                   height: 230,
                                   child: ScrollConfiguration(
-                                    behavior: const MaterialScrollBehavior().copyWith(
-                                      dragDevices: {
-                                        PointerDeviceKind.touch,
-                                        PointerDeviceKind.mouse,
-                                        PointerDeviceKind.trackpad,
-                                        PointerDeviceKind.stylus,
-                                      },
-                                    ),
+                                    behavior: const MaterialScrollBehavior()
+                                        .copyWith(
+                                          dragDevices: {
+                                            PointerDeviceKind.touch,
+                                            PointerDeviceKind.mouse,
+                                            PointerDeviceKind.trackpad,
+                                            PointerDeviceKind.stylus,
+                                          },
+                                        ),
                                     child: Row(
                                       children: [
                                         Expanded(
                                           child: Container(
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFF8FAFC),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                              ),
                                             ),
                                             child: RawScrollbar(
                                               controller: hourScrollController,
                                               thumbVisibility: true,
                                               thickness: 3.5,
                                               radius: const Radius.circular(4),
-                                              thumbColor: const Color(0xFF94A3B8),
+                                              thumbColor: const Color(
+                                                0xFF94A3B8,
+                                              ),
                                               child: ListView.builder(
-                                                controller: hourScrollController,
-                                                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                                controller:
+                                                    hourScrollController,
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 4,
+                                                    ),
                                                 itemCount: 24,
                                                 itemBuilder: (ctx, h) {
-                                                  final isHourDisabled = isSameDay && h < minDateTime!.hour;
-                                                  final isSelected = selectedHour == h;
+                                                  final isHourDisabled =
+                                                      isSameDay &&
+                                                      h < minDateTime!.hour;
+                                                  final isSelected =
+                                                      selectedHour == h;
 
                                                   return SizedBox(
                                                     height: 38,
                                                     child: Center(
                                                       child: InkWell(
-                                                        borderRadius: BorderRadius.circular(6),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
                                                         onTap: isHourDisabled
                                                             ? null
                                                             : () {
                                                                 setDialogState(() {
-                                                                  selectedHour = h;
-                                                                  selectedMinute ??= 0;
-                                                                  if (isSameDay && h == minDateTime!.hour) {
-                                                                    if (selectedMinute! <= minDateTime.minute) {
-                                                                      selectedMinute = minDateTime.minute + 1;
-                                                                      if (selectedMinute! >= 60) {
-                                                                        selectedHour = h + 1;
-                                                                        selectedMinute = 0;
+                                                                  selectedHour =
+                                                                      h;
+                                                                  selectedMinute ??=
+                                                                      0;
+                                                                  if (isSameDay &&
+                                                                      h ==
+                                                                          minDateTime!
+                                                                              .hour) {
+                                                                    if (selectedMinute! <=
+                                                                        minDateTime
+                                                                            .minute) {
+                                                                      selectedMinute =
+                                                                          minDateTime
+                                                                              .minute +
+                                                                          1;
+                                                                      if (selectedMinute! >=
+                                                                          60) {
+                                                                        selectedHour =
+                                                                            h +
+                                                                            1;
+                                                                        selectedMinute =
+                                                                            0;
                                                                       }
                                                                     }
                                                                   }
                                                                 });
-                                                                if (hourScrollController.hasClients) {
+                                                                if (hourScrollController
+                                                                    .hasClients) {
                                                                   hourScrollController.animateTo(
-                                                                    ((h * 38.0) - 92.0).clamp(0.0, hourScrollController.position.maxScrollExtent),
-                                                                    duration: const Duration(milliseconds: 250),
-                                                                    curve: Curves.easeOutCubic,
+                                                                    ((h * 38.0) -
+                                                                            92.0)
+                                                                        .clamp(
+                                                                          0.0,
+                                                                          hourScrollController
+                                                                              .position
+                                                                              .maxScrollExtent,
+                                                                        ),
+                                                                    duration: const Duration(
+                                                                      milliseconds:
+                                                                          250,
+                                                                    ),
+                                                                    curve: Curves
+                                                                        .easeOutCubic,
                                                                   );
                                                                 }
                                                               },
                                                         child: Container(
-                                                          width: double.infinity,
+                                                          width:
+                                                              double.infinity,
                                                           height: 34,
                                                           decoration: BoxDecoration(
                                                             color: isSelected
-                                                                ? const Color(0xFF004385)
+                                                                ? const Color(
+                                                                    0xFF004385,
+                                                                  )
                                                                 : (isHourDisabled
-                                                                    ? const Color(0xFFF1F5F9)
-                                                                    : Colors.transparent),
-                                                            borderRadius: BorderRadius.circular(6),
+                                                                      ? const Color(
+                                                                          0xFFF1F5F9,
+                                                                        )
+                                                                      : Colors
+                                                                            .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
                                                           ),
-                                                          alignment: Alignment.center,
+                                                          alignment:
+                                                              Alignment.center,
                                                           child: Text(
-                                                            h.toString().padLeft(2, '0'),
+                                                            h
+                                                                .toString()
+                                                                .padLeft(
+                                                                  2,
+                                                                  '0',
+                                                                ),
                                                             style: GoogleFonts.inter(
                                                               fontSize: 13,
-                                                              fontWeight: isSelected
-                                                                  ? FontWeight.w700
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .w700
                                                                   : (isHourDisabled
-                                                                      ? FontWeight.w400
-                                                                      : FontWeight.w600),
+                                                                        ? FontWeight
+                                                                              .w400
+                                                                        : FontWeight
+                                                                              .w600),
                                                               color: isSelected
                                                                   ? Colors.white
                                                                   : (isHourDisabled
-                                                                      ? const Color(0xFFCBD5E1)
-                                                                      : const Color(0xFF1E293B)),
+                                                                        ? const Color(
+                                                                            0xFFCBD5E1,
+                                                                          )
+                                                                        : const Color(
+                                                                            0xFF1E293B,
+                                                                          )),
                                                             ),
                                                           ),
                                                         ),
@@ -4362,73 +5438,134 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                           child: Container(
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFF8FAFC),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                              ),
                                             ),
                                             child: RawScrollbar(
-                                              controller: minuteScrollController,
+                                              controller:
+                                                  minuteScrollController,
                                               thumbVisibility: true,
                                               thickness: 3.5,
                                               radius: const Radius.circular(4),
-                                              thumbColor: const Color(0xFF94A3B8),
+                                              thumbColor: const Color(
+                                                0xFF94A3B8,
+                                              ),
                                               child: ListView.builder(
-                                                controller: minuteScrollController,
-                                                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                                                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                                                controller:
+                                                    minuteScrollController,
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 4,
+                                                    ),
                                                 itemCount: 60,
                                                 itemBuilder: (ctx, m) {
-                                                  final isMinuteDisabled = isSameDay &&
+                                                  final isMinuteDisabled =
+                                                      isSameDay &&
                                                       selectedHour != null &&
-                                                      selectedHour == minDateTime!.hour &&
+                                                      selectedHour ==
+                                                          minDateTime!.hour &&
                                                       m <= minDateTime.minute;
-                                                  final isSelected = selectedMinute == m;
+                                                  final isSelected =
+                                                      selectedMinute == m;
 
                                                   return SizedBox(
                                                     height: 38,
                                                     child: Center(
                                                       child: InkWell(
-                                                        borderRadius: BorderRadius.circular(6),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
                                                         onTap: isMinuteDisabled
                                                             ? null
                                                             : () {
                                                                 setDialogState(() {
-                                                                  selectedMinute = m;
-                                                                  selectedHour ??= isSameDay ? minDateTime!.hour : 9;
+                                                                  selectedMinute =
+                                                                      m;
+                                                                  selectedHour ??=
+                                                                      isSameDay
+                                                                      ? minDateTime!
+                                                                            .hour
+                                                                      : 9;
                                                                 });
-                                                                if (minuteScrollController.hasClients) {
+                                                                if (minuteScrollController
+                                                                    .hasClients) {
                                                                   minuteScrollController.animateTo(
-                                                                    ((m * 38.0) - 92.0).clamp(0.0, minuteScrollController.position.maxScrollExtent),
-                                                                    duration: const Duration(milliseconds: 250),
-                                                                    curve: Curves.easeOutCubic,
+                                                                    ((m * 38.0) -
+                                                                            92.0)
+                                                                        .clamp(
+                                                                          0.0,
+                                                                          minuteScrollController
+                                                                              .position
+                                                                              .maxScrollExtent,
+                                                                        ),
+                                                                    duration: const Duration(
+                                                                      milliseconds:
+                                                                          250,
+                                                                    ),
+                                                                    curve: Curves
+                                                                        .easeOutCubic,
                                                                   );
                                                                 }
                                                               },
                                                         child: Container(
-                                                          width: double.infinity,
+                                                          width:
+                                                              double.infinity,
                                                           height: 34,
                                                           decoration: BoxDecoration(
                                                             color: isSelected
-                                                                ? const Color(0xFF004385)
+                                                                ? const Color(
+                                                                    0xFF004385,
+                                                                  )
                                                                 : (isMinuteDisabled
-                                                                    ? const Color(0xFFF1F5F9)
-                                                                    : Colors.transparent),
-                                                            borderRadius: BorderRadius.circular(6),
+                                                                      ? const Color(
+                                                                          0xFFF1F5F9,
+                                                                        )
+                                                                      : Colors
+                                                                            .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
                                                           ),
-                                                          alignment: Alignment.center,
+                                                          alignment:
+                                                              Alignment.center,
                                                           child: Text(
-                                                            m.toString().padLeft(2, '0'),
+                                                            m
+                                                                .toString()
+                                                                .padLeft(
+                                                                  2,
+                                                                  '0',
+                                                                ),
                                                             style: GoogleFonts.inter(
                                                               fontSize: 13,
-                                                              fontWeight: isSelected
-                                                                  ? FontWeight.w700
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .w700
                                                                   : (isMinuteDisabled
-                                                                      ? FontWeight.w400
-                                                                      : FontWeight.w600),
+                                                                        ? FontWeight
+                                                                              .w400
+                                                                        : FontWeight
+                                                                              .w600),
                                                               color: isSelected
                                                                   ? Colors.white
                                                                   : (isMinuteDisabled
-                                                                      ? const Color(0xFFCBD5E1)
-                                                                      : const Color(0xFF1E293B)),
+                                                                        ? const Color(
+                                                                            0xFFCBD5E1,
+                                                                          )
+                                                                        : const Color(
+                                                                            0xFF1E293B,
+                                                                          )),
                                                             ),
                                                           ),
                                                         ),
@@ -4450,9 +5587,16 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                         ],
                       ),
                     ),
-                    const Divider(height: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFE2E8F0),
+                    ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           if (showNowButton)
@@ -4460,8 +5604,13 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                               style: TextButton.styleFrom(
                                 backgroundColor: const Color(0xFFEFF6FF),
                                 foregroundColor: const Color(0xFF004385),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                               ),
                               onPressed: () {
                                 final nowGmt7 = _getGmt7Now();
@@ -4469,7 +5618,11 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 final targetMinute = nowGmt7.minute;
 
                                 setDialogState(() {
-                                  selectedDate = DateTime(nowGmt7.year, nowGmt7.month, nowGmt7.day);
+                                  selectedDate = DateTime(
+                                    nowGmt7.year,
+                                    nowGmt7.month,
+                                    nowGmt7.day,
+                                  );
                                   selectedHour = targetHour;
                                   selectedMinute = targetMinute;
                                 });
@@ -4477,7 +5630,12 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 if (hourScrollController.hasClients) {
                                   final targetH = (targetHour * 38.0) - 92.0;
                                   hourScrollController.animateTo(
-                                    targetH.clamp(0.0, hourScrollController.position.maxScrollExtent),
+                                    targetH.clamp(
+                                      0.0,
+                                      hourScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
                                     duration: const Duration(milliseconds: 250),
                                     curve: Curves.easeOutCubic,
                                   );
@@ -4485,7 +5643,12 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                                 if (minuteScrollController.hasClients) {
                                   final targetM = (targetMinute * 38.0) - 92.0;
                                   minuteScrollController.animateTo(
-                                    targetM.clamp(0.0, minuteScrollController.position.maxScrollExtent),
+                                    targetM.clamp(
+                                      0.0,
+                                      minuteScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
                                     duration: const Duration(milliseconds: 250),
                                     curve: Curves.easeOutCubic,
                                   );
@@ -4493,14 +5656,20 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                               },
                               child: Text(
                                 'Today',
-                                style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           const Spacer(),
                           TextButton(
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF64748B),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                             ),
                             onPressed: () {
                               tickerTimer?.cancel();
@@ -4508,26 +5677,41 @@ class _AddWalkInModalState extends State<AddWalkInModal> {
                             },
                             child: Text(
                               'Cancel',
-                              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: isSelectionValid ? const Color(0xFF004385) : const Color(0xFFCBD5E1),
+                              backgroundColor: isSelectionValid
+                                  ? const Color(0xFF004385)
+                                  : const Color(0xFFCBD5E1),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
                             ),
                             onPressed: isSelectionValid
                                 ? () {
                                     tickerTimer?.cancel();
-                                    Navigator.of(dialogContext).pop(currentPreview);
+                                    Navigator.of(
+                                      dialogContext,
+                                    ).pop(currentPreview);
                                   }
                                 : null,
                             child: Text(
                               'OK',
-                              style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ],

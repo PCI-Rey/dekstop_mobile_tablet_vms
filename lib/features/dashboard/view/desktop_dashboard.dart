@@ -4265,7 +4265,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to create Walk-In visitors.');
       return;
     }
-    if ((actionName == 'Pra Register' || actionName == 'Pra-Register' || actionName == 'Pre Register') && !controller.canPraRegister) {
+    if ((actionName == 'Pra Register' || actionName == 'Pra-Register' || actionName == 'Pre Register' || actionName == 'New Invitation') && !controller.canPraRegister) {
       AppSnackbar.warning(title: 'Permission Denied', message: 'You do not have permission to create Pra-Registrations.');
       return;
     }
@@ -4504,7 +4504,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     }
     if (actionName == 'Pra Register' ||
         actionName == 'Pra-Register' ||
-        actionName == 'Pre Register') {
+        actionName == 'Pre Register' ||
+        actionName == 'New Invitation') {
       AddPraRegistrationModal.show(context, isWalkIn: false);
       return;
     }

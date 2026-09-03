@@ -95,6 +95,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
   // --- Step 3 State (Purpose Visit) ---
   Map<String, dynamic>? _selectedDestination;
+  Map<String, dynamic>? _selectedParentSite;
+  bool _isParentSiteChecked = true;
+  Map<String, dynamic>? _selectedChildBuilding;
+  bool _isChildBuildingChecked = false;
   Map<String, dynamic>? _selectedPicHost;
   String? _selectedAgenda;
   final TextEditingController _otherAgendaController = TextEditingController();
@@ -335,8 +339,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     ];
   }
 
-  bool get _isStep1Valid =>
-      _selectedVisitorType != null && _isGroup != null;
+  bool get _isStep1Valid => _selectedVisitorType != null && _isGroup != null;
 
   bool get _isStep2Valid {
     final fields = _getVisitorInfoPraFormFields();
@@ -1113,6 +1116,15 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
 
     final visitorTypeId = (_selectedVisitorType?['id'] ?? '').toString();
     final siteId = (_selectedDestination?['id'] ?? '').toString();
+    final isChildDestination = _selectedDestination?['is_child'] == true;
+    final parentSiteId = (_selectedParentSite?['id'] ??
+            _selectedDestination?['parent'] ??
+            '')
+        .toString();
+    final registeredSiteId =
+        (isChildDestination && _isParentSiteChecked && parentSiteId.isNotEmpty)
+            ? parentSiteId
+            : siteId;
     final hostId = (_selectedPicHost?['id'] ?? '').toString();
     final resolvedAgenda = _selectedAgenda == 'Others'
         ? _otherAgendaController.text.trim()
@@ -1157,7 +1169,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         'is_group': true,
         'type_registered': 0,
         'tz': 'Asia/Jakarta',
-        if (siteId.isNotEmpty) 'registered_site': siteId,
+        if (registeredSiteId.isNotEmpty) 'registered_site': registeredSiteId,
         'group_code': _groupCode,
         'group_name': _groupNameController.text.trim(),
         'flow': 'Praregister',
@@ -1175,7 +1187,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                     _singleSelectedData?['employee_id'] ??
                     '')
                 .toString()
-          : '';
+            : '';
 
       final singleQuestionPage = _buildDynamicQuestionPage(
         name: _singleFullNameCtrl.text.trim(),
@@ -1201,7 +1213,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
         'tz': 'Asia/Jakarta',
         'flow': 'Praregister',
         'visitor_role': _singleRole ?? resolvedRole,
-        if (siteId.isNotEmpty) 'registered_site': siteId,
+        if (registeredSiteId.isNotEmpty) 'registered_site': registeredSiteId,
         'data_visitor': [
           {'question_page': singleQuestionPage},
         ],
@@ -1324,9 +1336,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   bool _isStepCompleted(int stepNum) {
     if (stepNum == _currentStep) return false;
     if (stepNum > _maxStepReached) return false;
-    if (stepNum == 1) return _isStep1Valid && (_currentStep > 1 || _maxStepReached > 1);
-    if (stepNum == 2) return _isStep1Valid && _isStep2Valid && (_currentStep > 2 || _maxStepReached > 2);
-    if (stepNum == 3) return _isStep1Valid && _isStep2Valid && _isStep3Valid && (_currentStep > 3 || _maxStepReached > 3);
+    if (stepNum == 1)
+      return _isStep1Valid && (_currentStep > 1 || _maxStepReached > 1);
+    if (stepNum == 2)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          (_currentStep > 2 || _maxStepReached > 2);
+    if (stepNum == 3)
+      return _isStep1Valid &&
+          _isStep2Valid &&
+          _isStep3Valid &&
+          (_currentStep > 3 || _maxStepReached > 3);
     return false;
   }
 
@@ -1369,8 +1389,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   color: isActive || isCompleted
                       ? const Color(0xFF004385)
                       : (canJump
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFFCBD5E1)),
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFFCBD5E1)),
                 ),
                 child: Center(
                   child: showCheckmark
@@ -1394,8 +1414,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   color: isActive
                       ? const Color(0xFF004385)
                       : (isCompleted || canJump
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFF64748B)),
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFF64748B)),
                 ),
               ),
             ],
@@ -1408,9 +1428,13 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   Widget _buildStepConnector(int stepBefore) {
     bool isCompleted = false;
     if (stepBefore == 1) {
-      isCompleted = _isStep1Valid && (_currentStep >= 2 || _maxStepReached >= 2);
+      isCompleted =
+          _isStep1Valid && (_currentStep >= 2 || _maxStepReached >= 2);
     } else if (stepBefore == 2) {
-      isCompleted = _isStep1Valid && _isStep2Valid && (_currentStep >= 3 || _maxStepReached >= 3);
+      isCompleted =
+          _isStep1Valid &&
+          _isStep2Valid &&
+          (_currentStep >= 3 || _maxStepReached >= 3);
     }
 
     return Container(
@@ -1425,7 +1449,8 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
   // Step 1: User Type
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildStep1UserType() {
-    final List<Map<String, dynamic>> visitorTypes = controller.rxPraRegVisitorTypes.isNotEmpty
+    final List<Map<String, dynamic>> visitorTypes =
+        controller.rxPraRegVisitorTypes.isNotEmpty
         ? controller.rxPraRegVisitorTypes.toList()
         : <Map<String, dynamic>>[
             {
@@ -2235,6 +2260,36 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           final isMandatory = f['mandatory'] == true;
 
           if (remarks == 'site_place' || remarks == 'destination') {
+            final isChildSite = _selectedDestination?['is_child'] == true;
+            final parentId = (_selectedDestination?['parent'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            final parentSite = isChildSite && parentId.isNotEmpty
+                ? sites.firstWhereOrNull(
+                    (s) =>
+                        (s['id'] ?? '').toString().trim().toLowerCase() ==
+                        parentId,
+                  )
+                : null;
+
+            final currentSiteId = (_selectedDestination?['id'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            final childBuildings = (!isChildSite && currentSiteId.isNotEmpty)
+                ? sites
+                    .where(
+                      (s) =>
+                          (s['parent'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase() ==
+                          currentSiteId,
+                    )
+                    .toList()
+                : <Map<String, dynamic>>[];
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Column(
@@ -2247,17 +2302,245 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<Map<String, dynamic>>(
-                    hint: 'Select Site or type at least 3 characters to search',
+                    hint: 'Select Site',
                     selectedValue: _selectedDestination,
                     items: sites.map((s) {
+                      final isChild = s['is_child'] == true;
+                      final pId = (s['parent'] ?? '')
+                          .toString()
+                          .trim()
+                          .toLowerCase();
+                      final parent = isChild && pId.isNotEmpty
+                          ? sites.firstWhereOrNull(
+                              (p) =>
+                                  (p['id'] ?? '')
+                                      .toString()
+                                      .trim()
+                                      .toLowerCase() ==
+                                  pId,
+                            )
+                          : null;
+                      final sName = s['name']?.toString() ?? 'Site';
+                      final displayLabel = (isChild && parent != null)
+                          ? '$sName, ${parent['name']}'
+                          : sName;
+
                       return DropdownMenuItemData<Map<String, dynamic>>(
                         value: s,
-                        label: s['name']?.toString() ?? 'Site',
+                        label: displayLabel,
                       );
                     }).toList(),
-                    onSelected: (val) =>
-                        setState(() => _selectedDestination = val),
+                    onSelected: (val) {
+                      setState(() {
+                        _selectedDestination = val;
+                        if (val['is_child'] == true) {
+                          final pId = (val['parent'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase();
+                          _selectedParentSite = sites.firstWhereOrNull(
+                            (s) =>
+                                (s['id'] ?? '')
+                                    .toString()
+                                    .trim()
+                                    .toLowerCase() ==
+                                pId,
+                          );
+                          _isParentSiteChecked = true;
+                          _selectedChildBuilding = null;
+                          _isChildBuildingChecked = false;
+                        } else {
+                          final cId = (val['id'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase();
+                          final children = sites
+                              .where(
+                                (s) =>
+                                    (s['parent'] ?? '')
+                                        .toString()
+                                        .trim()
+                                        .toLowerCase() ==
+                                    cId,
+                              )
+                              .toList();
+                          _selectedParentSite = null;
+                          _isParentSiteChecked = false;
+                          _selectedChildBuilding =
+                              children.isNotEmpty ? children.first : null;
+                          _isChildBuildingChecked = false;
+                        }
+                      });
+                    },
                   ),
+                  if (isChildSite && parentSite != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _isParentSiteChecked
+                              ? const Color(0xFF004385).withValues(alpha: 0.35)
+                              : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              setState(
+                                () =>
+                                    _isParentSiteChecked =
+                                        !_isParentSiteChecked,
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value: _isParentSiteChecked,
+                                    activeColor: const Color(0xFF004385),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    onChanged: (val) {
+                                      setState(
+                                        () =>
+                                            _isParentSiteChecked =
+                                                val ?? true,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Parent Site',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isParentSiteChecked) ...[
+                            const SizedBox(height: 8),
+                            _buildCleanDropdownField<Map<String, dynamic>>(
+                              hint: 'Select Parent Site',
+                              selectedValue: _selectedParentSite ?? parentSite,
+                              showSearch: false,
+                              items: [
+                                DropdownMenuItemData<Map<String, dynamic>>(
+                                  value: parentSite,
+                                  label:
+                                      parentSite['name']?.toString() ??
+                                      'Parent Site',
+                                ),
+                              ],
+                              onSelected: (val) {
+                                setState(() => _selectedParentSite = val);
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ] else if (!isChildSite && childBuildings.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _isChildBuildingChecked
+                              ? const Color(0xFF004385).withValues(alpha: 0.35)
+                              : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              setState(
+                                () =>
+                                    _isChildBuildingChecked =
+                                        !_isChildBuildingChecked,
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value: _isChildBuildingChecked,
+                                    activeColor: const Color(0xFF004385),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    onChanged: (val) {
+                                      setState(
+                                        () =>
+                                            _isChildBuildingChecked =
+                                                val ?? false,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Building / Sub-Location',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isChildBuildingChecked) ...[
+                            const SizedBox(height: 8),
+                            _buildCleanDropdownField<Map<String, dynamic>>(
+                              hint: 'Select Building',
+                              selectedValue:
+                                  _selectedChildBuilding ?? childBuildings.first,
+                              showSearch: false,
+                              items: childBuildings.map((b) {
+                                return DropdownMenuItemData<
+                                  Map<String, dynamic>
+                                >(
+                                  value: b,
+                                  label: b['name']?.toString() ?? 'Building',
+                                );
+                              }).toList(),
+                              onSelected: (val) {
+                                setState(() => _selectedChildBuilding = val);
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -2276,9 +2559,9 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<Map<String, dynamic>>(
-                    hint:
-                        'Select PIC Host or type at least 3 characters to search',
+                    hint: 'Select PIC Host',
                     selectedValue: _selectedPicHost,
+                    showSearch: false,
                     items: hosts.map((e) {
                       final eName = (e['name'] ?? 'Host').toString();
                       String orgName = '';
@@ -2307,6 +2590,17 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           }
 
           if (remarks == 'agenda') {
+            final dynamicOpts = (f['multiple_option_fields'] as List?)
+                ?.map((e) => (e is Map ? (e['name'] ?? e['value'] ?? '') : e.toString()).toString().trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
+            final agendaList = (dynamicOpts != null && dynamicOpts.isNotEmpty)
+                ? dynamicOpts
+                : List<String>.from(_agendaOptions);
+            if (!agendaList.contains('Others')) {
+              agendaList.add('Others');
+            }
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Column(
@@ -2319,9 +2613,10 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                   ),
                   const SizedBox(height: 6),
                   _buildCleanDropdownField<String>(
-                    hint: 'Select agenda',
+                    hint: 'Select Agenda',
                     selectedValue: _selectedAgenda,
-                    items: _agendaOptions.map((agenda) {
+                    showSearch: false,
+                    items: agendaList.map((agenda) {
                       return DropdownMenuItemData<String>(
                         value: agenda,
                         label: agenda,
@@ -2653,6 +2948,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     required T? selectedValue,
     required List<DropdownMenuItemData<T>> items,
     required ValueChanged<T> onSelected,
+    bool showSearch = true,
   }) {
     String displayLabel = hint;
     if (selectedValue != null) {
@@ -2672,6 +2968,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
           title: hint,
           items: items,
           selectedValue: selectedValue,
+          showSearch: showSearch,
         );
         if (result != null) {
           onSelected(result);
@@ -2716,6 +3013,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
     required String title,
     required List<DropdownMenuItemData<T>> items,
     required T? selectedValue,
+    bool showSearch = true,
   }) {
     final searchCtrl = TextEditingController();
 
@@ -2741,6 +3039,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
               child: Container(
                 width: 440,
                 constraints: const BoxConstraints(maxHeight: 460),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -2789,7 +3088,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                       ),
                     ),
                     const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    if (items.length > 5)
+                    if (showSearch && items.length > 5)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
                         child: TextField(
@@ -2840,7 +3139,7 @@ class _AddPraRegistrationModalState extends State<AddPraRegistrationModal> {
                     Flexible(
                       child: ListView.separated(
                         shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.only(top: 4, bottom: 8),
                         itemCount: filtered.length,
                         separatorBuilder: (context, idx) =>
                             const Divider(height: 1, color: Color(0xFFF8FAFC)),

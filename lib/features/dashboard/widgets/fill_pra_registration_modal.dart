@@ -298,8 +298,8 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
   }
 
   void _populateFallbackFields() {
-    _fullNameCtrl.text = (widget.visitor['visitor_name'] ?? '').toString();
-    _emailCtrl.text = (widget.visitor['visitor_email'] ?? '').toString();
+    _fullNameCtrl.text = (widget.visitor['visitor_name'] ?? widget.visitor['name'] ?? '').toString();
+    _emailCtrl.text = (widget.visitor['visitor_email'] ?? widget.visitor['email'] ?? '').toString();
     _phoneCtrl.text = (widget.visitor['visitor_phone'] ?? '').toString();
     _orgCtrl.text = (widget.visitor['visitor_organization_name'] ?? '').toString();
     _identityCtrl.text = (widget.visitor['visitor_identity_id'] ?? '').toString();
@@ -1414,6 +1414,8 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
             controller: _emailCtrl,
             hint: 'Enter your email',
             keyboardType: TextInputType.emailAddress,
+            enabled: false,
+            readOnly: true,
           ),
           const SizedBox(height: 16),
 
