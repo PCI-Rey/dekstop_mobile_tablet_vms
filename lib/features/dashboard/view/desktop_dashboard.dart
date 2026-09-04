@@ -1591,6 +1591,53 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+  String _formatPurposeVisitDateTime(dynamic raw) {
+    if (raw == null || raw.toString().trim().isEmpty) return '-';
+    final s = raw.toString().trim();
+    if (s == '-' || s == 'null') return '-';
+    try {
+      DateTime dt;
+      if (s.contains('T')) {
+        DateTime parsed;
+        if (!s.endsWith('Z') && !RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(s)) {
+          parsed = DateTime.parse('${s}Z');
+        } else {
+          parsed = DateTime.parse(s);
+        }
+        dt = parsed.toUtc().add(const Duration(hours: 7));
+      } else {
+        final parsed = controller.parseApiDateTime(s) ?? DateTime.tryParse(s);
+        if (parsed != null) {
+          dt = parsed;
+        } else {
+          return s;
+        }
+      }
+
+      const months = [
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      final day = dt.day.toString().padLeft(2, '0');
+      final month = months[dt.month - 1];
+      final h = dt.hour.toString().padLeft(2, '0');
+      final m = dt.minute.toString().padLeft(2, '0');
+      return '$day $month ${dt.year}, $h:$m';
+    } catch (_) {
+      return s;
+    }
+  }
+
   Widget _buildPurposeVisitTab(Map<String, dynamic>? visitor) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1609,9 +1656,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               _buildMetadataField(
                 Icons.more_time_rounded,
                 'Visit Period Start',
-                visitor?['visitor_period_start'] ??
-                    visitor?['period_start'] ??
-                    '-',
+                _formatPurposeVisitDateTime(
+                  visitor?['visitor_period_start'] ??
+                      visitor?['period_start'] ??
+                      visitor?['visit_start'],
+                ),
               ),
               _buildMetadataField(
                 Icons.location_on_outlined,
@@ -1643,7 +1692,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               _buildMetadataField(
                 Icons.event_available_outlined,
                 'Visit Period End',
-                visitor?['visitor_period_end'] ?? visitor?['period_end'] ?? '-',
+                _formatPurposeVisitDateTime(
+                  visitor?['visitor_period_end'] ??
+                      visitor?['period_end'] ??
+                      visitor?['visit_end'],
+                ),
               ),
               _buildMetadataField(
                 Icons.domain_rounded,
@@ -11609,9 +11662,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       if (clean.endsWith('Z') ||
           clean.contains('+') ||
           (clean.length > 19 && clean.substring(19).contains('-'))) {
-        dt = DateTime.parse(clean).toLocal();
+        dt = DateTime.parse(clean).toUtc().add(const Duration(hours: 7));
       } else {
-        dt = DateTime.parse('${clean}Z').toLocal();
+        dt = DateTime.parse('${clean}Z').toUtc().add(const Duration(hours: 7));
       }
       const months = [
         'Jan',

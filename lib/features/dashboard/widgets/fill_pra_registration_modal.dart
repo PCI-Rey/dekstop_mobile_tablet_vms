@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -69,9 +70,13 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
   final TextEditingController _phoneCtrl = TextEditingController();
   final TextEditingController _orgCtrl = TextEditingController();
   final TextEditingController _identityCtrl = TextEditingController();
+  bool? _isEmployee = false;
+  bool _hasIsEmployeeField = false;
+  bool _isEmployeeMandatory = false;
+  String _isEmployeeLabel = 'Are you Employee?';
   final Map<String, TextEditingController> _visitorExtraCtrls = {};
 
-  // --- Step 2 Controllers (Purpose Visit - READ-ONLY) ---
+  // --- Step 2 Controllers (Purpose Visit - EDITABLE) ---
   final TextEditingController _destinationCtrl = TextEditingController();
   final TextEditingController _picHostCtrl = TextEditingController();
   final TextEditingController _agendaCtrl = TextEditingController();
@@ -82,6 +87,10 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
   String? _rawHostId;
   String? _rawVisitStartIso;
   String? _rawVisitEndIso;
+  DateTime? _selectedVisitStart;
+  DateTime? _selectedVisitEnd;
+  bool _hasEditedVisitStart = false;
+  bool _hasEditedVisitEnd = false;
 
   // --- Step 3 Controllers (Vehicle Information) ---
   bool _isDriving = false;
@@ -210,10 +219,29 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
                   'Visitor')
                   .toString();
           _roleCtrl.text = _selectedRole!;
+        } else if (remarks == 'is_employee' ||
+            remarks == 'employee' ||
+            shortName == 'is_employee' ||
+            shortName.contains('employee') ||
+            longText.contains('employee')) {
+          _hasIsEmployeeField = true;
+          _isEmployeeMandatory = field['mandatory'] == true;
+          final l = (field['long_display_text'] ?? field['short_name'] ?? '').toString().trim();
+          _isEmployeeLabel = (l.isNotEmpty && !l.toLowerCase().contains('is_employee'))
+              ? l
+              : 'Are you Employee?';
+          final cleanAns = ans.trim().toLowerCase();
+          if (cleanAns == 'true' || cleanAns == 'yes' || cleanAns == '1') {
+            _isEmployee = true;
+          } else {
+            _isEmployee = false;
+          }
         } else {
           _visitorExtraCtrls.putIfAbsent(remarks, () => TextEditingController(text: ans));
         }
       }
+      _visitorExtraCtrls.removeWhere((k, v) =>
+          k.toLowerCase().contains('is_employee') || k.toLowerCase() == 'employee');
       if (_selectedRole == null || _selectedRole!.isEmpty) {
         _selectedRole = (_visitorTypeData?['name'] ??
             _visitorTypeData?['type_name'] ??
@@ -257,10 +285,12 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
         } else if (remarks == 'agenda') {
           _agendaCtrl.text = ans.isNotEmpty ? ans : (_rawDetailForm?['agenda'] ?? widget.visitor['agenda'] ?? 'Meeting').toString();
         } else if (remarks == 'visitor_period_start') {
-          _rawVisitStartIso = dt.isNotEmpty ? dt : (_rawDetailForm?['visitor_period_start'] ?? widget.visitor['visitor_period_start'] ?? '').toString();
+          _rawVisitStartIso = dt.isNotEmpty ? dt : (_rawDetailForm?['visitor_period_start'] ?? widget.visitor['visitor_period_start'] ?? widget.visitor['period_start'] ?? widget.visitor['visit_start'] ?? '').toString();
+          _selectedVisitStart = _parseToGmt7(_rawVisitStartIso);
           _visitStartCtrl.text = _formatDateTimeDisplay(_rawVisitStartIso);
         } else if (remarks == 'visitor_period_end') {
-          _rawVisitEndIso = dt.isNotEmpty ? dt : (_rawDetailForm?['visitor_period_end'] ?? widget.visitor['visitor_period_end'] ?? '').toString();
+          _rawVisitEndIso = dt.isNotEmpty ? dt : (_rawDetailForm?['visitor_period_end'] ?? widget.visitor['visitor_period_end'] ?? widget.visitor['period_end'] ?? widget.visitor['visit_end'] ?? '').toString();
+          _selectedVisitEnd = _parseToGmt7(_rawVisitEndIso);
           _visitEndCtrl.text = _formatDateTimeDisplay(_rawVisitEndIso);
         } else {
           _purposeExtraCtrls.putIfAbsent(remarks, () => TextEditingController(text: ans));
@@ -270,8 +300,12 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
       _destinationCtrl.text = (widget.visitor['site_place_name'] ?? 'Gedung SINERGI').toString();
       _picHostCtrl.text = (widget.visitor['host_name'] ?? 'Endru').toString();
       _agendaCtrl.text = (widget.visitor['agenda'] ?? 'Meeting').toString();
-      _visitStartCtrl.text = _formatDateTimeDisplay(widget.visitor['visitor_period_start']?.toString());
-      _visitEndCtrl.text = _formatDateTimeDisplay(widget.visitor['visitor_period_end']?.toString());
+      _rawVisitStartIso = (widget.visitor['visitor_period_start'] ?? widget.visitor['period_start'] ?? widget.visitor['visit_start'] ?? '').toString();
+      _selectedVisitStart = _parseToGmt7(_rawVisitStartIso);
+      _visitStartCtrl.text = _formatDateTimeDisplay(_rawVisitStartIso);
+      _rawVisitEndIso = (widget.visitor['visitor_period_end'] ?? widget.visitor['period_end'] ?? widget.visitor['visit_end'] ?? '').toString();
+      _selectedVisitEnd = _parseToGmt7(_rawVisitEndIso);
+      _visitEndCtrl.text = _formatDateTimeDisplay(_rawVisitEndIso);
     }
 
     // 3. Parse Vehicle Information (sort == 2)
@@ -309,27 +343,1005 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
     _destinationCtrl.text = (widget.visitor['site_place_name'] ?? 'Gedung SINERGI').toString();
     _picHostCtrl.text = (widget.visitor['host_name'] ?? 'Endru').toString();
     _agendaCtrl.text = (widget.visitor['agenda'] ?? 'Meeting').toString();
-    _visitStartCtrl.text = _formatDateTimeDisplay(widget.visitor['visitor_period_start']?.toString());
-    _visitEndCtrl.text = _formatDateTimeDisplay(widget.visitor['visitor_period_end']?.toString());
+    _rawVisitStartIso = (widget.visitor['visitor_period_start'] ?? widget.visitor['period_start'] ?? widget.visitor['visit_start'] ?? '').toString();
+    _selectedVisitStart = _parseToGmt7(_rawVisitStartIso);
+    _visitStartCtrl.text = _formatDateTimeDisplay(_rawVisitStartIso);
+
+    _rawVisitEndIso = (widget.visitor['visitor_period_end'] ?? widget.visitor['period_end'] ?? widget.visitor['visit_end'] ?? '').toString();
+    _selectedVisitEnd = _parseToGmt7(_rawVisitEndIso);
+    _visitEndCtrl.text = _formatDateTimeDisplay(_rawVisitEndIso);
+  }
+
+  DateTime? _parseToGmt7(dynamic dateStr) {
+    if (dateStr == null || dateStr.toString().trim().isEmpty) return null;
+    final s = dateStr.toString().trim();
+    if (s == '-' || s == 'null') return null;
+    try {
+      if (s.contains('T')) {
+        DateTime parsed;
+        if (!s.endsWith('Z') && !RegExp(r'[+-]\d{2}:?\d{2}$').hasMatch(s)) {
+          parsed = DateTime.parse('${s}Z');
+        } else {
+          parsed = DateTime.parse(s);
+        }
+        return parsed.toUtc().add(const Duration(hours: 7));
+      }
+      final parsed = DateTime.parse(s);
+      return parsed.toUtc().add(const Duration(hours: 7));
+    } catch (_) {
+      return null;
+    }
   }
 
   String _formatDateTimeDisplay(String? iso) {
-    if (iso == null || iso.isEmpty) return 'Jumat, 28 Agustus 2026, 09:00';
+    if (iso == null || iso.isEmpty) return 'Friday, 28 August 2026, 09:00';
     try {
-      final dt = DateTime.parse(iso).toLocal();
-      const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-      ];
-      final dayName = days[dt.weekday % 7];
-      final monthName = months[dt.month - 1];
-      final h = dt.hour.toString().padLeft(2, '0');
-      final m = dt.minute.toString().padLeft(2, '0');
-      return '$dayName, ${dt.day} $monthName ${dt.year}, $h:$m';
+      final dt = _parseToGmt7(iso);
+      if (dt == null) return iso;
+      return _formatGmt7DateTime(dt);
     } catch (_) {
       return iso;
     }
+  }
+
+  String _formatGmt7DateTime(DateTime dt) {
+    const days = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    final dayName = days[dt.weekday % 7];
+    final monthName = months[dt.month - 1];
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$dayName, ${dt.day} $monthName ${dt.year}, $h:$m';
+  }
+
+  String? _gmt7ToUtcIso(DateTime? gmt7Dt) {
+    if (gmt7Dt == null) return null;
+    final utc = DateTime.utc(
+      gmt7Dt.year,
+      gmt7Dt.month,
+      gmt7Dt.day,
+      gmt7Dt.hour,
+      gmt7Dt.minute,
+      gmt7Dt.second,
+    ).subtract(const Duration(hours: 7));
+    return '${utc.toIso8601String().split('.').first}Z';
+  }
+
+  Widget _buildDateTimePickerField({
+    required DateTime? value,
+    required ValueChanged<DateTime> onChanged,
+    DateTime? minDateTime,
+    String title = 'Select Date & Time',
+    bool showNowButton = true,
+  }) {
+    final formatted = value != null
+        ? _formatGmt7DateTime(value)
+        : 'EEEE, DD MMMM YYYY, hh:mm';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () async {
+        final picked = await _showTabletDateTimePicker(
+          context,
+          value,
+          minDateTime: minDateTime,
+          title: title,
+          showNowButton: showNowButton,
+        );
+        if (picked != null) {
+          onChanged(picked);
+        }
+      },
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                formatted,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  fontWeight: value != null ? FontWeight.w500 : FontWeight.w400,
+                  color: value != null
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.calendar_month_outlined,
+              size: 18,
+              color: Color(0xFF64748B),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  DateTime _getGmt7Now() {
+    return DateTime.now().toUtc().add(const Duration(hours: 7));
+  }
+
+  Future<DateTime?> _showTabletDateTimePicker(
+    BuildContext context,
+    DateTime? initialDate, {
+    DateTime? minDateTime,
+    String title = 'Select Date & Time',
+    bool showNowButton = true,
+  }) {
+    return showDialog<DateTime>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final gmt7Now = _getGmt7Now();
+        DateTime liveTime = gmt7Now;
+
+        DateTime selectedDate =
+            initialDate ??
+            (minDateTime != null && minDateTime.isAfter(gmt7Now)
+                ? minDateTime
+                : gmt7Now);
+
+        int? selectedHour = initialDate?.hour;
+        int? selectedMinute = initialDate?.minute;
+
+        final ScrollController hourScrollController = ScrollController();
+        final ScrollController minuteScrollController = ScrollController();
+
+        bool isSameDayAsMin(DateTime date) {
+          if (minDateTime == null) return false;
+          return date.year == minDateTime.year &&
+              date.month == minDateTime.month &&
+              date.day == minDateTime.day;
+        }
+
+        if (selectedHour != null && isSameDayAsMin(selectedDate)) {
+          if (selectedHour < minDateTime!.hour) {
+            selectedHour = minDateTime.hour;
+          }
+          if (selectedMinute != null &&
+              selectedHour == minDateTime.hour &&
+              selectedMinute <= minDateTime.minute) {
+            selectedMinute = minDateTime.minute + 1;
+            if (selectedMinute >= 60) {
+              selectedHour += 1;
+              selectedMinute = 0;
+            }
+          }
+        }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final h = selectedHour;
+          final m = selectedMinute;
+          if (h != null && hourScrollController.hasClients) {
+            final targetH = (h * 38.0) - 92.0;
+            hourScrollController.jumpTo(
+              targetH.clamp(0.0, hourScrollController.position.maxScrollExtent),
+            );
+          } else if (hourScrollController.hasClients) {
+            if (minDateTime != null && isSameDayAsMin(selectedDate)) {
+              final targetH = minDateTime.hour * 38.0;
+              hourScrollController.jumpTo(
+                targetH.clamp(
+                  0.0,
+                  hourScrollController.position.maxScrollExtent,
+                ),
+              );
+            } else {
+              hourScrollController.jumpTo(0.0);
+            }
+          }
+          if (m != null && minuteScrollController.hasClients) {
+            final targetM = (m * 38.0) - 92.0;
+            minuteScrollController.jumpTo(
+              targetM.clamp(
+                0.0,
+                minuteScrollController.position.maxScrollExtent,
+              ),
+            );
+          } else if (minuteScrollController.hasClients) {
+            minuteScrollController.jumpTo(0.0);
+          }
+        });
+
+        Timer? tickerTimer;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            tickerTimer ??= Timer.periodic(const Duration(seconds: 1), (t) {
+              if (dialogContext.mounted) {
+                setDialogState(() {
+                  liveTime = _getGmt7Now();
+                });
+              }
+            });
+
+            final isSameDay = isSameDayAsMin(selectedDate);
+            final hasSelectedTime =
+                selectedHour != null && selectedMinute != null;
+
+            final currentPreview = hasSelectedTime
+                ? DateTime(
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
+                    selectedHour!,
+                    selectedMinute!,
+                  )
+                : null;
+
+            final isSelectionValid =
+                hasSelectedTime &&
+                (minDateTime == null || currentPreview!.isAfter(minDateTime));
+
+            final days = [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday',
+            ];
+            final months = [
+              'January',
+              'February',
+              'March',
+              'April',
+              'May',
+              'June',
+              'July',
+              'August',
+              'September',
+              'October',
+              'November',
+              'December',
+            ];
+            final liveDayName = days[liveTime.weekday % 7];
+            final liveMonthName = months[liveTime.month - 1];
+            final liveHourStr = liveTime.hour.toString().padLeft(2, '0');
+            final liveMinStr = liveTime.minute.toString().padLeft(2, '0');
+            final liveSecStr = liveTime.second.toString().padLeft(2, '0');
+            final liveClockDisplay =
+                '$liveDayName, ${liveTime.day} $liveMonthName ${liveTime.year}, $liveHourStr:$liveMinStr:$liveSecStr';
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.all(16),
+              child: Container(
+                width: 670,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(16),
+                        ),
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 18,
+                            color: Color(0xFF004385),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            title,
+                            style: GoogleFonts.inter(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.access_time_filled_rounded,
+                                  size: 14,
+                                  color: Color(0xFF004385),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  liveClockDisplay,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF004385),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 11,
+                            child: Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: Color(0xFF004385),
+                                  onPrimary: Colors.white,
+                                  onSurface: Color(0xFF1E293B),
+                                ),
+                              ),
+                              child: CalendarDatePicker(
+                                key: ValueKey(
+                                  '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
+                                ),
+                                initialDate: selectedDate,
+                                firstDate: minDateTime != null
+                                    ? DateTime(
+                                        minDateTime.year,
+                                        minDateTime.month,
+                                        minDateTime.day,
+                                      )
+                                    : DateTime(2020),
+                                lastDate: DateTime(2035),
+                                onDateChanged: (newDate) {
+                                  setDialogState(() {
+                                    selectedDate = newDate;
+                                    if (selectedHour != null &&
+                                        isSameDayAsMin(newDate)) {
+                                      if (selectedHour! < minDateTime!.hour) {
+                                        selectedHour = minDateTime.hour;
+                                      }
+                                      if (selectedMinute != null &&
+                                          selectedHour == minDateTime.hour &&
+                                          selectedMinute! <=
+                                              minDateTime.minute) {
+                                        selectedMinute = minDateTime.minute + 1;
+                                        if (selectedMinute! >= 60) {
+                                          selectedHour = selectedHour! + 1;
+                                          selectedMinute = 0;
+                                        }
+                                      }
+                                    }
+                                  });
+                                  if (selectedHour == null &&
+                                      hourScrollController.hasClients) {
+                                    if (minDateTime != null &&
+                                        isSameDayAsMin(newDate)) {
+                                      final targetH = minDateTime.hour * 38.0;
+                                      hourScrollController.animateTo(
+                                        targetH.clamp(
+                                          0.0,
+                                          hourScrollController
+                                              .position
+                                              .maxScrollExtent,
+                                        ),
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    } else {
+                                      hourScrollController.animateTo(
+                                        0.0,
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        curve: Curves.easeOutCubic,
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 290,
+                            margin: const EdgeInsets.symmetric(horizontal: 12),
+                            color: const Color(0xFFE2E8F0),
+                          ),
+                          Expanded(
+                            flex: 10,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Selected Time: ',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                      ),
+                                      Text(
+                                        hasSelectedTime
+                                            ? '${selectedHour.toString().padLeft(2, '0')} : ${selectedMinute.toString().padLeft(2, '0')}'
+                                            : '-- : -- (Not selected)',
+                                        style: GoogleFonts.inter(
+                                          fontSize: hasSelectedTime ? 15 : 12.5,
+                                          fontWeight: hasSelectedTime
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          color: hasSelectedTime
+                                              ? const Color(0xFF004385)
+                                              : const Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Hour (24h)',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF475569),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Minute',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF475569),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                SizedBox(
+                                  height: 230,
+                                  child: ScrollConfiguration(
+                                    behavior: const MaterialScrollBehavior()
+                                        .copyWith(
+                                          dragDevices: {
+                                            PointerDeviceKind.touch,
+                                            PointerDeviceKind.mouse,
+                                            PointerDeviceKind.trackpad,
+                                            PointerDeviceKind.stylus,
+                                          },
+                                        ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF8FAFC),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                              ),
+                                            ),
+                                            child: RawScrollbar(
+                                              controller: hourScrollController,
+                                              thumbVisibility: true,
+                                              thickness: 3.5,
+                                              radius: const Radius.circular(4),
+                                              thumbColor: const Color(
+                                                0xFF94A3B8,
+                                              ),
+                                              child: ListView.builder(
+                                                controller:
+                                                    hourScrollController,
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 4,
+                                                    ),
+                                                itemCount: 24,
+                                                itemBuilder: (ctx, h) {
+                                                  final isHourDisabled =
+                                                      isSameDay &&
+                                                      h < minDateTime!.hour;
+                                                  final isSelected =
+                                                      selectedHour == h;
+
+                                                  return SizedBox(
+                                                    height: 38,
+                                                    child: Center(
+                                                      child: InkWell(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
+                                                        onTap: isHourDisabled
+                                                            ? null
+                                                            : () {
+                                                                setDialogState(() {
+                                                                  selectedHour =
+                                                                      h;
+                                                                  selectedMinute ??=
+                                                                      0;
+                                                                  if (isSameDay &&
+                                                                      h ==
+                                                                          minDateTime!
+                                                                              .hour) {
+                                                                    if (selectedMinute! <=
+                                                                        minDateTime
+                                                                            .minute) {
+                                                                      selectedMinute =
+                                                                          minDateTime
+                                                                              .minute +
+                                                                          1;
+                                                                      if (selectedMinute! >=
+                                                                          60) {
+                                                                        selectedHour =
+                                                                            h +
+                                                                            1;
+                                                                        selectedMinute =
+                                                                            0;
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                });
+                                                                if (hourScrollController
+                                                                    .hasClients) {
+                                                                  hourScrollController.animateTo(
+                                                                    ((h * 38.0) -
+                                                                            92.0)
+                                                                        .clamp(
+                                                                          0.0,
+                                                                          hourScrollController
+                                                                              .position
+                                                                              .maxScrollExtent,
+                                                                        ),
+                                                                    duration: const Duration(
+                                                                      milliseconds:
+                                                                          250,
+                                                                    ),
+                                                                    curve: Curves
+                                                                        .easeOutCubic,
+                                                                  );
+                                                                }
+                                                              },
+                                                        child: Container(
+                                                          width:
+                                                              double.infinity,
+                                                          height: 34,
+                                                          decoration: BoxDecoration(
+                                                            color: isSelected
+                                                                ? const Color(
+                                                                    0xFF004385,
+                                                                  )
+                                                                : (isHourDisabled
+                                                                      ? const Color(
+                                                                          0xFFF1F5F9,
+                                                                        )
+                                                                      : Colors
+                                                                            .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(
+                                                            h
+                                                                .toString()
+                                                                .padLeft(
+                                                                  2,
+                                                                  '0',
+                                                                ),
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .w700
+                                                                  : (isHourDisabled
+                                                                        ? FontWeight
+                                                                              .w400
+                                                                        : FontWeight
+                                                                              .w600),
+                                                              color: isSelected
+                                                                  ? Colors.white
+                                                                  : (isHourDisabled
+                                                                        ? const Color(
+                                                                            0xFFCBD5E1,
+                                                                          )
+                                                                        : const Color(
+                                                                            0xFF1E293B,
+                                                                          )),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF8FAFC),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: const Color(0xFFE2E8F0),
+                                              ),
+                                            ),
+                                            child: RawScrollbar(
+                                              controller:
+                                                  minuteScrollController,
+                                              thumbVisibility: true,
+                                              thickness: 3.5,
+                                              radius: const Radius.circular(4),
+                                              thumbColor: const Color(
+                                                0xFF94A3B8,
+                                              ),
+                                              child: ListView.builder(
+                                                controller:
+                                                    minuteScrollController,
+                                                physics:
+                                                    const AlwaysScrollableScrollPhysics(
+                                                      parent:
+                                                          BouncingScrollPhysics(),
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                      horizontal: 4,
+                                                    ),
+                                                itemCount: 60,
+                                                itemBuilder: (ctx, m) {
+                                                  final isMinuteDisabled =
+                                                      isSameDay &&
+                                                      selectedHour != null &&
+                                                      selectedHour ==
+                                                          minDateTime!.hour &&
+                                                      m <= minDateTime.minute;
+                                                  final isSelected =
+                                                      selectedMinute == m;
+
+                                                  return SizedBox(
+                                                    height: 38,
+                                                    child: Center(
+                                                      child: InkWell(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              6,
+                                                            ),
+                                                        onTap: isMinuteDisabled
+                                                            ? null
+                                                            : () {
+                                                                setDialogState(() {
+                                                                  selectedMinute =
+                                                                      m;
+                                                                  selectedHour ??=
+                                                                      isSameDay
+                                                                      ? minDateTime!
+                                                                            .hour
+                                                                      : 9;
+                                                                });
+                                                                if (minuteScrollController
+                                                                    .hasClients) {
+                                                                  minuteScrollController.animateTo(
+                                                                    ((m * 38.0) -
+                                                                            92.0)
+                                                                        .clamp(
+                                                                          0.0,
+                                                                          minuteScrollController
+                                                                              .position
+                                                                              .maxScrollExtent,
+                                                                        ),
+                                                                    duration: const Duration(
+                                                                      milliseconds:
+                                                                          250,
+                                                                    ),
+                                                                    curve: Curves
+                                                                        .easeOutCubic,
+                                                                  );
+                                                                }
+                                                              },
+                                                        child: Container(
+                                                          width:
+                                                              double.infinity,
+                                                          height: 34,
+                                                          decoration: BoxDecoration(
+                                                            color: isSelected
+                                                                ? const Color(
+                                                                    0xFF004385,
+                                                                  )
+                                                                : (isMinuteDisabled
+                                                                      ? const Color(
+                                                                          0xFFF1F5F9,
+                                                                        )
+                                                                      : Colors
+                                                                            .transparent),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: Text(
+                                                            m
+                                                                .toString()
+                                                                .padLeft(
+                                                                  2,
+                                                                  '0',
+                                                                ),
+                                                            style: GoogleFonts.inter(
+                                                              fontSize: 13,
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .w700
+                                                                  : (isMinuteDisabled
+                                                                        ? FontWeight
+                                                                              .w400
+                                                                        : FontWeight
+                                                                              .w600),
+                                                              color: isSelected
+                                                                  ? Colors.white
+                                                                  : (isMinuteDisabled
+                                                                        ? const Color(
+                                                                            0xFFCBD5E1,
+                                                                          )
+                                                                        : const Color(
+                                                                            0xFF1E293B,
+                                                                          )),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          if (showNowButton)
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: const Color(0xFFEFF6FF),
+                                foregroundColor: const Color(0xFF004385),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              onPressed: () {
+                                final nowGmt7 = _getGmt7Now();
+                                final targetHour = nowGmt7.hour;
+                                final targetMinute = nowGmt7.minute;
+
+                                setDialogState(() {
+                                  selectedDate = DateTime(
+                                    nowGmt7.year,
+                                    nowGmt7.month,
+                                    nowGmt7.day,
+                                  );
+                                  selectedHour = targetHour;
+                                  selectedMinute = targetMinute;
+                                });
+
+                                if (hourScrollController.hasClients) {
+                                  final targetH = (targetHour * 38.0) - 92.0;
+                                  hourScrollController.animateTo(
+                                    targetH.clamp(
+                                      0.0,
+                                      hourScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
+                                    duration: const Duration(milliseconds: 350),
+                                    curve: Curves.easeOutCubic,
+                                  );
+                                }
+                                if (minuteScrollController.hasClients) {
+                                  final targetM = (targetMinute * 38.0) - 92.0;
+                                  minuteScrollController.animateTo(
+                                    targetM.clamp(
+                                      0.0,
+                                      minuteScrollController
+                                          .position
+                                          .maxScrollExtent,
+                                    ),
+                                    duration: const Duration(milliseconds: 350),
+                                    curve: Curves.easeOutCubic,
+                                  );
+                                }
+                              },
+                              child: Text(
+                                'Today',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          const Spacer(),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF64748B),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                            ),
+                            onPressed: () {
+                              tickerTimer?.cancel();
+                              Navigator.of(dialogContext).pop(null);
+                            },
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isSelectionValid
+                                  ? const Color(0xFF004385)
+                                  : const Color(0xFFE2E8F0),
+                              foregroundColor: isSelectionValid
+                                  ? Colors.white
+                                  : const Color(0xFF94A3B8),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 8,
+                              ),
+                            ),
+                            onPressed: isSelectionValid
+                                ? () {
+                                    tickerTimer?.cancel();
+                                    Navigator.of(
+                                      dialogContext,
+                                    ).pop(currentPreview);
+                                  }
+                                : null,
+                            child: Text(
+                              'OK',
+                              style: GoogleFonts.inter(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   bool _isBicycle(String? vehicleType) {
@@ -491,6 +1503,31 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
             widget.visitor['vehicle_plate_number'] = null;
           }
 
+          final effectiveStart = (_hasEditedVisitStart && _selectedVisitStart != null)
+              ? _gmt7ToUtcIso(_selectedVisitStart)
+              : _rawVisitStartIso;
+          final effectiveEnd = (_hasEditedVisitEnd && _selectedVisitEnd != null)
+              ? _gmt7ToUtcIso(_selectedVisitEnd)
+              : _rawVisitEndIso;
+
+          final effectiveStartFormatted = (effectiveStart != null && effectiveStart.isNotEmpty)
+              ? controller.formatApiDate(effectiveStart)
+              : null;
+          final effectiveEndFormatted = (effectiveEnd != null && effectiveEnd.isNotEmpty)
+              ? controller.formatApiDate(effectiveEnd)
+              : null;
+
+          if (effectiveStartFormatted != null) {
+            widget.visitor['visitor_period_start'] = effectiveStartFormatted;
+            widget.visitor['period_start'] = effectiveStartFormatted;
+            widget.visitor['visit_start'] = effectiveStartFormatted;
+          }
+          if (effectiveEndFormatted != null) {
+            widget.visitor['visitor_period_end'] = effectiveEndFormatted;
+            widget.visitor['period_end'] = effectiveEndFormatted;
+            widget.visitor['visit_end'] = effectiveEndFormatted;
+          }
+
           if (widget.visitor['raw'] is Map) {
             final raw = widget.visitor['raw'] as Map<String, dynamic>;
             raw['is_praregister_done'] = true;
@@ -503,12 +1540,24 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
             if (primaryRole.isNotEmpty) raw['visitor_type_name'] = primaryRole;
             if (selfieCdnUrl != null) raw['selfie_image'] = selfieCdnUrl;
             if (ktpCdnUrl != null) raw['identity_image'] = ktpCdnUrl;
+            if (effectiveStart != null && effectiveStart.isNotEmpty) raw['visitor_period_start'] = effectiveStart;
+            if (effectiveEnd != null && effectiveEnd.isNotEmpty) raw['visitor_period_end'] = effectiveEnd;
           }
 
           if (controller.rxSelectedVisitor.value != null) {
             final updatedMap = Map<String, dynamic>.from(controller.rxSelectedVisitor.value!);
             updatedMap['is_praregister_done'] = true;
             updatedMap['is_complete_preregister'] = true;
+            if (effectiveStartFormatted != null) {
+              updatedMap['visitor_period_start'] = effectiveStartFormatted;
+              updatedMap['period_start'] = effectiveStartFormatted;
+              updatedMap['visit_start'] = effectiveStartFormatted;
+            }
+            if (effectiveEndFormatted != null) {
+              updatedMap['visitor_period_end'] = effectiveEndFormatted;
+              updatedMap['period_end'] = effectiveEndFormatted;
+              updatedMap['visit_end'] = effectiveEndFormatted;
+            }
             if (primaryName.isNotEmpty) {
               updatedMap['visitor_name'] = primaryName;
               updatedMap['name'] = primaryName;
@@ -568,6 +1617,28 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
           controller.rxSelectedVisitor.refresh();
           controller.rxRelatedVisitors.refresh();
           Navigator.of(context).pop();
+
+          // Immediately sync & refresh purpose visit and dashboard state from server upon submit
+          final invCode = (controller.rxSelectedVisitor.value?['invitation_code'] ??
+                  widget.visitor['invitation_code'] ??
+                  '')
+              .toString()
+              .trim();
+          final effectiveTrxId = _trxVisitorId.isNotEmpty
+              ? _trxVisitorId
+              : (controller.rxSelectedVisitor.value?['id'] ??
+                      widget.visitor['id'] ??
+                      '')
+                  .toString()
+                  .trim();
+
+          if (invCode.isNotEmpty && invCode != '-') {
+            controller.searchInvitationCode(invCode);
+          } else if (effectiveTrxId.isNotEmpty) {
+            controller.syncCurrentInvitationState();
+          }
+          controller.fetchLiveVisitors();
+          controller.fetchUpcomingPurpose(filter: 'Today');
         }
       }
     } catch (e) {
@@ -624,6 +1695,33 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
             field['answer_file'] = selfieUrl;
           } else if (remarks.contains('identity') || remarks.contains('ktp') || fieldType == 12 || shortName.contains('identity') || shortName.contains('ktp')) {
             field['answer_file'] = ktpUrl;
+          } else if (remarks == 'visitor_period_start' || shortName.contains('visit start') || longText.contains('visit start')) {
+            field['answer_datetime'] = (_hasEditedVisitStart && _selectedVisitStart != null)
+                ? _gmt7ToUtcIso(_selectedVisitStart)
+                : (_rawVisitStartIso ?? '2026-08-28T02:45:00Z');
+          } else if (remarks == 'is_employee' ||
+              remarks == 'employee' ||
+              shortName == 'is_employee' ||
+              shortName.contains('employee') ||
+              longText.contains('employee')) {
+            final isEmp = _isEmployee == true;
+            final target = isEmp ? 'yes' : 'no';
+            final multipleOptions =
+                field['multiple_option_fields'] as List<dynamic>? ?? [];
+            final opt = multipleOptions.firstWhereOrNull(
+              (o) =>
+                  (o['name'] ?? '').toString().toLowerCase() == target ||
+                  (o['value'] ?? '').toString().toLowerCase() == target,
+            );
+            if (opt != null) {
+              field['answer_text'] = (opt['value'] ?? opt['name'] ?? isEmp).toString();
+            } else {
+              field['answer_text'] = isEmp ? 'true' : 'false';
+            }
+          } else if (remarks == 'visitor_period_end' || shortName.contains('visit end') || longText.contains('visit end')) {
+            field['answer_datetime'] = (_hasEditedVisitEnd && _selectedVisitEnd != null)
+                ? _gmt7ToUtcIso(_selectedVisitEnd)
+                : (_rawVisitEndIso ?? '2026-08-28T13:00:00Z');
           }
 
           builtForms.add(field);
@@ -774,7 +1872,9 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
             'remarks': 'visitor_period_start',
             'multiple_option_fields': [],
             'visitor_form_type': 1,
-            'answer_datetime': _rawVisitStartIso ?? '2026-08-28T02:45:00Z',
+            'answer_datetime': (_hasEditedVisitStart && _selectedVisitStart != null)
+                ? _gmt7ToUtcIso(_selectedVisitStart)
+                : (_rawVisitStartIso ?? '2026-08-28T02:45:00Z'),
           },
           {
             'sort': 4,
@@ -787,7 +1887,9 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
             'remarks': 'visitor_period_end',
             'multiple_option_fields': [],
             'visitor_form_type': 1,
-            'answer_datetime': _rawVisitEndIso ?? '2026-08-28T13:00:00Z',
+            'answer_datetime': (_hasEditedVisitEnd && _selectedVisitEnd != null)
+                ? _gmt7ToUtcIso(_selectedVisitEnd)
+                : (_rawVisitEndIso ?? '2026-08-28T13:00:00Z'),
           },
         ],
       },
@@ -1390,6 +2492,45 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_hasIsEmployeeField) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFormFieldLabel(
+                    _isEmployeeLabel,
+                    isRequired: _isEmployeeMandatory,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildRadioOption(
+                        label: 'Yes',
+                        isSelected: _isEmployee == true,
+                        onTap: () {
+                          setState(() {
+                            _isEmployee = true;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 24),
+                      _buildRadioOption(
+                        label: 'No',
+                        isSelected: _isEmployee == false,
+                        onTap: () {
+                          setState(() {
+                            _isEmployee = false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           _buildFormFieldLabel('Role', isRequired: true),
           const SizedBox(height: 6),
           _buildTextInputField(
@@ -1445,7 +2586,11 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
           const SizedBox(height: 16),
 
           // Extra dynamic fields if any
-          ..._visitorExtraCtrls.entries.map((e) {
+          ..._visitorExtraCtrls.entries
+              .where((e) =>
+                  !e.key.toLowerCase().contains('is_employee') &&
+                  e.key.toLowerCase() != 'employee')
+              .map((e) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Column(
@@ -1507,21 +2652,41 @@ class _FillPraRegistrationModalState extends State<FillPraRegistrationModal> {
 
           _buildFormFieldLabel('Visit Start', isRequired: true),
           const SizedBox(height: 6),
-          _buildTextInputField(
-            controller: _visitStartCtrl,
-            hint: 'Visit Start Date & Time',
-            enabled: false,
-            readOnly: true,
+          _buildDateTimePickerField(
+            value: _selectedVisitStart,
+            title: 'Select Visit Start',
+            showNowButton: true,
+            onChanged: (dt) {
+              setState(() {
+                _selectedVisitStart = dt;
+                _visitStartCtrl.text = _formatGmt7DateTime(dt);
+                _hasEditedVisitStart = true;
+                if (_selectedVisitEnd != null &&
+                    (_selectedVisitEnd!.isBefore(dt) ||
+                        _selectedVisitEnd!.isAtSameMomentAs(dt))) {
+                  _selectedVisitEnd = dt.add(const Duration(hours: 2));
+                  _visitEndCtrl.text = _formatGmt7DateTime(_selectedVisitEnd!);
+                  _hasEditedVisitEnd = true;
+                }
+              });
+            },
           ),
           const SizedBox(height: 16),
 
           _buildFormFieldLabel('Visit End', isRequired: true),
           const SizedBox(height: 6),
-          _buildTextInputField(
-            controller: _visitEndCtrl,
-            hint: 'Visit End Date & Time',
-            enabled: false,
-            readOnly: true,
+          _buildDateTimePickerField(
+            value: _selectedVisitEnd,
+            minDateTime: _selectedVisitStart,
+            title: 'Select Visit End',
+            showNowButton: false,
+            onChanged: (dt) {
+              setState(() {
+                _selectedVisitEnd = dt;
+                _visitEndCtrl.text = _formatGmt7DateTime(dt);
+                _hasEditedVisitEnd = true;
+              });
+            },
           ),
         ],
       ),

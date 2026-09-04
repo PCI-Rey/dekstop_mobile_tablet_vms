@@ -260,6 +260,17 @@ class DashboardController extends GetxController {
               mapped['extend_visitor_period'] =
                   existing['extend_visitor_period'];
             }
+            final exIdentity = existing['identity_image'] ?? existing['ktp_image'];
+            if (exIdentity != null &&
+                exIdentity.toString().isNotEmpty &&
+                exIdentity.toString() != '-' &&
+                (mapped['identity_image'] == null ||
+                    mapped['identity_image'].toString().isEmpty ||
+                    mapped['identity_image'].toString() == '-')) {
+              mapped['identity_image'] = exIdentity;
+              mapped['ktp_image'] = exIdentity;
+              mapped['id_card_image'] = exIdentity;
+            }
             rxAllRelatedVisitors[matchIdx] = mapped;
           } else {
             rxAllRelatedVisitors.add(mapped);
@@ -2578,7 +2589,7 @@ class DashboardController extends GetxController {
       return DateTime.parse(s).toLocal();
     } catch (_) {}
 
-    // 2. Try Human formatted date: "18 August 2026, 19:00" (Already in Local GMT+7)
+    // 2. Try Human formatted date: "18 August 2026, 19:00" or "04 Sep 2026, 07:17" (Already in Local GMT+7)
     try {
       const months = {
         'january': 1,
@@ -2593,6 +2604,18 @@ class DashboardController extends GetxController {
         'october': 10,
         'november': 11,
         'december': 12,
+        'jan': 1,
+        'feb': 2,
+        'mar': 3,
+        'apr': 4,
+        'jun': 6,
+        'jul': 7,
+        'aug': 8,
+        'sep': 9,
+        'sept': 9,
+        'oct': 10,
+        'nov': 11,
+        'dec': 12,
       };
       final clean = s.replaceAll(',', '').trim();
       final parts = clean.split(RegExp(r'\s+'));
@@ -2940,7 +2963,7 @@ class DashboardController extends GetxController {
             .toString()
             .trim();
 
-    final identityImage =
+    String identityImage =
         (item['identity_image'] ??
                 item['indentity_image'] ??
                 item['identity_file'] ??
@@ -2958,6 +2981,28 @@ class DashboardController extends GetxController {
                 '')
             .toString()
             .trim();
+
+    if (identityImage.isEmpty || identityImage == '-' || identityImage == 'null') {
+      final docList = (item['documents'] as List?) ??
+          (item['visitor_documents'] as List?) ??
+          (item['visitor']?['documents'] as List?) ??
+          (item['visitor']?['visitor_documents'] as List?);
+      if (docList != null && docList.isNotEmpty) {
+        for (final doc in docList) {
+          if (doc is Map) {
+            final f = doc['file'] ??
+                doc['path'] ??
+                doc['url'] ??
+                doc['file_url'] ??
+                doc['document_url'];
+            if (f != null && f.toString().isNotEmpty && f.toString() != 'null') {
+              identityImage = f.toString().trim();
+              break;
+            }
+          }
+        }
+      }
+    }
 
     final hostName = sanitize(primaryHost['name'] ?? item['host_name']);
     final hostOrg = sanitize(
@@ -3275,6 +3320,21 @@ class DashboardController extends GetxController {
         final firstItem = Map<String, dynamic>.from(list[0] as Map);
         final uiVisitor = mapApiVisitorToUi(firstItem);
 
+        final currentSelected = rxSelectedVisitor.value;
+        if (currentSelected != null) {
+          final curIdentity = currentSelected['identity_image'] ?? currentSelected['ktp_image'];
+          if (curIdentity != null &&
+              curIdentity.toString().isNotEmpty &&
+              curIdentity.toString() != '-' &&
+              (uiVisitor['identity_image'] == null ||
+                  uiVisitor['identity_image'].toString().isEmpty ||
+                  uiVisitor['identity_image'].toString() == '-')) {
+            uiVisitor['identity_image'] = curIdentity;
+            uiVisitor['ktp_image'] = curIdentity;
+            uiVisitor['id_card_image'] = curIdentity;
+          }
+        }
+
         rxSelectedVisitor.value = uiVisitor;
 
         // 2. Fetch all related visitors via API:
@@ -3308,6 +3368,24 @@ class DashboardController extends GetxController {
               final mapped = mapApiVisitorToUi(
                 Map<String, dynamic>.from(vItem as Map),
               );
+              final vId = mapped['id'].toString();
+              final existing = rxAllRelatedVisitors.firstWhereOrNull(
+                (e) => e['id'].toString() == vId,
+              ) ?? (rxSelectedVisitor.value?['id'].toString() == vId ? rxSelectedVisitor.value : null);
+
+              if (existing != null) {
+                final exIdentity = existing['identity_image'] ?? existing['ktp_image'];
+                if (exIdentity != null &&
+                    exIdentity.toString().isNotEmpty &&
+                    exIdentity.toString() != '-' &&
+                    (mapped['identity_image'] == null ||
+                        mapped['identity_image'].toString().isEmpty ||
+                        mapped['identity_image'].toString() == '-')) {
+                  mapped['identity_image'] = exIdentity;
+                  mapped['ktp_image'] = exIdentity;
+                  mapped['id_card_image'] = exIdentity;
+                }
+              }
               newRelated.add(mapped);
             }
           }
