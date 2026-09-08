@@ -14,10 +14,12 @@ class AppConstants {
   static const String keyLanguageCode = 'language_code';
   static const String keyPrinterConfig = 'printer_config';
   static const String keyCameraConfig = 'camera_config';
+  static const String keyConfigPassword = 'config_password';
 
-  // Defaults (Matching mobile_vms backend server)
+  // Defaults (Matching backend server)
   static const String defaultServerUrl =
-      'https://be-vms.app.bio-experience.com';
+      'http://192.168.1.116:8000';
+  static const String defaultConfigPassword = 'admin';
   static const String pathApi = 'api'; // Base API path (/{{pathapi}}...)
   static const String pathCdn =
       'cdn'; // Base CDN endpoint path for visitor images (/{{pathcdn}}{path})

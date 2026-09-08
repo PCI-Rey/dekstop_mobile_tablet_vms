@@ -49,10 +49,31 @@ class StorageService extends GetxService {
 
   Future<String> getServerUrl() async {
     final url = await _storage.read(key: AppConstants.keyServerUrl);
-    if (url == null || url.isEmpty || url.contains('example.com')) {
+    if (url == null ||
+        url.isEmpty ||
+        url.contains('example.com')) {
       return AppConstants.defaultServerUrl;
     }
     return url;
+  }
+
+  String? _cachedConfigPassword;
+
+  Future<void> saveConfigPassword(String password) async {
+    _cachedConfigPassword = password;
+    await _storage.write(key: AppConstants.keyConfigPassword, value: password);
+  }
+
+  Future<String> getConfigPassword() async {
+    if (_cachedConfigPassword != null && _cachedConfigPassword!.isNotEmpty) {
+      return _cachedConfigPassword!;
+    }
+    final pwd = await _storage.read(key: AppConstants.keyConfigPassword);
+    if (pwd == null || pwd.isEmpty) {
+      return AppConstants.defaultConfigPassword;
+    }
+    _cachedConfigPassword = pwd;
+    return pwd;
   }
 
   Future<void> saveRememberMe(bool value) async {
@@ -198,6 +219,7 @@ class StorageService extends GetxService {
 
   // Reset all
   Future<void> clearAll() async {
+    _cachedConfigPassword = null;
     await _storage.deleteAll();
     await clearCardTapVisitors();
   }

@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
 import '../../../core/shared/routes/app_pages.dart';
+import '../../../core/shared/dialogs/server_config_dialog.dart';
 
-class LoginView extends GetView<AuthController> {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final AuthController controller = Get.find<AuthController>();
 
   // Exact Brand Gradient & Accent Colors from mobile_vms
   static const Color _blue = Color(0xFF1976D2);
@@ -12,6 +20,25 @@ class LoginView extends GetView<AuthController> {
   static const Color _textColorDark = Color(0xFF1E293B);
   static const Color _textColorMuted = Color(0xFF64748B);
   static const Color _fieldFillColor = Color(0xFFF4F7FB);
+
+  int _tripleTapCount = 0;
+  DateTime? _lastTripleTapTime;
+
+  void _handleBackgroundTripleTap(BuildContext context) {
+    final now = DateTime.now();
+    if (_lastTripleTapTime == null || now.difference(_lastTripleTapTime!) > const Duration(milliseconds: 700)) {
+      _tripleTapCount = 1;
+    } else {
+      _tripleTapCount++;
+    }
+    _lastTripleTapTime = now;
+
+    if (_tripleTapCount >= 3) {
+      _tripleTapCount = 0;
+      _lastTripleTapTime = null;
+      ServerConfigDialog.showAuth(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +51,23 @@ class LoginView extends GetView<AuthController> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: _blue,
-      body: Stack(
-        children: [
-          // 1. Blue Header Background Gradient (Identical to mobile_vms)
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_blue, _blueDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => _handleBackgroundTripleTap(context),
+        child: Stack(
+          children: [
+            // 1. Blue Header Background Gradient (Identical to mobile_vms)
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_blue, _blueDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
             ),
-          ),
 
           // 2. Decorative Circles (Depth effect identical to mobile_vms)
           Positioned(
@@ -137,23 +167,27 @@ class LoginView extends GetView<AuthController> {
                       Expanded(
                         flex: 6,
                         child: Center(
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 460),
-                            margin: const EdgeInsets.all(24.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.12),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(36.0),
-                              child: _buildLoginForm(context),
+                          child: GestureDetector(
+                            onTap: () {}, // Absorb taps inside login card
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 460),
+                              margin: const EdgeInsets.all(24.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.12),
+                                    blurRadius: 24,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(36.0),
+                                child: _buildLoginForm(context),
+                              ),
                             ),
                           ),
                         ),
@@ -200,31 +234,34 @@ class LoginView extends GetView<AuthController> {
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24.0,
                                 ),
-                                child: Text(
-                                  'VISITOR MANAGEMENT SYSTEM',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: (minDim * 0.05).clamp(18.0, 24.0),
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.2,
-                                  ),
+                              child: Text(
+                                'VISITOR MANAGEMENT SYSTEM',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: (minDim * 0.05).clamp(18.0, 24.0),
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Smart Visitor Experience',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.75),
-                                fontSize: 13,
-                              ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Smart Visitor Experience',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontSize: 13,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
 
-                      // White Content Card Bottom
-                      Expanded(
+                    // White Content Card Bottom
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {}, // Absorb taps inside login card
+                        behavior: HitTestBehavior.opaque,
                         child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
@@ -249,15 +286,17 @@ class LoginView extends GetView<AuthController> {
                           ),
                         ),
                       ),
-                    ],
-                  );
-                }
-              },
-            ),
-          ),
-        ],
+                    ),
+                  ],
+              );
+            }
+          },
+        ),
       ),
-    );
+    ],
+  ),
+),
+);
   }
 
   Widget _buildLoginForm(BuildContext context) {

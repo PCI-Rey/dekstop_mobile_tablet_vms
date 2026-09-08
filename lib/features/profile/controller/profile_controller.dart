@@ -38,6 +38,8 @@ class ProfileController extends GetxController {
     return 'OperatorVMS';
   }
 
+  String get groupName => role;
+
   String get organization {
     final coll = rxProfileData.value;
     if (coll != null && coll['organization_name'] != null && coll['organization_name'].toString().trim().isNotEmpty) {

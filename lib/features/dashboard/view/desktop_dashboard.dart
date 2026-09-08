@@ -5771,8 +5771,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       final cId =
                                           (c['id'] ?? c['card_number'] ?? '')
                                               .toString();
-                                      if (cId.isNotEmpty)
+                                      if (cId.isNotEmpty) {
                                         selectedCardIds.add(cId);
+                                      }
                                     }
 
                                     // Smoothly drag / scroll down sequentially to each chosen card
@@ -5790,8 +5791,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         i < pickedList.length;
                                         i++
                                       ) {
-                                        if (!cardScrollController.hasClients)
+                                        if (!cardScrollController.hasClients) {
                                           break;
+                                        }
                                         final card = pickedList[i];
                                         final pickedIndex = filteredCards
                                             .indexOf(card);
@@ -6093,8 +6095,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                             card: card,
                                             isSelected: isSelected,
                                             onTap: () {
-                                              if (card['is_used'] == true)
+                                              if (card['is_used'] == true) {
                                                 return;
+                                              }
                                               setDialogState(() {
                                                 if (selectedCardIds.contains(
                                                   cardId,

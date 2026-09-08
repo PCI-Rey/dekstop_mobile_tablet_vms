@@ -19,6 +19,10 @@ class ConfigureView extends GetView<SettingController> {
 
   @override
   Widget build(BuildContext context) {
+    final target = Get.arguments?.toString();
+    final isAbout = target == 'about';
+    final pageTitle = isAbout ? 'About Application' : 'Server Configuration';
+
     return Scaffold(
       backgroundColor: _bgSlate,
       body: SafeArea(
@@ -55,7 +59,7 @@ class ConfigureView extends GetView<SettingController> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    'System Configurations',
+                    pageTitle,
                     style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -75,7 +79,11 @@ class ConfigureView extends GetView<SettingController> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.tune_rounded, size: 14, color: _primaryBlue),
+                        Icon(
+                          isAbout ? Icons.info_outline_rounded : Icons.dns_rounded,
+                          size: 14,
+                          color: _primaryBlue,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Tablet Hybrid Client',
@@ -92,7 +100,7 @@ class ConfigureView extends GetView<SettingController> {
               ),
             ),
 
-            // Main Settings Layout (Sidebar + Content Pane)
+            // Main Settings Layout (Standalone Full-Width Card)
             Expanded(
               child: _buildMainLayout(context),
             ),
@@ -103,160 +111,58 @@ class ConfigureView extends GetView<SettingController> {
   }
 
   Widget _buildMainLayout(BuildContext context) {
-    final activeTab = 0.obs;
+    final target = Get.arguments?.toString();
 
-    final sections = [
-      {'title': 'Server Configuration', 'icon': Icons.dns_rounded, 'subtitle': 'Base URL & API endpoints'},
-      {'title': 'Printer Configuration', 'icon': Icons.print_rounded, 'subtitle': 'Bluetooth, USB, & LAN printers'},
-      {'title': 'Camera Configuration', 'icon': Icons.camera_alt_rounded, 'subtitle': 'Visitor scanner & OCR camera'},
-      {'title': 'About Application', 'icon': Icons.info_outline_rounded, 'subtitle': 'Software release & tech stack'},
-      {'title': 'Reset & Maintenance', 'icon': Icons.settings_backup_restore_rounded, 'subtitle': 'Cache clearing & data reset'},
-    ];
+    // // Previous sidebar sections (commented out because Server Configuration and About Application are now standalone pages):
+    // final sections = [
+    //   {'title': 'Server Configuration', 'icon': Icons.dns_rounded, 'subtitle': 'Base URL & API endpoints', 'key': 'server'},
+    //   // {'title': 'Printer Configuration', 'icon': Icons.print_rounded, 'subtitle': 'Bluetooth, USB, & LAN printers', 'key': 'printer'},
+    //   // {'title': 'Camera Configuration', 'icon': Icons.camera_alt_rounded, 'subtitle': 'Visitor scanner & OCR camera', 'key': 'camera'},
+    //   {'title': 'About Application', 'icon': Icons.info_outline_rounded, 'subtitle': 'Software release & tech stack', 'key': 'about'},
+    //   // {'title': 'Reset & Maintenance', 'icon': Icons.settings_backup_restore_rounded, 'subtitle': 'Cache clearing & data reset', 'key': 'reset'},
+    // ];
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Left Sidebar Navigation Card
-          Container(
-            width: 280,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: _primaryBlue.withValues(alpha: 0.12)),
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryBlue.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: _primaryBlue.withValues(alpha: 0.12)),
+          boxShadow: [
+            BoxShadow(
+              color: _primaryBlue.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
-            child: ListView.separated(
-              itemCount: sections.length,
-              shrinkWrap: true,
-              padding: const EdgeInsets.all(12),
-              separatorBuilder: (context, index) => const SizedBox(height: 6),
-              itemBuilder: (context, index) {
-                final section = sections[index];
-                return Obx(() {
-                  final isSelected = activeTab.value == index;
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => activeTab.value = index,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFFBFDBFE) : Colors.transparent,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? _primaryBlue.withValues(alpha: 0.12)
-                                  : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            alignment: Alignment.center,
-                            child: Icon(
-                              section['icon'] as IconData,
-                              size: 18,
-                              color: isSelected ? _primaryBlue : _textMuted,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  section['title'] as String,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                                    color: isSelected ? _primaryBlue : _textDark,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  section['subtitle'] as String,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w400,
-                                    color: _textMuted,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (isSelected)
-                            const Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              size: 13,
-                              color: _primaryBlue,
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                });
-              },
-            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(28.0),
+            child: _buildConfigContent(target),
           ),
-
-          const SizedBox(width: 24),
-
-          // Right Settings Content Card
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: _primaryBlue.withValues(alpha: 0.12)),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryBlue.withValues(alpha: 0.04),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(28.0),
-                  child: Obx(() {
-                    switch (activeTab.value) {
-                      case 0:
-                        return _buildServerConfig();
-                      case 1:
-                        return _buildPrinterConfig();
-                      case 2:
-                        return _buildCameraConfig();
-                      case 3:
-                        return _buildAboutConfig();
-                      case 4:
-                        return _buildResetConfig();
-                      default:
-                        return const SizedBox.shrink();
-                    }
-                  }),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildConfigContent(String? target) {
+    switch (target) {
+      case 'about':
+        return _buildAboutConfig();
+      case 'printer':
+        return _buildPrinterConfig();
+      case 'camera':
+        return _buildCameraConfig();
+      case 'reset':
+        return _buildResetConfig();
+      case 'server':
+      default:
+        return _buildServerConfig();
+    }
   }
 
   // ===================== Sub-Configuration Renderers =====================
@@ -282,7 +188,7 @@ class ConfigureView extends GetView<SettingController> {
           controller: controller.serverUrlController,
           style: GoogleFonts.inter(fontSize: 13.5, color: _textDark),
           decoration: InputDecoration(
-            hintText: 'https://be-vms.app.bio-experience.com',
+            hintText: 'http://192.168.1.116:8000',
             hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
             prefixIcon: const Icon(Icons.link_rounded, size: 20, color: _primaryBlue),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

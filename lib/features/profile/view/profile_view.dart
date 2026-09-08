@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controller/profile_controller.dart';
 import '../../../core/config/constants.dart';
-import '../../../core/shared/routes/app_pages.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
+import '../../../core/shared/dialogs/server_config_dialog.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -19,8 +20,6 @@ class ProfileView extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    final appVersionStr = 'v${AppConstants.appVersion} (${AppConstants.buildNumber})';
-
     return Scaffold(
       backgroundColor: _bgSlate,
       body: SafeArea(
@@ -65,53 +64,6 @@ class ProfileView extends GetView<ProfileController> {
                       color: _textDark,
                     ),
                   ),
-                  const Spacer(),
-                  // Refresh Button
-                  Obx(
-                    () => IconButton(
-                      icon: controller.rxIsLoading.value
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: _primaryBlue),
-                            )
-                          : const Icon(Icons.refresh_rounded, size: 20, color: _textMuted),
-                      tooltip: 'Refresh Profile',
-                      onPressed: controller.rxIsLoading.value ? null : () => controller.fetchProfile(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Online Status Chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFA7F3D0)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF10B981),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Online & Active',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF065F46),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -119,14 +71,17 @@ class ProfileView extends GetView<ProfileController> {
             // Main Body Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 820),
                     child: Obx(() {
                       final name = controller.fullname;
                       final email = controller.email;
-                      final role = controller.role;
+                      final groupName = controller.groupName;
                       final organization = controller.organization;
 
                       return Column(
@@ -135,9 +90,7 @@ class ProfileView extends GetView<ProfileController> {
                           // 1. Hero Profile Header Card (Standard Profile Icon, No External Picture)
                           _buildHeroProfileCard(
                             name: name,
-                            email: email,
-                            role: role,
-                            isVerified: controller.isEmailVerified,
+                            groupName: groupName,
                           ),
                           const SizedBox(height: 20),
 
@@ -145,7 +98,6 @@ class ProfileView extends GetView<ProfileController> {
                           _buildOperatorDetailsCard(
                             email: email,
                             organization: organization,
-                            version: appVersionStr,
                           ),
                           const SizedBox(height: 20),
 
@@ -168,9 +120,7 @@ class ProfileView extends GetView<ProfileController> {
   // --- Hero Profile Card with Brand Blue Gradient & Standard Profile Icon ---
   Widget _buildHeroProfileCard({
     required String name,
-    required String email,
-    required String role,
-    required bool isVerified,
+    required String groupName,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -228,7 +178,10 @@ class ProfileView extends GetView<ProfileController> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 3),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      width: 3,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.15),
@@ -246,71 +199,31 @@ class ProfileView extends GetView<ProfileController> {
                 ),
                 const SizedBox(width: 20),
 
-                // Name, Role Badge, Email
+                // Name & Group Name
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              name,
-                              style: GoogleFonts.inter(
-                                fontSize: 19,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: 0.3,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                            ),
-                            child: Text(
-                              isVerified ? 'VERIFIED' : 'OPERATOR',
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                letterSpacing: 0.6,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
                       Text(
-                        role,
+                        name,
                         style: GoogleFonts.inter(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFFBFDBFE),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.email_outlined, size: 14, color: Color(0xFF93C5FD)),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              email,
-                              style: GoogleFonts.inter(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFFDBEAFE),
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        groupName,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFFDBEAFE),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -327,7 +240,6 @@ class ProfileView extends GetView<ProfileController> {
   Widget _buildOperatorDetailsCard({
     required String email,
     required String organization,
-    required String version,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -386,13 +298,6 @@ class ProfileView extends GetView<ProfileController> {
             label: 'Organization',
             value: organization,
             iconColor: const Color(0xFF0F62FE),
-          ),
-          const Divider(height: 1, indent: 64, color: _borderSoft),
-          _buildDetailItem(
-            icon: Icons.info_outline_rounded,
-            label: 'VMS App Version',
-            value: version,
-            iconColor: const Color(0xFF10B981),
           ),
         ],
       ),
@@ -500,20 +405,40 @@ class ProfileView extends GetView<ProfileController> {
             icon: Icons.lock_reset_rounded,
             iconColor: _primaryBlue,
             title: 'Change Password',
-            subtitle: 'Update your operator account credentials',
+            subtitle: 'Set password required to modify server base URL',
             onTap: () => _showChangePasswordDialog(context),
           ),
           const Divider(height: 1, indent: 64, color: _borderSoft),
 
-          // System Configurations Tile
+          // Server Configuration Tile
           _buildActionTile(
-            icon: Icons.tune_rounded,
+            icon: Icons.dns_rounded,
             iconColor: const Color(0xFF0F62FE),
-            title: 'System Configurations',
-            subtitle: 'Manage scanner hardware, printers, and site parameters',
-            onTap: () => Get.toNamed(AppRoutes.configure),
+            title: 'Server Configuration',
+            subtitle: 'Configure backend server base URL',
+            onTap: () => _showServerConfigAuthDialog(context),
           ),
           const Divider(height: 1, indent: 64, color: _borderSoft),
+
+          // About Application Tile
+          _buildActionTile(
+            icon: Icons.info_outline_rounded,
+            iconColor: _primaryBlue,
+            title: 'About Application',
+            subtitle: 'Application version & system specifications',
+            onTap: () => _showAboutAppDialog(context),
+          ),
+          const Divider(height: 1, indent: 64, color: _borderSoft),
+
+          // // System Configurations Tile
+          // _buildActionTile(
+          //   icon: Icons.tune_rounded,
+          //   iconColor: const Color(0xFF0F62FE),
+          //   title: 'System Configurations',
+          //   subtitle: 'Manage scanner hardware, printers, and site parameters',
+          //   onTap: () => Get.toNamed(AppRoutes.configure),
+          // ),
+          // const Divider(height: 1, indent: 64, color: _borderSoft),
 
           // Logout Tile
           _buildActionTile(
@@ -581,7 +506,9 @@ class ProfileView extends GetView<ProfileController> {
             Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: isDanger ? _dangerRed.withValues(alpha: 0.6) : const Color(0xFF94A3B8),
+              color: isDanger
+                  ? _dangerRed.withValues(alpha: 0.6)
+                  : const Color(0xFF94A3B8),
             ),
           ],
         ),
@@ -591,9 +518,13 @@ class ProfileView extends GetView<ProfileController> {
 
   // --- Modern Logout Confirmation Modal ---
   void _showLogoutConfirmDialog(BuildContext context) {
-    Get.dialog(
-      Dialog(
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Container(
           width: 420,
           padding: const EdgeInsets.all(24),
@@ -619,7 +550,11 @@ class ProfileView extends GetView<ProfileController> {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.logout_rounded, size: 28, color: _dangerRed),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  size: 28,
+                  color: _dangerRed,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -648,10 +583,12 @@ class ProfileView extends GetView<ProfileController> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: _borderSoft),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 13),
                       ),
-                      onPressed: () => Get.back(),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
                       child: Text(
                         'Cancel',
                         style: GoogleFonts.inter(
@@ -669,11 +606,13 @@ class ProfileView extends GetView<ProfileController> {
                         backgroundColor: _dangerRed,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 13),
                       ),
                       onPressed: () {
-                        Get.back();
+                        Navigator.of(dialogContext).pop();
                         controller.logout();
                       },
                       child: Text(
@@ -696,15 +635,348 @@ class ProfileView extends GetView<ProfileController> {
 
   // --- Show password change form dialog ---
   void _showChangePasswordDialog(BuildContext context) {
+    final storageService = Get.find<StorageService>();
     final oldPasswordCtrl = TextEditingController();
     final newPasswordCtrl = TextEditingController();
     final confirmPasswordCtrl = TextEditingController();
 
-    Get.dialog(
-      Dialog(
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => MediaQuery(
+        data: MediaQuery.of(dialogContext).copyWith(viewInsets: EdgeInsets.zero),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          alignment: const Alignment(0, -0.2),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Container(
+            width: 440,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(dialogContext).size.height - 32,
+            ),
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: _primaryBlue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.lock_reset_rounded,
+                          size: 20,
+                          color: _primaryBlue,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Change Password',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: _textDark,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: _textMuted,
+                        ),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  _buildPasswordInput(
+                    controller: oldPasswordCtrl,
+                    label: 'Current Password',
+                    hint: 'Enter current password',
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPasswordInput(
+                    controller: newPasswordCtrl,
+                    label: 'New Password',
+                    hint: 'Enter new password',
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPasswordInput(
+                    controller: confirmPasswordCtrl,
+                    label: 'Confirm New Password',
+                    hint: 'Re-enter your new password',
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) async {
+                      final oldPwd = oldPasswordCtrl.text.trim();
+                      final newPwd = newPasswordCtrl.text.trim();
+                      final confirmPwd = confirmPasswordCtrl.text.trim();
+
+                      if (oldPwd.isEmpty ||
+                          newPwd.isEmpty ||
+                          confirmPwd.isEmpty) {
+                        AppSnackbar.warning(
+                          title: 'Incomplete Form',
+                          message: 'Please fill in all password fields.',
+                        );
+                        return;
+                      }
+                      final currentSaved = await storageService
+                          .getConfigPassword();
+                      if (oldPwd != currentSaved) {
+                        AppSnackbar.error(
+                          title: 'Incorrect Password',
+                          message: 'Current password does not match.',
+                        );
+                        return;
+                      }
+                      if (newPwd.length < 4) {
+                        AppSnackbar.warning(
+                          title: 'Password Too Short',
+                          message:
+                              'New password must be at least 4 characters.',
+                        );
+                        return;
+                      }
+                      if (newPwd != confirmPwd) {
+                        AppSnackbar.error(
+                          title: 'Password Mismatch',
+                          message:
+                              'New password and confirmation do not match.',
+                        );
+                        return;
+                      }
+                      await storageService.saveConfigPassword(newPwd);
+                      if (dialogContext.mounted) {
+                        Navigator.of(dialogContext).pop();
+                      }
+                      AppSnackbar.success(
+                        title: 'Password Updated',
+                        message:
+                            'Configuration access password has been updated successfully.',
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: _borderSoft),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _textMuted,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _primaryBlue,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () async {
+                            final oldPwd = oldPasswordCtrl.text.trim();
+                            final newPwd = newPasswordCtrl.text.trim();
+                            final confirmPwd = confirmPasswordCtrl.text.trim();
+
+                            if (oldPwd.isEmpty ||
+                                newPwd.isEmpty ||
+                                confirmPwd.isEmpty) {
+                              AppSnackbar.warning(
+                                title: 'Incomplete Form',
+                                message: 'Please fill in all password fields.',
+                              );
+                              return;
+                            }
+                            final currentSaved = await storageService
+                                .getConfigPassword();
+                            if (oldPwd != currentSaved) {
+                              AppSnackbar.error(
+                                title: 'Incorrect Password',
+                                message: 'Current password does not match.',
+                              );
+                              return;
+                            }
+                            if (newPwd.length < 4) {
+                              AppSnackbar.warning(
+                                title: 'Password Too Short',
+                                message:
+                                    'New password must be at least 4 characters.',
+                              );
+                              return;
+                            }
+                            if (newPwd != confirmPwd) {
+                              AppSnackbar.error(
+                                title: 'Password Mismatch',
+                                message:
+                                    'New password and confirmation do not match.',
+                              );
+                              return;
+                            }
+                            await storageService.saveConfigPassword(newPwd);
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                            AppSnackbar.success(
+                              title: 'Password Updated',
+                              message:
+                                  'Configuration access password has been updated successfully.',
+                            );
+                          },
+                          child: Text(
+                            'Update Password',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Password Prompt before opening Server Configuration ---
+  void _showServerConfigAuthDialog(BuildContext context) {
+    ServerConfigDialog.showAuth(context);
+  }
+
+  Widget _buildPasswordInput({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputAction textInputAction = TextInputAction.next,
+    void Function(String)? onSubmitted,
+  }) {
+    bool obscure = true;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _textDark,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: controller,
+              obscureText: obscure,
+              textInputAction: textInputAction,
+              onSubmitted: onSubmitted,
+              style: GoogleFonts.inter(fontSize: 13, color: _textDark),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF94A3B8),
+                ),
+                prefixIcon: const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    obscure
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    size: 18,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      obscure = !obscure;
+                    });
+                  },
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: _borderSoft),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: _borderSoft),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: _primaryBlue, width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- Show About Application Dialog Popup ---
+  void _showAboutAppDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Container(
-          width: 440,
+          width: 480,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -731,154 +1003,161 @@ class ProfileView extends GetView<ProfileController> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.lock_reset_rounded, size: 20, color: _primaryBlue),
+                    child: const Icon(
+                      Icons.info_outline_rounded,
+                      size: 20,
+                      color: _primaryBlue,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Change Password',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: _textDark,
-                          ),
-                        ),
-                        Text(
-                          'Enter your current and new password',
-                          style: GoogleFonts.inter(fontSize: 12, color: _textMuted),
-                        ),
-                      ],
+                    child: Text(
+                      'About Application',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: _textDark,
+                      ),
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: _textMuted,
+                    ),
+                    onPressed: () => Navigator.of(dialogContext).pop(),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              _buildPasswordInput(
-                controller: oldPasswordCtrl,
-                label: 'Current Password',
-                hint: 'Enter your current password',
-              ),
-              const SizedBox(height: 12),
-              _buildPasswordInput(
-                controller: newPasswordCtrl,
-                label: 'New Password',
-                hint: 'Enter new password (min. 6 chars)',
-              ),
-              const SizedBox(height: 12),
-              _buildPasswordInput(
-                controller: confirmPasswordCtrl,
-                label: 'Confirm New Password',
-                hint: 'Re-enter your new password',
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: _borderSoft),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+
+              // Brand Hero Banner
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _borderSoft),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [_primaryBlue, _darkBlue],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _primaryBlue.withValues(alpha: 0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: _textMuted),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        if (oldPasswordCtrl.text.isEmpty ||
-                            newPasswordCtrl.text.isEmpty ||
-                            confirmPasswordCtrl.text.isEmpty) {
-                          AppSnackbar.warning(
-                            title: 'Incomplete Form',
-                            message: 'Please fill in all password fields.',
-                          );
-                          return;
-                        }
-                        if (newPasswordCtrl.text != confirmPasswordCtrl.text) {
-                          AppSnackbar.error(
-                            title: 'Password Mismatch',
-                            message: 'New password and confirmation do not match.',
-                          );
-                          return;
-                        }
-                        Get.back();
-                        AppSnackbar.success(
-                          title: 'Password Updated',
-                          message: 'Your account password has been updated successfully.',
-                        );
-                      },
-                      child: Text(
-                        'Update Password',
-                        style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.tablet_mac_rounded,
+                        size: 24,
+                        color: Colors.white,
                       ),
                     ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppConstants.appName,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: _textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: const Color(0xFFBFDBFE),
+                                  ),
+                                ),
+                                child: Text(
+                                  AppConstants.appVersion,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: _primaryBlue,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: _borderSoft),
+                                ),
+                                child: Text(
+                                  'Android Tablet',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: _textDark,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryBlue,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  'Close',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPasswordInput({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: _textDark,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          obscureText: true,
-          style: GoogleFonts.inter(fontSize: 13, color: _textDark),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
-            prefixIcon: const Icon(Icons.lock_outline_rounded, size: 18, color: Color(0xFF64748B)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: _borderSoft),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: _borderSoft),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: _primaryBlue, width: 1.5),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
