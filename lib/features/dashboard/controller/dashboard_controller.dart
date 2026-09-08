@@ -34,12 +34,10 @@ class DashboardController extends GetxController {
   bool get canPraRegister =>
       can('OperatorVisitorPreregister') && canManageInvite;
   bool get canExtend => can('OperatorVisitorExtend');
-  bool get canArrival => can('OperatorVisitorSendNotificationArrival');
   bool get canTriggerOpen => can('OperatorVisitorTriggerOpen');
   bool get canParking => can('OperatorVisitorParkingIssuance');
   bool get canCardIssue => can('OperatorVisitorCardIssuance');
   bool get canBlock => can('OperatorVisitorBlock');
-  bool get canManageAccess => true;
   bool get canManageBlacklist => canBlock;
   bool get canManageVisitor => true;
   bool get canManageInvite => can('ManageInvite');
@@ -690,12 +688,6 @@ class DashboardController extends GetxController {
       'icon': 'access_time',
       'label': 'Extend',
       'color': 'orange',
-      'enabled': true,
-    },
-    {
-      'icon': 'call_received',
-      'label': 'Arrival',
-      'color': 'greenAccent',
       'enabled': true,
     },
     {'icon': 'block', 'label': 'Blacklist', 'color': 'grey', 'enabled': true},
