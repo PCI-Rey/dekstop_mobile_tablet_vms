@@ -2396,181 +2396,163 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           key: _keyActionGrid,
           padding: const EdgeInsets.all(6.0),
           child: Obx(() {
+            // Explicitly track rxUserPermissions so GetX observer is guaranteed to register
+            final _ = controller.rxUserPermissions.length;
+
+            final showParking = controller.canParking;
+            final showOpen = controller.canTriggerOpen;
+            final canPraRegister = controller.canPraRegister;
+            final canWalkIn = controller.canWalkIn;
+            final canExtend = controller.canExtend;
+            final canCheckIn = controller.canCheckIn;
+            final canCheckOut = controller.canCheckOut;
+            final canCardIssue = controller.canCardIssue;
+
+            final row2Buttons = <Widget>[
+              if (canPraRegister)
+                _buildActionButton(
+                  label: 'Pra Register',
+                  icon: Icons.person_add_alt_1_outlined,
+                  bgColor: const Color(0xFF005696),
+                  onTap: () => _handleAction('Pra Register'),
+                  isEnabled: true,
+                ),
+              if (canWalkIn)
+                _buildActionButton(
+                  label: 'Walk In',
+                  icon: Icons.person_add_alt_1_outlined,
+                  bgColor: const Color(0xFF005696),
+                  onTap: () => _handleAction('Walk In'),
+                  isEnabled: true,
+                ),
+              if (canExtend)
+                _buildActionButton(
+                  label: 'Extend',
+                  icon: Icons.access_time_rounded,
+                  bgColor: const Color(0xFFF5B82A),
+                  onTap: () => _handleAction('Extend'),
+                  isEnabled: true,
+                ),
+            ];
+
+            final row3Buttons = <Widget>[
+              if (canCheckIn)
+                _buildActionButton(
+                  label: 'Check In',
+                  icon: Icons.login_rounded,
+                  bgColor: const Color(0xFF18B854),
+                  onTap: () => _handleAction('Check In'),
+                  isEnabled: true,
+                ),
+              if (canCheckOut)
+                _buildActionButton(
+                  label: 'Check Out',
+                  icon: Icons.logout_rounded,
+                  bgColor: const Color(0xFFE52929),
+                  onTap: () => _handleAction('Check Out'),
+                  isEnabled: true,
+                ),
+            ];
+
+            final row4Buttons = <Widget>[
+              if (canCardIssue)
+                _buildActionButton(
+                  label: 'Card Issue',
+                  icon: Icons.style_outlined,
+                  bgColor: const Color(0xFF005696),
+                  onTap: () => _handleAction('Card Issue'),
+                  isEnabled: true,
+                ),
+              if (canCardIssue)
+                _buildActionButton(
+                  label: 'Card Return',
+                  icon: Icons.style_outlined,
+                  bgColor: const Color(0xFF005696),
+                  onTap: () => _handleAction('Card Return'),
+                  isEnabled: true,
+                ),
+            ];
+
             return Column(
               children: [
                 // Row 1: Scan QR (Wide), Parking, Open
-                Builder(
-                  builder: (context) {
-                    final showParking = controller.canParking;
-                    final showOpen = controller.canTriggerOpen;
-                    return Row(
-                      children: [
-                        Expanded(
-                          flex: (showParking && showOpen) ? 2 : 1,
-                          child: _buildActionButton(
-                            label: 'Scan QR',
-                            icon: Icons.qr_code_2_rounded,
-                            bgColor: const Color(0xFF005696),
-                            onTap: () => _handleAction('Scan QR'),
-                            isEnabled: true,
-                          ),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: (showParking && showOpen) ? 2 : 1,
+                      child: _buildActionButton(
+                        label: 'Scan QR',
+                        icon: Icons.qr_code_2_rounded,
+                        bgColor: const Color(0xFF005696),
+                        onTap: () => _handleAction('Scan QR'),
+                        isEnabled: true,
+                      ),
+                    ),
+                    if (showParking) ...[
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _buildActionButton(
+                          label: 'Parking',
+                          icon: Icons.local_parking_rounded,
+                          bgColor: const Color(0xFF00A3B8),
+                          onTap: () => _handleAction('Parking'),
+                          isEnabled: true,
                         ),
-                        if (showParking) ...[
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: _buildActionButton(
-                              label: 'Parking',
-                              icon: Icons.local_parking_rounded,
-                              bgColor: const Color(0xFF00A3B8),
-                              onTap: () => _handleAction('Parking'),
-                              isEnabled: true,
-                            ),
-                          ),
-                        ],
-                        if (showOpen) ...[
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: _buildActionButton(
-                              label: 'Open',
-                              icon: Icons.meeting_room_outlined,
-                              bgColor: const Color(0xFFA62626),
-                              onTap: () => _handleAction('Open Door'),
-                              isEnabled: true,
-                            ),
-                          ),
-                        ],
-                      ],
-                    );
-                  },
+                      ),
+                    ],
+                    if (showOpen) ...[
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: _buildActionButton(
+                          label: 'Open',
+                          icon: Icons.meeting_room_outlined,
+                          bgColor: const Color(0xFFA62626),
+                          onTap: () => _handleAction('Open Door'),
+                          isEnabled: true,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
 
-                // Row 2: Pra Register, Walk In, Extend
-                Builder(
-                  builder: (context) {
-                    final row2Buttons = <Widget>[
-                      if (controller.canPraRegister)
-                        _buildActionButton(
-                          label: 'Pra Register',
-                          icon: Icons.person_add_alt_1_outlined,
-                          bgColor: const Color(0xFF005696),
-                          onTap: () => _handleAction('Pra Register'),
-                          isEnabled: true,
-                        ),
-                      if (controller.canWalkIn)
-                        _buildActionButton(
-                          label: 'Walk In',
-                          icon: Icons.person_add_alt_1_outlined,
-                          bgColor: const Color(0xFF005696),
-                          onTap: () => _handleAction('Walk In'),
-                          isEnabled: true,
-                        ),
-                      if (controller.canExtend)
-                        _buildActionButton(
-                          label: 'Extend',
-                          icon: Icons.access_time_rounded,
-                          bgColor: const Color(0xFFF5B82A),
-                          onTap: () => _handleAction('Extend'),
-                          isEnabled: true,
-                        ),
-                    ];
-
-                    if (row2Buttons.isEmpty) return const SizedBox.shrink();
-
-                    return Column(
-                      children: [
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            for (int i = 0; i < row2Buttons.length; i++) ...[
-                              if (i > 0) const SizedBox(width: 4),
-                              Expanded(child: row2Buttons[i]),
-                            ],
-                          ],
-                        ),
+                // Row 2
+                if (row2Buttons.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      for (int i = 0; i < row2Buttons.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 4),
+                        Expanded(child: row2Buttons[i]),
                       ],
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                ],
 
-                // Row 3: Check In, Check Out
-                Builder(
-                  builder: (context) {
-                    final row3Buttons = <Widget>[
-                      if (controller.canCheckIn)
-                        _buildActionButton(
-                          label: 'Check In',
-                          icon: Icons.login_rounded,
-                          bgColor: const Color(0xFF18B854),
-                          onTap: () => _handleAction('Check In'),
-                          isEnabled: true,
-                        ),
-                      if (controller.canCheckOut)
-                        _buildActionButton(
-                          label: 'Check Out',
-                          icon: Icons.logout_rounded,
-                          bgColor: const Color(0xFFE52929),
-                          onTap: () => _handleAction('Check Out'),
-                          isEnabled: true,
-                        ),
-                    ];
-
-                    if (row3Buttons.isEmpty) return const SizedBox.shrink();
-
-                    return Column(
-                      children: [
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            for (int i = 0; i < row3Buttons.length; i++) ...[
-                              if (i > 0) const SizedBox(width: 4),
-                              Expanded(child: row3Buttons[i]),
-                            ],
-                          ],
-                        ),
+                // Row 3
+                if (row3Buttons.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      for (int i = 0; i < row3Buttons.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 4),
+                        Expanded(child: row3Buttons[i]),
                       ],
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                ],
 
-                // Row 4: Card Issue, Card Return
-                Builder(
-                  builder: (context) {
-                    final row4Buttons = <Widget>[
-                      if (controller.canCardIssue)
-                        _buildActionButton(
-                          label: 'Card Issue',
-                          icon: Icons.style_outlined,
-                          bgColor: const Color(0xFF005696),
-                          onTap: () => _handleAction('Card Issue'),
-                          isEnabled: true,
-                        ),
-                      if (controller.canCardIssue)
-                        _buildActionButton(
-                          label: 'Card Return',
-                          icon: Icons.style_outlined,
-                          bgColor: const Color(0xFF005696),
-                          onTap: () => _handleAction('Card Return'),
-                          isEnabled: true,
-                        ),
-                    ];
-
-                    if (row4Buttons.isEmpty) return const SizedBox.shrink();
-
-                    return Column(
-                      children: [
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            for (int i = 0; i < row4Buttons.length; i++) ...[
-                              if (i > 0) const SizedBox(width: 4),
-                              Expanded(child: row4Buttons[i]),
-                            ],
-                          ],
-                        ),
+                // Row 4
+                if (row4Buttons.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      for (int i = 0; i < row4Buttons.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 4),
+                        Expanded(child: row4Buttons[i]),
                       ],
-                    );
-                  },
-                ),
+                    ],
+                  ),
+                ],
               ],
             );
           }),
@@ -8465,34 +8447,35 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF004385),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.person_outline_rounded,
-                          size: 16,
-                        ),
-                        label: Text(
-                          'New Invitation',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onPressed: () {
-                          Get.back();
-                          _handleAction('New Invitation');
-                        },
-                      ),
+                      // ElevatedButton.icon(
+                      //   style: ElevatedButton.styleFrom(
+                      //     backgroundColor: const Color(0xFF004385),
+                      //     foregroundColor: Colors.white,
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(6),
+                      //     ),
+                      //     padding: const EdgeInsets.symmetric(
+                      //       horizontal: 16,
+                      //       vertical: 10,
+                      //     ),
+                      //   ),
+                      //   icon: const Icon(
+                      //     Icons.person_outline_rounded,
+                      //     size: 16,
+                      //   ),
+                      //   label: Text(
+                      //     'New Invitation',
+                      //     style: GoogleFonts.inter(
+                      //       fontSize: 12.5,
+                      //       fontWeight: FontWeight.w600,
+                      //     ),
+                      //   ),
+                      //   onPressed: () {
+                      //     Get.back();
+                      //     _handleAction('New Invitation');
+                      //   },
+                      // ),
+                      const Spacer(),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF004385),
