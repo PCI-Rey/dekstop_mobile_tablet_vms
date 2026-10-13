@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
 import '../services/storage_service.dart';
 import '../shared/routes/app_pages.dart';
+import 'dio_client.dart';
 
 class AuthInterceptor extends QueuedInterceptor {
   final StorageService _storageService;
@@ -14,6 +15,9 @@ class AuthInterceptor extends QueuedInterceptor {
 
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    options.headers['X-Use-Token'] = DioClient.xUseToken;
+    options.headers['X-Bypass-Captcha'] = DioClient.xBypassCaptcha;
+
     final token = await _storageService.getAccessToken();
     if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';

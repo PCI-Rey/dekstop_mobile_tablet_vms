@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/network/dio_client.dart';
 
@@ -14,6 +15,12 @@ class AuthRepository {
         'username': username,
         'password': password,
       },
+      options: Options(
+        headers: {
+          'X-Use-Token': DioClient.xUseToken,
+          'X-Bypass-Captcha': DioClient.xBypassCaptcha,
+        },
+      ),
     );
   }
 }

@@ -18,7 +18,7 @@ class AppConstants {
 
   // Defaults (Matching backend server)
   static const String defaultServerUrl =
-      'http://192.168.1.116:8000';
+      'https://be-vms.app.bio-experience.com';
   static const String defaultConfigPassword = 'admin';
   static const String pathApi = 'api'; // Base API path (/{{pathapi}}...)
   static const String pathCdn =

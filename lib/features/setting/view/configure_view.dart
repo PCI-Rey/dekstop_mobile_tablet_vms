@@ -188,7 +188,7 @@ class ConfigureView extends GetView<SettingController> {
           controller: controller.serverUrlController,
           style: GoogleFonts.inter(fontSize: 13.5, color: _textDark),
           decoration: InputDecoration(
-            hintText: 'http://192.168.1.116:8000',
+            hintText: 'https://be-vms.app.bio-experience.com',
             hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
             prefixIcon: const Icon(Icons.link_rounded, size: 20, color: _primaryBlue),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

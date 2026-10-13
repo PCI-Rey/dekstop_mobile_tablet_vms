@@ -6,6 +6,11 @@ import 'auth_interceptor.dart';
 import 'dio_interceptor.dart';
 
 class DioClient {
+  static const String xUseToken =
+      'b02d992e7a03606f90be1114717178b4904a00e35594c499cb1876d59ccff275';
+  static const String xBypassCaptcha =
+      '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
+
   final StorageService _storageService;
   late final Dio _dio;
 
@@ -16,6 +21,8 @@ class DioClient {
       contentType: 'application/json',
       headers: {
         'Accept': 'application/json',
+        'X-Use-Token': xUseToken,
+        'X-Bypass-Captcha': xBypassCaptcha,
       },
     ));
 
@@ -29,6 +36,83 @@ class DioClient {
     final baseUrl = await _storageService.getServerUrl();
     _dio.options.baseUrl = baseUrl;
     return _dio;
+  }
+
+  void updateBaseUrl(String newUrl) {
+    String formattedUrl = newUrl.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://';
+    }
+    if (formattedUrl.endsWith('/')) {
+      formattedUrl = formattedUrl.substring(0, formattedUrl.length - 1);
+    }
+    _dio.options.baseUrl = formattedUrl;
+  }
+
+  static Future<({bool isSuccess, String message, int? statusCode})> testConnection(String url) async {
+    try {
+      String formattedUrl = url.trim();
+      if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+        formattedUrl = 'https://';
+      }
+      if (formattedUrl.endsWith('/')) {
+        formattedUrl = formattedUrl.substring(0, formattedUrl.length - 1);
+      }
+
+      final testDio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 8),
+          receiveTimeout: const Duration(seconds: 8),
+          headers: {
+            'Accept': 'application/json',
+            'X-Use-Token': xUseToken,
+            'X-Bypass-Captcha': xBypassCaptcha,
+          },
+        ),
+      );
+
+      final response = await testDio.get(
+        formattedUrl,
+        options: Options(
+          validateStatus: (status) => true,
+        ),
+      );
+
+      return (
+        isSuccess: true,
+        message: 'Server connected & responding (HTTP )',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return (
+          isSuccess: true,
+          message: 'Server reachable (HTTP )',
+          statusCode: e.response?.statusCode,
+        );
+      }
+      String msg = 'Failed to connect to server';
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        msg = 'Connection timeout (server did not respond)';
+      } else if (e.type == DioExceptionType.connectionError) {
+        msg = 'Connection refused / Host not found';
+      } else {
+        msg = e.message ?? 'Connection error';
+      }
+      return (
+        isSuccess: false,
+        message: msg,
+        statusCode: null,
+      );
+    } catch (e) {
+      return (
+        isSuccess: false,
+        message: 'Error: ',
+        statusCode: null,
+      );
+    }
   }
 
   // Wrapper for GET requests

@@ -40,6 +40,26 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
+  // --- Secret Developer / Base URL Setting Trigger (Tap logo 3x) ---
+  int _logoTapCount = 0;
+  DateTime? _lastLogoTapTime;
+
+  void _handleLogoTripleTap(BuildContext context) {
+    final now = DateTime.now();
+    if (_lastLogoTapTime == null || now.difference(_lastLogoTapTime!).inMilliseconds > 1500) {
+      _logoTapCount = 1;
+    } else {
+      _logoTapCount++;
+    }
+    _lastLogoTapTime = now;
+
+    if (_logoTapCount >= 3) {
+      _logoTapCount = 0;
+      _lastLogoTapTime = null;
+      ServerConfigDialog.showAuth(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -115,27 +135,31 @@ class _LoginViewState extends State<LoginView> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Logo Circle
-                              SizedBox(
-                                width: (minDim * 0.25).clamp(80.0, 140.0),
-                                height: (minDim * 0.25).clamp(80.0, 140.0),
-                                child: Image.asset(
-                                  'assets/images/VMS.png',
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.15,
+                              // Logo Circle (Tap 3x for Base URL Config)
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => _handleLogoTripleTap(context),
+                                child: SizedBox(
+                                  width: (minDim * 0.25).clamp(80.0, 140.0),
+                                  height: (minDim * 0.25).clamp(80.0, 140.0),
+                                  child: Image.asset(
+                                    'assets/images/VMS.png',
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            shape: BoxShape.circle,
                                           ),
-                                          shape: BoxShape.circle,
+                                          child: const Icon(
+                                            Icons.admin_panel_settings_rounded,
+                                            size: 64,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                        child: const Icon(
-                                          Icons.admin_panel_settings_rounded,
-                                          size: 64,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -205,26 +229,30 @@ class _LoginViewState extends State<LoginView> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              width: minDim * 0.28,
-                              height: minDim * 0.28,
-                              child: Image.asset(
-                                'assets/images/VMS.png',
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.15,
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => _handleLogoTripleTap(context),
+                              child: SizedBox(
+                                width: minDim * 0.28,
+                                height: minDim * 0.28,
+                                child: Image.asset(
+                                  'assets/images/VMS.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                          shape: BoxShape.circle,
                                         ),
-                                        shape: BoxShape.circle,
+                                        child: const Icon(
+                                          Icons.admin_panel_settings_rounded,
+                                          size: 48,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                      child: const Icon(
-                                        Icons.admin_panel_settings_rounded,
-                                        size: 48,
-                                        color: Colors.white,
-                                      ),
-                                    ),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 12),

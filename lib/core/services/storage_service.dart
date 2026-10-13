@@ -51,7 +51,11 @@ class StorageService extends GetxService {
     final url = await _storage.read(key: AppConstants.keyServerUrl);
     if (url == null ||
         url.isEmpty ||
-        url.contains('example.com')) {
+        url.contains('example.com') ||
+        url.contains('192.168.1.116')) {
+      if (url != null && url.contains('192.168.1.116')) {
+        await saveServerUrl(AppConstants.defaultServerUrl);
+      }
       return AppConstants.defaultServerUrl;
     }
     return url;
