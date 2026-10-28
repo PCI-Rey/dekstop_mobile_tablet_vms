@@ -16,7 +16,8 @@ class AuthInterceptor extends QueuedInterceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     options.headers['X-Use-Token'] = DioClient.xUseToken;
-    options.headers['X-Bypass-Captcha'] = DioClient.xBypassCaptcha;
+    options.headers['X-Platform-Id'] = DioClient.xPlatformId;
+    options.headers['X-UserAgent'] = DioClient.xUserAgent;
 
     final token = await _storageService.getAccessToken();
     if (token != null && token.isNotEmpty) {

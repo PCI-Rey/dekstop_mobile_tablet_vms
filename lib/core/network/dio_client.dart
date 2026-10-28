@@ -8,8 +8,8 @@ import 'dio_interceptor.dart';
 class DioClient {
   static const String xUseToken =
       'b02d992e7a03606f90be1114717178b4904a00e35594c499cb1876d59ccff275';
-  static const String xBypassCaptcha =
-      '77a841cca52cfc2bd18d675d9e80321631f27cb25accdcf798ad0ce9345536f2';
+  static const String xPlatformId = 'tabletoperator';
+  static const String xUserAgent = 'desktop_tablet_vms';
 
   final StorageService _storageService;
   late final Dio _dio;
@@ -22,7 +22,8 @@ class DioClient {
       headers: {
         'Accept': 'application/json',
         'X-Use-Token': xUseToken,
-        'X-Bypass-Captcha': xBypassCaptcha,
+        'X-Platform-Id': xPlatformId,
+        'X-UserAgent': xUserAgent,
       },
     ));
 
@@ -48,6 +49,36 @@ class DioClient {
     }
     _dio.options.baseUrl = formattedUrl;
   }
+  Future<ApiResult<Map<String, dynamic>>> getCaptcha() async {
+    try {
+      final client = await dio;
+      final response = await client.get(
+        '/api/captcha/generate',
+        options: Options(
+          headers: {
+            'Accept': 'application/json',
+            'X-Use-Token': xUseToken,
+            'X-Platform-Id': xPlatformId,
+            'X-UserAgent': xUserAgent,
+          },
+        ),
+      );
+      if (response.data is Map<String, dynamic>) {
+        return ApiResult.success(response.data as Map<String, dynamic>);
+      } else if (response.data is Map) {
+        return ApiResult.success(
+            Map<String, dynamic>.from(response.data as Map));
+      }
+      return ApiResult.failure(const ServerException(
+          statusCode: 500, message: 'Invalid captcha response format'));
+    } on DioException catch (e) {
+      return ApiResult.failure(NetworkException.fromDioException(e));
+    } catch (e) {
+      return ApiResult.failure(
+          ServerException(statusCode: 500, message: e.toString()));
+    }
+  }
+
 
   static Future<({bool isSuccess, String message, int? statusCode})> testConnection(String url) async {
     try {
@@ -66,7 +97,8 @@ class DioClient {
           headers: {
             'Accept': 'application/json',
             'X-Use-Token': xUseToken,
-            'X-Bypass-Captcha': xBypassCaptcha,
+            'X-Platform-Id': xPlatformId,
+            'X-UserAgent': xUserAgent,
           },
         ),
       );

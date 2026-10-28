@@ -1,3 +1,4 @@
+import '../widgets/captcha_box_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/auth_controller.dart';
@@ -384,6 +385,20 @@ class _LoginViewState extends State<LoginView> {
                 ),
               ),
             ),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Captcha Field
+        Obx(
+          () => CaptchaBoxWidget(
+            captchaCode: controller.rxCaptchaCode.value,
+            captchaSvg: controller.rxCaptchaSvg.value,
+            isRefreshing: controller.rxIsRefreshingCaptcha.value,
+            onRefresh: () => controller.refreshCaptcha(),
+            controller: controller.captchaController,
+            errorText: controller.rxCaptchaError.value,
           ),
         ),
 

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/network/api_result.dart';
@@ -25,11 +26,23 @@ class AuthController extends GetxController {
   final rxServerConnected = true.obs;
   final rxServerUrlDisplay = ''.obs;
 
+  // Captcha States
+  final captchaController = TextEditingController();
+  final rxCaptchaId = ''.obs;
+  final rxCaptchaCode = ''.obs;
+  final rxCaptchaSvg = ''.obs;
+  final rxIsRefreshingCaptcha = false.obs;
+  final rxCaptchaError = Rxn<String>();
+
   @override
   void onInit() {
     super.onInit();
     _loadSavedUsername();
     _loadServerUrl();
+    fetchCaptcha();
+    captchaController.addListener(() {
+      if (rxCaptchaError.value != null) rxCaptchaError.value = null;
+    });
   }
 
   // Loaded at Startup
@@ -77,10 +90,50 @@ class AuthController extends GetxController {
     rxIsLoadingSplash.value = false;
   }
 
+    Future<void> fetchCaptcha() async {
+    rxIsRefreshingCaptcha.value = true;
+    captchaController.clear();
+    rxCaptchaError.value = null;
+
+    try {
+      final res = await _authRepository.getCaptcha();
+      if (res != null && res.captchaId.isNotEmpty) {
+        rxCaptchaId.value = res.captchaId;
+        rxCaptchaCode.value = res.captchaCode;
+        rxCaptchaSvg.value = res.svgBackground;
+        debugPrint(
+          '🔥 [TABLET CAPTCHA LIVE] ID: ${res.captchaId} | CODE: ${res.captchaCode}',
+        );
+      } else {
+        _generateDummyCaptcha();
+      }
+    } catch (e) {
+      debugPrint('⚠️ [TABLET CAPTCHA ERROR] $e');
+      _generateDummyCaptcha();
+    } finally {
+      rxIsRefreshingCaptcha.value = false;
+    }
+  }
+
+  void _generateDummyCaptcha() {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    final random = math.Random();
+    final newCode =
+        List.generate(5, (_) => chars[random.nextInt(chars.length)]).join();
+    rxCaptchaCode.value = newCode;
+    rxCaptchaSvg.value = '';
+    rxCaptchaId.value = '';
+  }
+
+  Future<void> refreshCaptcha() async {
+    await fetchCaptcha();
+  }
+
   // --- Login Action ---
   Future<void> login() async {
     final username = usernameController.text.trim();
     final password = passwordController.text.trim();
+    final captcha = captchaController.text.trim();
 
     if (username.isEmpty) {
       AppSnackbar.error(
@@ -96,10 +149,28 @@ class AuthController extends GetxController {
       );
       return;
     }
+    if (captcha.isEmpty) {
+      rxCaptchaError.value = 'Please enter the captcha code';
+      return;
+    }
+
+    // Local fallback check if dummy was generated
+    if (rxCaptchaSvg.value.isEmpty && rxCaptchaCode.value.isNotEmpty) {
+      if (captcha.toUpperCase() != rxCaptchaCode.value.toUpperCase()) {
+        rxCaptchaError.value = 'Invalid captcha code';
+        refreshCaptcha();
+        return;
+      }
+    }
 
     rxIsLoadingLogin.value = true;
 
-    final result = await _authRepository.login(username, password);
+    final result = await _authRepository.login(
+      username,
+      password,
+      captchaId: rxCaptchaId.value.isNotEmpty ? rxCaptchaId.value : null,
+      captchaAnswer: captcha,
+    );
     rxIsLoadingLogin.value = false;
 
     if (result is Success<Map<String, dynamic>>) {
@@ -141,10 +212,15 @@ class AuthController extends GetxController {
 
       Get.offAllNamed(AppRoutes.dashboard);
     } else if (result is Failure) {
+      final msg = (result as Failure).exception.message;
+      if (msg.toLowerCase().contains('captcha')) {
+        rxCaptchaError.value = msg;
+      }
       AppSnackbar.error(
         title: 'Login Failed',
-        message: (result as Failure).exception.message,
+        message: msg,
       );
+      refreshCaptcha();
     }
   }
 
