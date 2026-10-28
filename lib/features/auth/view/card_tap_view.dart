@@ -1272,33 +1272,6 @@ class _CardTapViewState extends State<CardTapView> {
                   // Visitor Photo
                   _buildVisitorImage(imageSrc),
 
-                  // Face Detection Green Targeting Reticle Overlay
-                  Positioned.fill(
-                    child: Center(
-                      child: Container(
-                        width: 52,
-                        height: 52,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: const Color(0xFF10B981),
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Stack(
-                          children: [
-                            // 4 Corner Brackets
-                            _buildCornerBracket(Alignment.topLeft),
-                            _buildCornerBracket(Alignment.topRight),
-                            _buildCornerBracket(Alignment.bottomLeft),
-                            _buildCornerBracket(Alignment.bottomRight),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
                   // Bottom Status Badge (Passed / Checkin / Blacklisted / Rejected)
                   Positioned(
                     bottom: 4,
@@ -1442,20 +1415,6 @@ class _CardTapViewState extends State<CardTapView> {
           Icons.person_rounded,
           size: 44,
           color: _textMuted,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCornerBracket(Alignment alignment) {
-    return Align(
-      alignment: alignment,
-      child: Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: const Color(0xFF10B981),
-          borderRadius: BorderRadius.circular(1),
         ),
       ),
     );
