@@ -1345,7 +1345,7 @@ class DashboardController extends GetxController {
 
         // 3. Add Timeline Entry
         final nowFormatted =
-            formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+            formatLocalTime(DateTime.now());
         rxTimeline.insert(0, {
           'time': nowFormatted,
           'title': 'Visitor Blacklisted',
@@ -1551,7 +1551,7 @@ class DashboardController extends GetxController {
 
         // Insert Timeline Entry
         final nowFormatted =
-            formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+            formatLocalTime(DateTime.now());
         rxTimeline.insert(0, {
           'time': nowFormatted,
           'title': 'Card Returned',
@@ -1709,7 +1709,7 @@ class DashboardController extends GetxController {
 
     if (result is Success<Map<String, dynamic>>) {
       final nowFormatted =
-          formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+          formatLocalTime(DateTime.now());
       final actionTitle = isSwapCard ? 'Card Swapped' : 'Card Granted';
       final actionDesc = isSwapCard
           ? 'Card Number: $cardNum swapped ($swapType)'
@@ -1899,7 +1899,7 @@ class DashboardController extends GetxController {
           : '$count cards have been given successfully.';
 
       final nowFormatted =
-          formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+          formatLocalTime(DateTime.now());
       rxTimeline.insert(0, {
         'time': nowFormatted,
         'title': actionTitle,
@@ -2057,9 +2057,9 @@ class DashboardController extends GetxController {
 
     if (result is Success) {
       final updated = Map<String, dynamic>.from(visitor);
-      final nowFormatted =
-          formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
-      final nowFullDate = formatApiDate(DateTime.now().toIso8601String());
+      final nowDt = DateTime.now();
+      final nowFormatted = formatLocalTime(nowDt);
+      final nowFullDate = formatLocalDateTime(nowDt);
 
       if (apiAction == 'Checkin') {
         updated['visitor_status'] = 'Checkin';
@@ -2413,7 +2413,7 @@ class DashboardController extends GetxController {
 
       // 2. Add Timeline Entry
       final nowFormatted =
-          formatApiTime(DateTime.now().toIso8601String()) ?? '12:00';
+          formatLocalTime(DateTime.now());
       rxTimeline.insert(0, {
         'time': nowFormatted,
         'title': 'Period Extended',
@@ -2650,6 +2650,12 @@ class DashboardController extends GetxController {
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
     return '$day $month $year, $hour:$minute';
+  }
+
+  String formatLocalTime(DateTime dt) {
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   String? formatApiTime(dynamic dateStr) {
