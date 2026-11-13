@@ -331,6 +331,256 @@ class DashboardController extends GetxController {
   final rxAvailableCards = <Map<String, dynamic>>[].obs;
   final rxIsAvailableCardsLoading = false.obs;
 
+  // --- Parking & Vehicle Count (/operator-invitation/vehicle-count) ---
+  final rxIsVehicleCountLoading = false.obs;
+  final rxVehicleSummary = <String, dynamic>{}.obs;
+  final rxVehicleCounts = <String, int>{
+    'Car': 0,
+    'Motorcycle': 0,
+    'Bus': 0,
+    'Mini Bus': 0,
+    'Truck 16 Feet': 0,
+    'Truck 20 Feet': 0,
+    'Truck 40 Feet': 0,
+  }.obs;
+  final rxByVehicleList = <Map<String, dynamic>>[].obs;
+  final rxByVehicleTypeList = <Map<String, dynamic>>[].obs;
+  final rxByVisitorTypeList = <Map<String, dynamic>>[].obs;
+  final rxVehicleItems = <Map<String, dynamic>>[].obs;
+
+  // Vehicle Count Filters
+  final rxVehicleFilterStartDate = Rxn<DateTime>();
+  final rxVehicleFilterEndDate = Rxn<DateTime>();
+  final rxVehicleFilterVehicleType = 'All'.obs;
+  final rxVehicleFilterVisitorType = 'All'.obs;
+
+  Future<void> fetchVehicleCount({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? vehicleType,
+    String? visitorType,
+    bool silent = false,
+  }) async {
+    if (!silent) {
+      rxIsVehicleCountLoading.value = true;
+    }
+
+    final effectiveStart = startDate ?? rxVehicleFilterStartDate.value;
+    final effectiveEnd = endDate ?? rxVehicleFilterEndDate.value;
+    final effectiveVehicle = vehicleType ?? rxVehicleFilterVehicleType.value;
+    final effectiveVisitor = visitorType ?? rxVehicleFilterVisitorType.value;
+
+    String? startStr;
+    if (effectiveStart != null) {
+      // Start of day in Asia/Jakarta (UTC+7) converted to UTC ISO
+      final localMidnightUtc = DateTime.utc(
+        effectiveStart.year,
+        effectiveStart.month,
+        effectiveStart.day,
+        0,
+        0,
+        0,
+      );
+      final jakartaStartUtc =
+          localMidnightUtc.subtract(const Duration(hours: 7));
+      startStr = jakartaStartUtc.toIso8601String();
+    }
+
+    String? endStr;
+    if (effectiveEnd != null) {
+      // End of day in Asia/Jakarta (UTC+7) converted to UTC ISO
+      final localEndUtc = DateTime.utc(
+        effectiveEnd.year,
+        effectiveEnd.month,
+        effectiveEnd.day,
+        23,
+        59,
+        59,
+        999,
+      );
+      final jakartaEndUtc = localEndUtc.subtract(const Duration(hours: 7));
+      endStr = jakartaEndUtc.toIso8601String();
+    }
+
+    final bool isToday = (effectiveStart == null && effectiveEnd == null);
+
+    try {
+      debugPrint('==> [fetchVehicleCount] start: $startStr, end: $endStr, vehicle: $effectiveVehicle, visitor: $effectiveVisitor, today: $isToday');
+      final res = await _dashboardRepository.getVehicleCount(
+        startDate: startStr,
+        endDate: endStr,
+        vehicleType: effectiveVehicle,
+        visitorType: effectiveVisitor,
+        today: isToday,
+      );
+
+      if (res is Success<Map<String, dynamic>>) {
+        debugPrint('==> [fetchVehicleCount] SUCCESS: ${res.data}');
+        final rawCollection = res.data['collection'];
+        final Map<String, dynamic> collection = (rawCollection is Map)
+            ? Map<String, dynamic>.from(rawCollection)
+            : <String, dynamic>{};
+
+        // 1. Summary
+        final rawSummary = collection['summary'];
+        if (rawSummary is Map) {
+          rxVehicleSummary.assignAll(Map<String, dynamic>.from(rawSummary));
+        } else {
+          rxVehicleSummary.clear();
+        }
+
+        // 2. Lists
+        final rawByVehicle = collection['by_vehicle'];
+        if (rawByVehicle is List) {
+          rxByVehicleList.assignAll(
+            rawByVehicle
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList(),
+          );
+        } else {
+          rxByVehicleList.clear();
+        }
+
+        final rawByVehicleType = collection['by_vehicle_type'];
+        if (rawByVehicleType is List) {
+          rxByVehicleTypeList.assignAll(
+            rawByVehicleType
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList(),
+          );
+        } else {
+          rxByVehicleTypeList.clear();
+        }
+
+        final rawByVisitorType = collection['by_visitor_type'];
+        if (rawByVisitorType is List) {
+          rxByVisitorTypeList.assignAll(
+            rawByVisitorType
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList(),
+          );
+        } else {
+          rxByVisitorTypeList.clear();
+        }
+
+        final rawItems = collection['items'];
+        if (rawItems is List) {
+          rxVehicleItems.assignAll(
+            rawItems
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList(),
+          );
+        } else {
+          rxVehicleItems.clear();
+        }
+
+        // 3. Aggregate 7 standard vehicle types (Exact web logic: D = S?.by_vehicle)
+        final updatedCounts = <String, int>{
+          'Car': 0,
+          'Motorcycle': 0,
+          'Bus': 0,
+          'Mini Bus': 0,
+          'Truck 16 Feet': 0,
+          'Truck 20 Feet': 0,
+          'Truck 40 Feet': 0,
+        };
+
+        // Priority 1: rxByVehicleList (Primary source used in Web Operator View)
+        // Priority 2: rxByVehicleTypeList (Fallback only if by_vehicle is empty)
+        final List<Map<String, dynamic>> primarySource =
+            rxByVehicleList.isNotEmpty ? rxByVehicleList : rxByVehicleTypeList;
+
+        int extractCountForType(String typeKey) {
+          final normTarget =
+              typeKey.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+          for (final item in primarySource) {
+            final rawType = (item['vehicle_type'] ??
+                    item['name'] ??
+                    item['type'] ??
+                    item['vehicle'] ??
+                    '')
+                .toString();
+            final norm = rawType.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+            if (norm == normTarget) {
+              return int.tryParse(item['count']?.toString() ??
+                      item['total']?.toString() ??
+                      item['value']?.toString() ??
+                      item['qty'] ??
+                      '0') ??
+                  0;
+            }
+          }
+          return 0;
+        }
+
+        updatedCounts['Car'] = extractCountForType('Car');
+        updatedCounts['Motorcycle'] = extractCountForType('Motorcycle');
+        updatedCounts['Bus'] = extractCountForType('Bus');
+        updatedCounts['Mini Bus'] = extractCountForType('MiniBus');
+        updatedCounts['Truck 16 Feet'] = extractCountForType('Truck16Feet');
+        updatedCounts['Truck 20 Feet'] = extractCountForType('Truck20Feet');
+        updatedCounts['Truck 40 Feet'] = extractCountForType('Truck40Feet');
+
+        // Fallback: If all are 0 but items list is present, compute from items
+        if (updatedCounts.values.every((c) => c == 0) &&
+            rxVehicleItems.isNotEmpty) {
+          for (final item in rxVehicleItems) {
+            final vt = (item['vehicle_type'] ??
+                    item['vehicle'] ??
+                    item['type'] ??
+                    '')
+                .toString();
+            final norm = vt.toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+            if (norm == 'car') {
+              updatedCounts['Car'] = (updatedCounts['Car'] ?? 0) + 1;
+            } else if (norm.contains('motor') || norm.contains('bike')) {
+              updatedCounts['Motorcycle'] =
+                  (updatedCounts['Motorcycle'] ?? 0) + 1;
+            } else if (norm == 'minibus') {
+              updatedCounts['Mini Bus'] =
+                  (updatedCounts['Mini Bus'] ?? 0) + 1;
+            } else if (norm == 'bus') {
+              updatedCounts['Bus'] = (updatedCounts['Bus'] ?? 0) + 1;
+            } else if (norm.contains('16')) {
+              updatedCounts['Truck 16 Feet'] =
+                  (updatedCounts['Truck 16 Feet'] ?? 0) + 1;
+            } else if (norm.contains('20')) {
+              updatedCounts['Truck 20 Feet'] =
+                  (updatedCounts['Truck 20 Feet'] ?? 0) + 1;
+            } else if (norm.contains('40')) {
+              updatedCounts['Truck 40 Feet'] =
+                  (updatedCounts['Truck 40 Feet'] ?? 0) + 1;
+            }
+          }
+        }
+
+        debugPrint('==> [fetchVehicleCount] Final Aggregated Counts: $updatedCounts');
+        rxVehicleCounts.assignAll(updatedCounts);
+      } else if (res is Failure<Map<String, dynamic>>) {
+        AppSnackbar.error(
+          title: 'Failed to load vehicle count',
+          message: res.exception.message,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error in fetchVehicleCount: $e');
+    } finally {
+      rxIsVehicleCountLoading.value = false;
+    }
+  }
+
+  void resetVehicleFilters() {
+    rxVehicleFilterStartDate.value = null;
+    rxVehicleFilterEndDate.value = null;
+    rxVehicleFilterVehicleType.value = 'All';
+    rxVehicleFilterVisitorType.value = 'All';
+    fetchVehicleCount();
+  }
+
   // Pra-Registration Form Dependencies
   final rxIsPraRegLoading = false.obs;
   final rxPraRegSites = <Map<String, dynamic>>[].obs;

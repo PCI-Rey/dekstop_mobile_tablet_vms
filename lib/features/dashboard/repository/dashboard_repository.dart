@@ -594,5 +594,72 @@ class DashboardRepository {
       '/user-permission',
     );
   }
+
+  // --- Vehicle Count (/operator-invitation/vehicle-count) ---
+  Future<ApiResult<Map<String, dynamic>>> getVehicleCount({
+    String? startDate,
+    String? endDate,
+    String? vehicleType,
+    String? visitorType,
+    bool? today,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'detail-by-visitor-type': true,
+    };
+
+    if (today == true || (startDate == null && endDate == null)) {
+      queryParams['today'] = true;
+    }
+
+    if (startDate != null && startDate.trim().isNotEmpty) {
+      queryParams['start-date'] = startDate.trim();
+      queryParams['start_date'] = startDate.trim();
+    }
+    if (endDate != null && endDate.trim().isNotEmpty) {
+      queryParams['end-date'] = endDate.trim();
+      queryParams['end_date'] = endDate.trim();
+    }
+
+    if (vehicleType != null &&
+        vehicleType.trim().isNotEmpty &&
+        vehicleType.trim().toLowerCase() != 'all' &&
+        !vehicleType.trim().toLowerCase().contains('all vehicle')) {
+      final cleanType = vehicleType.trim().replaceAll(' ', '');
+      queryParams['vehicle-type'] = cleanType;
+      queryParams['vehicle_type'] = cleanType;
+    }
+
+    if (visitorType != null &&
+        visitorType.trim().isNotEmpty &&
+        visitorType.trim().toLowerCase() != 'all' &&
+        !visitorType.trim().toLowerCase().contains('all visitor')) {
+      queryParams['visitor-type'] = visitorType.trim();
+      queryParams['visitor_type'] = visitorType.trim();
+    }
+
+    debugPrint('==> [VehicleCount Repository] Request params: $queryParams');
+
+    // 1. Try GET /operator-invitation/vehicle-count (Exact web frontend route)
+    final getDirect = await _dioClient.get<Map<String, dynamic>>(
+      '/operator-invitation/vehicle-count',
+      queryParameters: queryParams,
+    );
+    if (getDirect is Success) {
+      debugPrint('==> [VehicleCount Repository] Direct /operator-invitation/vehicle-count success!');
+      return getDirect;
+    }
+
+    // 2. Try GET /api/operator-invitation/vehicle-count (API prefixed route)
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/vehicle-count',
+      queryParameters: queryParams,
+    );
+    if (getApi is Success) {
+      debugPrint('==> [VehicleCount Repository] API /api/operator-invitation/vehicle-count success!');
+      return getApi;
+    }
+
+    return getDirect;
+  }
 }
 

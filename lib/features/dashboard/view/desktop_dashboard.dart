@@ -13,6 +13,7 @@ import '../widgets/operator_tour_overlay.dart';
 import '../widgets/add_pra_registration_modal.dart';
 import '../widgets/add_walk_in_modal.dart';
 import '../widgets/fill_pra_registration_modal.dart';
+import '../widgets/parking_vehicle_modal.dart';
 import 'desktop_overview_analytics.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/config/constants.dart';
@@ -4381,6 +4382,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
     if (actionName == 'Scan QR') {
       _showScanQrDialog();
+      return;
+    }
+    if (actionName == 'Parking' || actionName == 'List Parking') {
+      ParkingVehicleModal.show(context);
       return;
     }
     if (actionName == 'Extend' || actionName == 'Extend Visit') {
