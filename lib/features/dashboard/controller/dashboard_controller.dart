@@ -357,46 +357,65 @@ class DashboardController extends GetxController {
       // 1. Sites
       final sitesRes = results[0];
       if (sitesRes is Success<Map<String, dynamic>>) {
-        final collection = sitesRes.data['collection'] as List<dynamic>? ?? [];
+        final rawCollection = sitesRes.data['collection'];
+        final collection = (rawCollection is List) ? rawCollection : [];
         rxPraRegSites.assignAll(
-          collection.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+          collection
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
         );
       }
 
       // 2. Visitor Types
       final typesRes = results[1];
       if (typesRes is Success<Map<String, dynamic>>) {
-        final collection = typesRes.data['collection'] as List<dynamic>? ?? [];
+        final rawCollection = typesRes.data['collection'];
+        final collection = (rawCollection is List) ? rawCollection : [];
         rxPraRegVisitorTypes.assignAll(
-          collection.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+          collection
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
         );
       }
 
       // 3. Visitors
       final visitorsRes = results[2];
       if (visitorsRes is Success<Map<String, dynamic>>) {
-        final collection =
-            visitorsRes.data['collection'] as List<dynamic>? ?? [];
+        final rawCollection = visitorsRes.data['collection'];
+        final collection = (rawCollection is List) ? rawCollection : [];
         rxPraRegVisitors.assignAll(
-          collection.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+          collection
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
         );
       }
 
       // 4. Employees
       final empRes = results[3];
       if (empRes is Success<Map<String, dynamic>>) {
-        final collection = empRes.data['collection'] as List<dynamic>? ?? [];
+        final rawCollection = empRes.data['collection'];
+        final collection = (rawCollection is List) ? rawCollection : [];
         rxPraRegEmployees.assignAll(
-          collection.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+          collection
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
         );
       }
 
       // 5. Hosts
       final hostsRes = results[4];
       if (hostsRes is Success<Map<String, dynamic>>) {
-        final collection = hostsRes.data['collection'] as List<dynamic>? ?? [];
+        final rawCollection = hostsRes.data['collection'];
+        final collection = (rawCollection is List) ? rawCollection : [];
         rxPraRegHosts.assignAll(
-          collection.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+          collection
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
         );
       }
     } catch (e) {

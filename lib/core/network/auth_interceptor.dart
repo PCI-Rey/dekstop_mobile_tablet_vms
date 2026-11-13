@@ -107,25 +107,67 @@ class AuthInterceptor extends QueuedInterceptor {
         return newAccess;
       }
 
-      // Standalone dio to execute refresh call
+      // Standalone dio to execute refresh call with security headers
       final dio = Dio(BaseOptions(
         baseUrl: serverUrl,
-        connectTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {
+          'Accept': 'application/json',
+          'X-Use-Token': DioClient.xUseToken,
+          'X-Platform-Id': DioClient.xPlatformId,
+          'X-UserAgent': DioClient.xUserAgent,
+        },
       ));
       
-      final response = await dio.post('/refresh-token', data: {
-        'refresh_token': refreshToken,
-      });
+      Response<dynamic>? response;
+      try {
+        response = await dio.post('/refresh-token', data: {
+          'refresh_token': refreshToken,
+        });
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) {
+          response = await dio.post('/api/refresh-token', data: {
+            'refresh_token': refreshToken,
+          });
+        } else {
+          rethrow;
+        }
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final newAccess = response.data['access_token'] as String;
-        final newRefresh = response.data['refresh_token'] as String?;
-        
-        await _storageService.saveAccessToken(newAccess);
-        if (newRefresh != null && newRefresh.isNotEmpty) {
-          await _storageService.saveRefreshToken(newRefresh);
+        final dynamic rawData = response.data;
+        Map<String, dynamic> payload = {};
+        if (rawData is Map<String, dynamic>) {
+          payload = rawData;
+        } else if (rawData is Map) {
+          payload = Map<String, dynamic>.from(rawData);
         }
-        return newAccess;
+
+        // Support collection, data, or root envelope
+        final collection = payload['collection'] is Map
+            ? Map<String, dynamic>.from(payload['collection'] as Map)
+            : (payload['data'] is Map
+                ? Map<String, dynamic>.from(payload['data'] as Map)
+                : payload);
+
+        final newAccess = (collection['access_token'] ??
+                collection['token'] ??
+                payload['access_token'] ??
+                payload['token'])
+            ?.toString();
+
+        final newRefresh = (collection['refresh_token'] ??
+                payload['refresh_token'])
+            ?.toString();
+
+        if (newAccess != null && newAccess.isNotEmpty) {
+          await _storageService.saveAccessToken(newAccess);
+          if (newRefresh != null && newRefresh.isNotEmpty) {
+            await _storageService.saveRefreshToken(newRefresh);
+          }
+          return newAccess;
+        }
       }
     } catch (_) {
       // Any error during refresh fails the auth flow

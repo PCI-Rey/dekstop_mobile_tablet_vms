@@ -179,6 +179,7 @@ class DioClient {
         }
       } on DioException catch (e) {
         final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        // GET is idempotent: can safely retry on connection, timeout, or network abort
         final isTransient = e.type == DioExceptionType.connectionError ||
             e.type == DioExceptionType.connectionTimeout ||
             e.type == DioExceptionType.receiveTimeout ||
@@ -255,9 +256,10 @@ class DioClient {
         }
       } on DioException catch (e) {
         final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        // Idempotency Guard: Do not retry non-idempotent write operations on receiveTimeout
+        // to avoid duplicate transactions or 422 conflicts when backend has already processed it
         final isTransient = e.type == DioExceptionType.connectionError ||
             e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
             e.type == DioExceptionType.sendTimeout ||
             errStr.contains('semaphore') ||
             errStr.contains('SocketException') ||
@@ -331,9 +333,10 @@ class DioClient {
         }
       } on DioException catch (e) {
         final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        // Idempotency Guard: Do not retry non-idempotent write operations on receiveTimeout
+        // to avoid duplicate transactions or 422 conflicts when backend has already processed it
         final isTransient = e.type == DioExceptionType.connectionError ||
             e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
             e.type == DioExceptionType.sendTimeout ||
             errStr.contains('semaphore') ||
             errStr.contains('SocketException') ||
@@ -392,9 +395,10 @@ class DioClient {
         }
       } on DioException catch (e) {
         final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        // Idempotency Guard: Do not retry non-idempotent write operations on receiveTimeout
+        // to avoid duplicate transactions or 422 conflicts when backend has already processed it
         final isTransient = e.type == DioExceptionType.connectionError ||
             e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
             e.type == DioExceptionType.sendTimeout ||
             errStr.contains('semaphore') ||
             errStr.contains('SocketException') ||
