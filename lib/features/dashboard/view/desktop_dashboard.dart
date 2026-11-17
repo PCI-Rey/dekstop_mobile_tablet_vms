@@ -3425,189 +3425,242 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           controller.rxPrimaryHost.value ??
           (visitor?['host_name'] != null ? visitor : null);
 
-      return Column(
-        children: [
-          // ── 1. Host Information Card (Keyed for Tour Step 7) ──────────────
-          Expanded(
-            flex: 6,
-            child: _buildCardContainer(
-              key: _keyHostInfo,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Host Information',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F2B48),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final colH = constraints.maxHeight;
+          final isCompact = colH < 620;
+          final hostFlex = isCompact ? 5 : 4;
+          final occFlex = isCompact ? 5 : 5;
+          final idFlex = isCompact ? 8 : 10;
+          final alertFlex = isCompact ? 5 : 5;
 
-                  // Avatar + Detailed Host info
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Circular Avatar with CDN Face Image
-                        Builder(
-                          builder: (context) {
-                            final hostFace =
-                                (host?['faceimage'] ??
-                                        host?['host_faceimage'] ??
-                                        host?['avatar'] ??
-                                        host?['photo'] ??
-                                        '')
-                                    .toString()
-                                    .trim();
-
-                            return Container(
-                              width: 58,
-                              height: 58,
+          return Column(
+            children: [
+              // ── 1. Host Information Card (Keyed for Tour Step 7) ──────────────
+              Expanded(
+                flex: hostFlex,
+                child: _buildCardContainer(
+                  key: _keyHostInfo,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Host Information',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F2B48),
+                            ),
+                          ),
+                          if (host != null &&
+                              (host['name'] != null || host['host_name'] != null))
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2.5,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                shape: BoxShape.circle,
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: const Color(0xFFDBEAFE),
-                                  width: 1.5,
+                                  color: const Color(0xFFA7F3D0),
+                                  width: 1,
                                 ),
                               ),
-                              clipBehavior: Clip.antiAlias,
-                              child:
-                                  (hostFace.isNotEmpty &&
-                                      hostFace != '-' &&
-                                      hostFace != 'null' &&
-                                      !hostFace.startsWith('assets/'))
-                                  ? Image.network(
-                                      AppConstants.getCdnImageUrl(hostFace),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          const Center(
-                                            child: Icon(
-                                              Icons.person,
-                                              size: 34,
-                                              color: Color(0xFF003082),
-                                            ),
-                                          ),
-                                    )
-                                  : const Center(
-                                      child: Icon(
-                                        Icons.person,
-                                        size: 34,
-                                        color: Color(0xFF003082),
-                                      ),
-                                    ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (host != null &&
-                                  (host['name'] != null ||
-                                      host['host_name'] != null)) ...[
-                                Text(
-                                  host['name'] ??
-                                      host['host_name'] ??
-                                      'Host Name',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF1E293B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  host['organization'] ??
-                                      host['host_organization_name'] ??
-                                      host['host_dept'] ??
-                                      'Organization SPU',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF1E293B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ] else ...[
-                                Text(
-                                  '-',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF1E293B),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                              const SizedBox(height: 3),
-                              Row(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
-                                    Icons.phone_rounded,
-                                    size: 13.5,
-                                    color: Color(0xFF1E293B),
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF10B981),
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                  const SizedBox(width: 5),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
+                                    'Available',
                                     style: GoogleFonts.inter(
-                                      fontSize: 11.5,
+                                      fontSize: 10.5,
                                       fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF1E293B),
+                                      color: const Color(0xFF059669),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.mail_rounded,
-                                    size: 13.5,
-                                    color: Color(0xFF1E293B),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Avatar + Detailed Host info
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Circular Avatar with CDN Face Image
+                            Builder(
+                              builder: (context) {
+                                final hostFace =
+                                    (host?['faceimage'] ??
+                                            host?['host_faceimage'] ??
+                                            host?['avatar'] ??
+                                            host?['photo'] ??
+                                            '')
+                                        .toString()
+                                        .trim();
+
+                                return Container(
+                                  width: isCompact ? 50 : 56,
+                                  height: isCompact ? 50 : 56,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFFDBEAFE),
+                                      width: 1.5,
+                                    ),
                                   ),
-                                  const SizedBox(width: 5),
-                                  Expanded(
-                                    child: Text(
-                                      ' :  ${host?['email'] ?? host?['host_email'] ?? "-"}',
+                                  clipBehavior: Clip.antiAlias,
+                                  child:
+                                      (hostFace.isNotEmpty &&
+                                          hostFace != '-' &&
+                                          hostFace != 'null' &&
+                                          !hostFace.startsWith('assets/'))
+                                      ? Image.network(
+                                          AppConstants.getCdnImageUrl(hostFace),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              Center(
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: isCompact ? 28 : 32,
+                                                  color: const Color(0xFF003082),
+                                                ),
+                                              ),
+                                        )
+                                      : Center(
+                                          child: Icon(
+                                            Icons.person,
+                                            size: isCompact ? 28 : 32,
+                                            color: const Color(0xFF003082),
+                                          ),
+                                        ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (host != null &&
+                                      (host['name'] != null ||
+                                          host['host_name'] != null)) ...[
+                                    Text(
+                                      host['name'] ??
+                                          host['host_name'] ??
+                                          'Host Name',
                                       style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: isCompact ? 13 : 13.5,
+                                        fontWeight: FontWeight.w800,
                                         color: const Color(0xFF1E293B),
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      host['organization'] ??
+                                          host['host_organization_name'] ??
+                                          host['host_dept'] ??
+                                          'Organization SPU',
+                                      style: GoogleFonts.inter(
+                                        fontSize: isCompact ? 11 : 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ] else ...[
+                                    Text(
+                                      '-',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF1E293B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.phone_rounded,
+                                        size: 13,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.mail_rounded,
+                                        size: 13,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Expanded(
+                                        child: Text(
+                                          ' :  ${host?['email'] ?? host?['host_email'] ?? "-"}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
 
-          const SizedBox(height: 5),
+              const SizedBox(height: 5),
 
-          // ── 2. Live Occupancy Card (Keyed for Tour Step 8) ─────────────────
-          Expanded(
-            flex: 6,
-            child: _buildCardContainer(
+              // ── 2. Live Occupancy Card (Keyed for Tour Step 8) ─────────────────
+              Expanded(
+                flex: occFlex,
+                child: _buildCardContainer(
               key: _keyLiveOccupancy,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Column(
@@ -3839,7 +3892,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
           // ── 3. Identity Image Card (Keyed for Tour Step 9) ─────────────────
           Expanded(
-            flex: 7,
+            flex: idFlex,
             child: _buildCardContainer(
               key: _keyIdentityImage,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -4011,7 +4064,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
           // ── 4. Alerts Card (Keyed for Tour Step 10) ────────────────────────
           Expanded(
-            flex: 6,
+            flex: alertFlex,
             child: _buildCardContainer(
               key: _keyAlerts,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -4063,8 +4116,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           ),
         ],
       );
-    });
-  }
+    },
+  );
+});
+}
 
   void _showIdentityImagePreview(
     BuildContext context,
