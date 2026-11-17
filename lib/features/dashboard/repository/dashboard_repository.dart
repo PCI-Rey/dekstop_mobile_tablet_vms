@@ -263,44 +263,6 @@ class DashboardRepository {
     );
   }
 
-  Future<ApiResult<Map<String, dynamic>>> extendVisitorPeriod({
-    required String id,
-    required int period,
-    bool applyToAll = false,
-  }) async {
-    final body = {'id': id, 'period': period, 'apply_to_all': applyToAll};
-
-    // 1. Try POST /api/operator-invitation/extend-period
-    final postApi = await _dioClient.post<Map<String, dynamic>>(
-      '/api/operator-invitation/extend-period',
-      data: body,
-    );
-    if (postApi is Success) return postApi;
-
-    // 2. Try PUT /api/operator-invitation/extend-period
-    final putApi = await _dioClient.put<Map<String, dynamic>>(
-      '/api/operator-invitation/extend-period',
-      data: body,
-    );
-    if (putApi is Success) return putApi;
-
-    // 3. Try PUT /operator-invitation/extend-period
-    final putDirect = await _dioClient.put<Map<String, dynamic>>(
-      '/operator-invitation/extend-period',
-      data: body,
-    );
-    if (putDirect is Success) return putDirect;
-
-    // 4. Try POST /operator-invitation/extend-period
-    final postDirect = await _dioClient.post<Map<String, dynamic>>(
-      '/operator-invitation/extend-period',
-      data: body,
-    );
-    if (postDirect is Success) return postDirect;
-
-    return postApi;
-  }
-
   Future<ApiResult<Map<String, dynamic>>> blacklistVisitor({
     required String visitorId,
     required String reason,

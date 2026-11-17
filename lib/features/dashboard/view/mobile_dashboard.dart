@@ -6,6 +6,7 @@ import '../../../core/shared/routes/app_pages.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
 import '../../scan/view/mobile_scanner_view.dart';
+import '../widgets/parking_vehicle_modal.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MobileDashboard extends GetView<DashboardController> {
@@ -582,6 +583,9 @@ class MobileDashboard extends GetView<DashboardController> {
                   controller.executeAction('check_in');
                 } else if (label.contains('Out')) {
                   controller.executeAction('check_out');
+                } else if (label.contains('Vehicle') ||
+                    label.contains('Parking')) {
+                  ParkingVehicleModal.show(context);
                 } else {
                   AppSnackbar.info(
                     title: 'Action Triggered',

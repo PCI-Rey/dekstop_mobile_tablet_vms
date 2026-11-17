@@ -33,7 +33,6 @@ class DashboardController extends GetxController {
   bool get canWalkIn => can('OperatorVisitorWalkIn') && canManageInvite;
   bool get canPraRegister =>
       can('OperatorVisitorPreregister') && canManageInvite;
-  bool get canExtend => can('OperatorVisitorExtend');
   bool get canTriggerOpen => can('OperatorVisitorTriggerOpen');
   bool get canParking => can('OperatorVisitorParkingIssuance');
   bool get canCardIssue => can('OperatorVisitorCardIssuance');
@@ -954,9 +953,9 @@ class DashboardController extends GetxController {
       'enabled': true,
     },
     {
-      'icon': 'access_time',
-      'label': 'Extend',
-      'color': 'orange',
+      'icon': 'local_parking',
+      'label': 'Vehicle Count',
+      'color': 'blue',
       'enabled': true,
     },
     {'icon': 'block', 'label': 'Blacklist', 'color': 'grey', 'enabled': true},
@@ -1176,7 +1175,7 @@ class DashboardController extends GetxController {
         }
 
         final liveTotal = rxLiveVisitors.isNotEmpty
-            ? (rxLiveVisitors.length / 10).ceil()
+            ? (rxLiveVisitors.length / 20).ceil()
             : 0;
         rxLiveTotalPages.value = liveTotal;
         if (liveTotal == 0) {
@@ -1394,7 +1393,7 @@ class DashboardController extends GetxController {
     }
 
     rxRelatedVisitors.assignAll(list);
-    final total = list.isNotEmpty ? (list.length / 10).ceil() : 0;
+    final total = list.isNotEmpty ? (list.length / 20).ceil() : 0;
     rxRelatedTotalPages.value = total;
     rxTotalPages.value = total;
 
@@ -1428,7 +1427,7 @@ class DashboardController extends GetxController {
         rxLiveVisitors.assignAll(filtered);
       }
       final total = rxLiveVisitors.isNotEmpty
-          ? (rxLiveVisitors.length / 10).ceil()
+          ? (rxLiveVisitors.length / 20).ceil()
           : 0;
       rxLiveTotalPages.value = total;
       rxLiveCurrentPage.value = total > 0 ? 1 : 0;
@@ -2503,211 +2502,6 @@ class DashboardController extends GetxController {
       }
     } catch (_) {}
     return null;
-  }
-
-  Future<bool> extendVisitorPeriod({
-    required int period,
-    bool applyToAll = false,
-    String? visitorId,
-    List<String>? targetVisitorIds,
-  }) async {
-    final List<String> idsToExtend = [];
-
-    if (targetVisitorIds != null && targetVisitorIds.isNotEmpty) {
-      idsToExtend.addAll(targetVisitorIds);
-    } else if (visitorId != null && visitorId.isNotEmpty) {
-      idsToExtend.add(visitorId);
-    } else if (rxSelectMultiple.value && rxSelectedItems.isNotEmpty) {
-      final allPool = [
-        ...rxAllRelatedVisitors,
-        ...rxLiveVisitors,
-        if (rxSelectedVisitor.value != null) rxSelectedVisitor.value!,
-      ];
-
-      for (final selKey in rxSelectedItems) {
-        final found = allPool.firstWhereOrNull(
-          (v) =>
-              (v['id'] ?? '').toString() == selKey ||
-              (v['trx_id'] ?? '').toString() == selKey ||
-              (v['transaction_visitor_id'] ?? '').toString() == selKey ||
-              (v['invitation_code'] ?? '').toString() == selKey ||
-              (v['visitor_code'] ?? '').toString() == selKey ||
-              (v['name'] ?? '').toString() == selKey,
-        );
-        final resolvedId =
-            (found?['raw']?['id'] ??
-                    found?['trx_id'] ??
-                    found?['id'] ??
-                    found?['transaction_visitor_id'] ??
-                    selKey)
-                .toString()
-                .trim();
-        if (resolvedId.isNotEmpty && !idsToExtend.contains(resolvedId)) {
-          idsToExtend.add(resolvedId);
-        }
-      }
-    } else {
-      final v = rxSelectedVisitor.value;
-      final targetId =
-          (v?['raw']?['id'] ??
-                  v?['trx_id'] ??
-                  v?['id'] ??
-                  v?['transaction_visitor_id'] ??
-                  '')
-              .toString()
-              .trim();
-      if (targetId.isNotEmpty) {
-        idsToExtend.add(targetId);
-      }
-    }
-
-    if (idsToExtend.isEmpty) {
-      AppSnackbar.error(
-        title: 'Validation Error',
-        message: 'No visitor selected to extend period',
-      );
-      return false;
-    }
-
-    rxIsActionLoading.value = true;
-    int successCount = 0;
-    String lastErrorMsg = '';
-
-    for (final targetId in idsToExtend) {
-      final result = await _dashboardRepository.extendVisitorPeriod(
-        id: targetId,
-        period: period,
-        applyToAll: applyToAll,
-      );
-
-      if (result is Success<Map<String, dynamic>>) {
-        successCount++;
-      } else if (result is Failure) {
-        lastErrorMsg = (result as Failure).exception.message;
-      }
-    }
-    rxIsActionLoading.value = false;
-
-    if (successCount > 0) {
-      // 1. Calculate and update visitor period end and extend_visitor_period dynamically for all related visitors
-      for (int i = 0; i < rxAllRelatedVisitors.length; i++) {
-        final item = Map<String, dynamic>.from(rxAllRelatedVisitors[i]);
-        final itemId =
-            (item['raw']?['id'] ??
-                    item['trx_id'] ??
-                    item['id'] ??
-                    item['transaction_visitor_id'] ??
-                    item['invitation_code'] ??
-                    '')
-                .toString();
-
-        if (applyToAll || idsToExtend.contains(itemId)) {
-          final currentEnd =
-              item['visitor_period_end'] ??
-              item['period_end'] ??
-              item['raw']?['visitor_period_end'];
-          DateTime currentEndDt =
-              parseApiDateTime(currentEnd) ??
-              parseApiDateTime(item['raw']?['visitor_period_end']) ??
-              DateTime.now();
-          final newEndDt = currentEndDt.add(Duration(minutes: period));
-          final newFormattedEnd = formatLocalDateTime(newEndDt);
-          final newIsoEnd = newEndDt.toUtc().toIso8601String();
-
-          final currentExtend =
-              int.tryParse((item['extend_visitor_period'] ?? 0).toString()) ??
-              0;
-          final newExtend = currentExtend + period;
-
-          item['extend_visitor_period'] = newExtend;
-          item['visitor_period_end'] = newFormattedEnd;
-          item['period_end'] = newFormattedEnd;
-          if (item['raw'] is Map) {
-            final updatedRaw = Map<String, dynamic>.from(item['raw'] as Map);
-            updatedRaw['extend_visitor_period'] = newExtend;
-            updatedRaw['visitor_period_end'] = newIsoEnd;
-            item['raw'] = updatedRaw;
-          }
-          rxAllRelatedVisitors[i] = item;
-        }
-      }
-
-      // Also update selected visitor if affected
-      if (rxSelectedVisitor.value != null) {
-        final selectedId =
-            (rxSelectedVisitor.value!['raw']?['id'] ??
-                    rxSelectedVisitor.value!['trx_id'] ??
-                    rxSelectedVisitor.value!['id'] ??
-                    rxSelectedVisitor.value!['transaction_visitor_id'] ??
-                    '')
-                .toString();
-        if (applyToAll || idsToExtend.contains(selectedId)) {
-          final currentEnd =
-              rxSelectedVisitor.value!['visitor_period_end'] ??
-              rxSelectedVisitor.value!['period_end'] ??
-              rxSelectedVisitor.value!['raw']?['visitor_period_end'];
-          DateTime currentEndDt =
-              parseApiDateTime(currentEnd) ??
-              parseApiDateTime(
-                rxSelectedVisitor.value!['raw']?['visitor_period_end'],
-              ) ??
-              DateTime.now();
-          final newEndDt = currentEndDt.add(Duration(minutes: period));
-          final newFormattedEnd = formatLocalDateTime(newEndDt);
-          final newIsoEnd = newEndDt.toUtc().toIso8601String();
-
-          final currentExtend =
-              int.tryParse(
-                (rxSelectedVisitor.value!['extend_visitor_period'] ?? 0)
-                    .toString(),
-              ) ??
-              0;
-          final newExtend = currentExtend + period;
-
-          final updated = Map<String, dynamic>.from(rxSelectedVisitor.value!);
-          updated['extend_visitor_period'] = newExtend;
-          updated['visitor_period_end'] = newFormattedEnd;
-          updated['period_end'] = newFormattedEnd;
-          if (updated['raw'] is Map) {
-            final updatedRaw = Map<String, dynamic>.from(updated['raw'] as Map);
-            updatedRaw['extend_visitor_period'] = newExtend;
-            updatedRaw['visitor_period_end'] = newIsoEnd;
-            updated['raw'] = updatedRaw;
-          }
-          rxSelectedVisitor.value = updated;
-        }
-      }
-
-      applyFiltersAndPagination();
-
-      // 2. Add Timeline Entry
-      final nowFormatted =
-          formatLocalTime(DateTime.now());
-      rxTimeline.insert(0, {
-        'time': nowFormatted,
-        'title': 'Period Extended',
-        'desc':
-            'Extended by +$period min ($successCount visitor${successCount > 1 ? "s" : ""})',
-        'status': 'extend',
-      });
-
-      AppSnackbar.success(
-        title: 'Period Extended',
-        message: 'Visit period extended by $period minutes successfully',
-      );
-
-      // Refresh live visitors in background
-      fetchLiveVisitors();
-      return true;
-    } else {
-      AppSnackbar.error(
-        title: 'Extend Failed',
-        message: lastErrorMsg.isNotEmpty
-            ? lastErrorMsg
-            : 'Failed to extend visitor period.',
-      );
-      return false;
-    }
   }
 
   // --- Multiple Operator Invitation Actions (/api/operator-invitation/multiple-action) ---

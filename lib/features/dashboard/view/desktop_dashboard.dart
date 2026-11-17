@@ -1403,20 +1403,38 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           final cardStatus = (card['card_status'] ?? 'Available').toString();
           final isCurrent = card['current_used'] == true;
 
+          final statusLower = cardStatus.toLowerCase();
+          final bool isRevoked = statusLower.contains('revoked') ||
+              statusLower.contains('block') ||
+              statusLower.contains('lost');
+          final bool isIssued = statusLower.contains('issued') ||
+              statusLower.contains('active');
+
+          final Color statusBgColor = isIssued
+              ? const Color(0xFF10B981) // Emerald Green for active/issued
+              : isRevoked
+                  ? const Color(0xFFEF4444) // Red for revoked/blocked
+                  : const Color(0xFFF59E0B); // Amber for others
+
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isRevoked ? const Color(0xFFF8FAFC) : Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF00ACC1), width: 1.2),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 1.0,
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.qr_code_scanner_rounded,
                   size: 22,
-                  color: Color(0xFF004385),
+                  color: isRevoked
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF004385),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1432,7 +1450,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               style: GoogleFonts.inter(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF1E293B),
+                                color: isRevoked
+                                    ? const Color(0xFF64748B)
+                                    : const Color(0xFF1E293B),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1553,7 +1573,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B),
+                        color: statusBgColor,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -2045,7 +2065,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         // ── 1. Color-coded Quick Action Buttons Grid (Keyed for Tour Step 4) ──
         _buildCardContainer(
           key: _keyActionGrid,
-          padding: const EdgeInsets.all(6.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
           child: Obx(() {
             // Explicitly track rxUserPermissions so GetX observer is guaranteed to register
             final _ = controller.rxUserPermissions.length;
@@ -2054,156 +2074,154 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             final showOpen = controller.canTriggerOpen;
             final canPraRegister = controller.canPraRegister;
             final canWalkIn = controller.canWalkIn;
-            final canExtend = controller.canExtend;
             final canCheckIn = controller.canCheckIn;
             final canCheckOut = controller.canCheckOut;
             final canCardIssue = controller.canCardIssue;
 
-            final row2Buttons = <Widget>[
-              if (canPraRegister)
-                _buildActionButton(
-                  label: 'Pra Register',
-                  icon: Icons.person_add_alt_1_outlined,
-                  bgColor: const Color(0xFF005696),
-                  onTap: () => _handleAction('Pra Register'),
-                  isEnabled: true,
-                ),
-              if (canWalkIn)
-                _buildActionButton(
-                  label: 'Walk In',
-                  icon: Icons.person_add_alt_1_outlined,
-                  bgColor: const Color(0xFF005696),
-                  onTap: () => _handleAction('Walk In'),
-                  isEnabled: true,
-                ),
-              if (canExtend)
-                _buildActionButton(
-                  label: 'Extend',
-                  icon: Icons.access_time_rounded,
-                  bgColor: const Color(0xFFF5B82A),
-                  onTap: () => _handleAction('Extend'),
-                  isEnabled: true,
-                ),
-            ];
-
-            final row3Buttons = <Widget>[
-              if (canCheckIn)
-                _buildActionButton(
-                  label: 'Check In',
-                  icon: Icons.login_rounded,
-                  bgColor: const Color(0xFF18B854),
-                  onTap: () => _handleAction('Check In'),
-                  isEnabled: true,
-                ),
-              if (canCheckOut)
-                _buildActionButton(
-                  label: 'Check Out',
-                  icon: Icons.logout_rounded,
-                  bgColor: const Color(0xFFE52929),
-                  onTap: () => _handleAction('Check Out'),
-                  isEnabled: true,
-                ),
-            ];
-
-            final row4Buttons = <Widget>[
-              if (canCardIssue)
-                _buildActionButton(
-                  label: 'Card Issue',
-                  icon: Icons.style_outlined,
-                  bgColor: const Color(0xFF005696),
-                  onTap: () => _handleAction('Card Issue'),
-                  isEnabled: true,
-                ),
-              if (canCardIssue)
-                _buildActionButton(
-                  label: 'Card Return',
-                  icon: Icons.style_outlined,
-                  bgColor: const Color(0xFF005696),
-                  onTap: () => _handleAction('Card Return'),
-                  isEnabled: true,
-                ),
-            ];
-
-            return Column(
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Row 1: Scan QR (Wide), Parking, Open
-                Row(
-                  children: [
-                    Expanded(
-                      flex: (showParking && showOpen) ? 2 : 1,
-                      child: _buildActionButton(
+                // Column 1: Visit Flow
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Visit Flow',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _buildActionButton(
                         label: 'Scan QR',
                         icon: Icons.qr_code_2_rounded,
-                        bgColor: const Color(0xFF005696),
+                        bgColor: const Color(0xFF1976D2),
                         onTap: () => _handleAction('Scan QR'),
                         isEnabled: true,
                       ),
-                    ),
-                    if (showParking) ...[
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: _buildActionButton(
-                          label: 'Parking',
-                          icon: Icons.local_parking_rounded,
-                          bgColor: const Color(0xFF00A3B8),
-                          onTap: () => _handleAction('Parking'),
+                      if (canPraRegister) ...[
+                        const SizedBox(height: 4),
+                        _buildActionButton(
+                          label: 'Pra Register',
+                          icon: Icons.person_add_alt_1_outlined,
+                          bgColor: const Color(0xFF005696),
+                          onTap: () => _handleAction('Pra Register'),
                           isEnabled: true,
                         ),
-                      ),
+                      ],
+                      if (canWalkIn) ...[
+                        const SizedBox(height: 4),
+                        _buildActionButton(
+                          label: 'Walk In',
+                          icon: Icons.person_add_alt_1_outlined,
+                          bgColor: const Color(0xFF005696),
+                          onTap: () => _handleAction('Walk In'),
+                          isEnabled: true,
+                        ),
+                      ],
                     ],
-                    if (showOpen) ...[
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: _buildActionButton(
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Column 2: In Access
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'In Access',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      if (canCheckIn)
+                        _buildActionButton(
+                          label: 'Check In',
+                          icon: Icons.login_rounded,
+                          bgColor: const Color(0xFF10B981),
+                          onTap: () => _handleAction('Check In'),
+                          isEnabled: true,
+                        ),
+                      if (canCheckOut) ...[
+                        const SizedBox(height: 4),
+                        _buildActionButton(
+                          label: 'Check Out',
+                          icon: Icons.logout_rounded,
+                          bgColor: const Color(0xFFEF4444),
+                          onTap: () => _handleAction('Check Out'),
+                          isEnabled: true,
+                        ),
+                      ],
+                      if (showOpen) ...[
+                        const SizedBox(height: 4),
+                        _buildActionButton(
                           label: 'Open',
                           icon: Icons.meeting_room_outlined,
-                          bgColor: const Color(0xFFA62626),
+                          bgColor: const Color(0xFFDC2626),
                           onTap: () => _handleAction('Open Door'),
                           isEnabled: true,
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
+                const SizedBox(width: 8),
 
-                // Row 2
-                if (row2Buttons.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
+                // Column 3: Control
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      for (int i = 0; i < row2Buttons.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 4),
-                        Expanded(child: row2Buttons[i]),
+                      Text(
+                        'Control',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      if (canCardIssue)
+                        _buildActionButton(
+                          label: 'Card Issue',
+                          icon: Icons.style_outlined,
+                          bgColor: const Color(0xFF005696),
+                          onTap: () => _handleAction('Card Issue'),
+                          isEnabled: true,
+                        ),
+                      if (canCardIssue) ...[
+                        const SizedBox(height: 4),
+                        _buildActionButton(
+                          label: 'Card Return',
+                          icon: Icons.style_outlined,
+                          bgColor: const Color(0xFF005696),
+                          onTap: () => _handleAction('Card Return'),
+                          isEnabled: true,
+                        ),
+                      ],
+                      if (showParking) ...[
+                        const SizedBox(height: 4),
+                        _buildActionButton(
+                          label: 'Vehicle Count',
+                          icon: Icons.local_parking_rounded,
+                          bgColor: const Color(0xFF005696),
+                          onTap: () => _handleAction('Vehicle Count'),
+                          isEnabled: true,
+                        ),
                       ],
                     ],
                   ),
-                ],
-
-                // Row 3
-                if (row3Buttons.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      for (int i = 0; i < row3Buttons.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 4),
-                        Expanded(child: row3Buttons[i]),
-                      ],
-                    ],
-                  ),
-                ],
-
-                // Row 4
-                if (row4Buttons.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      for (int i = 0; i < row4Buttons.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 4),
-                        Expanded(child: row4Buttons[i]),
-                      ],
-                    ],
-                  ),
-                ],
+                ),
               ],
             );
           }),
@@ -2526,7 +2544,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               ? controller.rxLiveVisitors
                               : controller.rxRelatedVisitors;
                           final total = list.isNotEmpty
-                              ? (list.length / 10).ceil()
+                              ? (list.length / 20).ceil()
                               : 0;
                           final current = activeTab == 0
                               ? controller.rxLiveCurrentPage.value
@@ -2669,7 +2687,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ? controller.rxLiveVisitors
                         : controller.rxRelatedVisitors;
                     final totalPages = list.isNotEmpty
-                        ? (list.length / 10).ceil()
+                        ? (list.length / 20).ceil()
                         : 1;
                     final pageController = activeTab == 0
                         ? _livePageController
@@ -2711,64 +2729,42 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           }
                         },
                         itemBuilder: (context, pageIndex) {
-                          final startIndex = pageIndex * 10;
+                          final startIndex = pageIndex * 20;
                           final pageItems = list
                               .skip(startIndex)
-                              .take(10)
+                              .take(20)
                               .toList();
                           final row1Items = pageItems.take(5).toList();
                           final row2Items = pageItems.skip(5).take(5).toList();
+                          final row3Items = pageItems.skip(10).take(5).toList();
+                          final row4Items = pageItems.skip(15).take(5).toList();
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 2,
-                              vertical: 2,
-                            ),
-                            child: Column(
-                              children: [
-                                // Row 1 (Expanded, fills top half)
-                                Expanded(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      for (int i = 0; i < 5; i++) ...[
-                                        if (i < row1Items.length)
-                                          Expanded(
-                                            child: _buildFeedVisitorCard(
-                                              row1Items[i],
-                                            ),
-                                          )
-                                        else
-                                          const Expanded(child: SizedBox()),
-                                        if (i < 4) const SizedBox(width: 6),
-                                      ],
-                                    ],
-                                  ),
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final availableHeight = constraints.maxHeight;
+                              final rowGap = availableHeight > 480 ? 6.0 : 4.0;
+                              // Dynamically fill the entire height in both windowed and fullscreen:
+                              final cardHeight =
+                                  ((availableHeight - (3 * rowGap) - 6) / 4)
+                                      .clamp(75.0, 160.0);
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                  vertical: 2,
                                 ),
-                                const SizedBox(height: 8),
-                                // Row 2 (Expanded, fills bottom half)
-                                Expanded(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      for (int i = 0; i < 5; i++) ...[
-                                        if (i < row2Items.length)
-                                          Expanded(
-                                            child: _buildFeedVisitorCard(
-                                              row2Items[i],
-                                            ),
-                                          )
-                                        else
-                                          const Expanded(child: SizedBox()),
-                                        if (i < 4) const SizedBox(width: 6),
-                                      ],
-                                    ],
-                                  ),
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildFeedRow(row1Items, cardHeight),
+                                    _buildFeedRow(row2Items, cardHeight),
+                                    _buildFeedRow(row3Items, cardHeight),
+                                    _buildFeedRow(row4Items, cardHeight),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -2948,7 +2944,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         );
                       }),
                       const Spacer(),
-                      // Right Action Pills: Extend, Card Issuance, Print (Hidden on initial/empty state)
+                      // Right Action Pills: Card Issuance (Hidden on initial/empty state)
                       Obx(() {
                         final hasData =
                             controller.rxSelectedVisitor.value != null ||
@@ -2958,14 +2954,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         return Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildFeedPillButton(
-                              'Extend',
-                              Icons.access_time_rounded,
-                              const Color(0xFFFBBF24),
-                              Colors.white,
-                              () => _handleAction('Extend'),
-                            ),
-                            const SizedBox(width: 6),
                             _buildFeedPillButton(
                               'Card Issuance',
                               Icons.credit_card_rounded,
@@ -3049,19 +3037,19 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   message: 'You do not have permission to use $label.',
                 );
               },
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(6),
         child: Container(
-          height: 30,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
             color: effectiveBgColor,
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(6),
             boxShadow: isEnabled
                 ? [
                     BoxShadow(
-                      color: bgColor.withValues(alpha: 0.2),
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
+                      color: bgColor.withValues(alpha: 0.18),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1.5),
                     ),
                   ]
                 : null,
@@ -3069,15 +3057,15 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 13, color: effectiveContentColor),
-              const SizedBox(width: 4),
+              Icon(icon, size: 14, color: effectiveContentColor),
+              const SizedBox(width: 5),
               Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: 10,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     color: effectiveContentColor,
                   ),
@@ -3130,7 +3118,38 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildFeedVisitorCard(Map<String, dynamic> item) {
+  Widget _buildFeedRow(
+    List<Map<String, dynamic>> rowItems,
+    double cardHeight,
+  ) {
+    return SizedBox(
+      height: cardHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (int i = 0; i < 5; i++) ...[
+            if (i < rowItems.length)
+              Expanded(
+                child: _buildFeedVisitorCard(
+                  rowItems[i],
+                  cardHeight: cardHeight,
+                ),
+              )
+            else
+              const Expanded(
+                child: SizedBox(),
+              ),
+            if (i < 4) const SizedBox(width: 5),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedVisitorCard(
+    Map<String, dynamic> item, {
+    double? cardHeight,
+  }) {
     return Obx(() {
       final selectedVisitor = controller.rxSelectedVisitor.value;
       final selectedId =
@@ -3182,6 +3201,17 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                   item['host_faceimage'] ??
                   '')
               .toString();
+
+      final isVeryCompact = (cardHeight != null && cardHeight < 105);
+      final isSpacious = (cardHeight != null && cardHeight >= 118);
+
+      final avatarSize = isVeryCompact ? 30.0 : (isSpacious ? 46.0 : 38.0);
+      final avatarIconSize = isVeryCompact ? 16.0 : (isSpacious ? 25.0 : 20.0);
+      final nameFontSize = isVeryCompact ? 9.5 : (isSpacious ? 12.0 : 10.5);
+      final orgFontSize = isVeryCompact ? 7.8 : (isSpacious ? 10.0 : 8.5);
+      final cbSize = isVeryCompact ? 13.0 : (isSpacious ? 16.0 : 14.5);
+      final cbIconSize = isVeryCompact ? 9.0 : (isSpacious ? 11.5 : 10.0);
+      final gap = isVeryCompact ? 2.5 : (isSpacious ? 6.0 : 4.0);
 
       return Material(
         color: Colors.transparent,
@@ -3236,44 +3266,46 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               }
             }
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 100),
-            height: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            height: cardHeight ?? double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSelected
                     ? const Color(0xFF003082)
                     : const Color(0xFFE2E8F0),
-                width: isSelected ? 1.8 : 1,
+                width: isSelected ? 1.6 : 1,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isSelected
                       ? const Color(0xFF003082).withValues(alpha: 0.12)
                       : Colors.black.withValues(alpha: 0.03),
-                  blurRadius: isSelected ? 6 : 3,
+                  blurRadius: isSelected ? 5 : 2,
                   offset: const Offset(0, 1),
                 ),
               ],
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Avatar with circle frame
+                // Avatar with circle frame & soft presence ring
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: avatarSize,
+                  height: avatarSize,
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFFDBEAFE),
-                      width: 1.5,
+                      color: isSelected
+                          ? const Color(0xFF1976D2)
+                          : const Color(0xFFDBEAFE),
+                      width: 1.2,
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -3285,27 +3317,30 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ? Image.network(
                           AppConstants.getCdnImageUrl(faceImg),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Center(
+                          errorBuilder: (_, __, ___) => Center(
                             child: Icon(
                               Icons.person,
-                              size: 26,
-                              color: Color(0xFF003082),
+                              size: avatarIconSize,
+                              color: const Color(0xFF003082),
                             ),
                           ),
                         )
-                      : const Center(
+                      : Center(
                           child: Icon(
                             Icons.person,
-                            size: 26,
-                            color: Color(0xFF003082),
+                            size: avatarIconSize,
+                            color: const Color(0xFF003082),
                           ),
                         ),
                 ),
+                SizedBox(height: gap),
+
+                // Visitor Name & Organization
                 Builder(
                   builder: (context) {
-                    final visitorName = (item['name'] ?? 'Visitor').toString();
-                    final isLong = visitorName.length > 12;
-                    final fontSize = isLong ? 10.0 : 11.0;
+                    final visitorName =
+                        (item['name'] ?? item['visitor_name'] ?? 'Visitor')
+                            .toString();
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -3315,20 +3350,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           Text(
                             visitorName,
                             style: GoogleFonts.inter(
-                              fontSize: fontSize,
+                              fontSize: nameFontSize,
                               height: 1.15,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1E293B),
                             ),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: isSpacious ? 2.5 : 1.5),
                           Text(
                             item['organization'] ?? item['company'] ?? '-',
                             style: GoogleFonts.inter(
-                              fontSize: 8.5,
+                              fontSize: orgFontSize,
                               height: 1.1,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF64748B),
@@ -3342,25 +3377,27 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     );
                   },
                 ),
+                SizedBox(height: isSpacious ? 8.0 : (isVeryCompact ? 3.5 : 5.5)),
+
                 // Checkbox Indicator
                 Container(
-                  width: 17,
-                  height: 17,
+                  width: cbSize,
+                  height: cbSize,
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFF003082) : Colors.white,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     border: Border.all(
                       color: isSelected
                           ? const Color(0xFF003082)
                           : const Color(0xFFCBD5E1),
-                      width: 1.5,
+                      width: 1.2,
                     ),
                   ),
                   child: isSelected
-                      ? const Center(
+                      ? Center(
                           child: Icon(
                             Icons.check_rounded,
-                            size: 13,
+                            size: cbIconSize,
                             color: Colors.white,
                           ),
                         )
@@ -3692,77 +3729,97 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       .toString();
                               final bgColor = bgColors[index % bgColors.length];
 
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(10),
-                                  onTap: () {
-                                    final categoryId =
-                                        (item['id'] ??
-                                                item['visitor_type_id'] ??
-                                                '')
-                                            .toString();
-                                    final categoryName =
-                                        (item['name'] ??
-                                                item['purpose'] ??
-                                                'Visitors')
-                                            .toString();
-                                    final initialCount = int.tryParse(
-                                      (item['count'] ?? item['total'] ?? 0)
-                                          .toString(),
-                                    );
-                                    _showUpcomingVisitorsDialog(
-                                      context,
-                                      categoryName: categoryName,
-                                      categoryId: categoryId,
-                                      initialCount: initialCount,
-                                    );
-                                  },
-                                  child: Container(
-                                    width: 135,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: bgColor,
+                              return Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 135,
+                                    minWidth: 120,
+                                    maxHeight: 92,
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
                                       borderRadius: BorderRadius.circular(10),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: bgColor.withValues(
-                                            alpha: 0.35,
-                                          ),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
+                                      onTap: () {
+                                        final categoryId =
+                                            (item['id'] ??
+                                                    item['visitor_type_id'] ??
+                                                    '')
+                                                .toString();
+                                        final categoryName =
+                                            (item['name'] ??
+                                                    item['purpose'] ??
+                                                    'Visitors')
+                                                .toString();
+                                        final initialCount = int.tryParse(
+                                          (item['count'] ?? item['total'] ?? 0)
+                                              .toString(),
+                                        );
+                                        _showUpcomingVisitorsDialog(
+                                          context,
+                                          categoryName: categoryName,
+                                          categoryId: categoryId,
+                                          initialCount: initialCount,
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 13,
+                                          vertical: 8,
                                         ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          label,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        decoration: BoxDecoration(
+                                          color: bgColor,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: bgColor.withValues(
+                                                alpha: 0.35,
+                                              ),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          count,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white,
-                                            height: 1.0,
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  label,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 13.0,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.white,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.left,
+                                                ),
+                                                const SizedBox(height: 5),
+                                                Text(
+                                                  count,
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 26,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Colors.white,
+                                                    height: 1.0,
+                                                  ),
+                                                  textAlign: TextAlign.left,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -4336,14 +4393,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       );
       return;
     }
-    if ((actionName == 'Extend' || actionName == 'Extend Visit') &&
-        !controller.canExtend) {
-      AppSnackbar.warning(
-        title: 'Permission Denied',
-        message: 'You do not have permission to extend visits.',
-      );
-      return;
-    }
     if ((actionName == 'Open' || actionName == 'Open Door') &&
         !controller.canTriggerOpen) {
       AppSnackbar.warning(
@@ -4352,7 +4401,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       );
       return;
     }
-    if (actionName == 'Parking' && !controller.canParking) {
+    if ((actionName == 'Parking' || actionName == 'Vehicle Count') &&
+        !controller.canParking) {
       AppSnackbar.warning(
         title: 'Permission Denied',
         message: 'You do not have permission for Parking issuance.',
@@ -4384,23 +4434,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       _showScanQrDialog();
       return;
     }
-    if (actionName == 'Parking' || actionName == 'List Parking') {
+    if (actionName == 'Parking' ||
+        actionName == 'List Parking' ||
+        actionName == 'Vehicle Count') {
       ParkingVehicleModal.show(context);
-      return;
-    }
-    if (actionName == 'Extend' || actionName == 'Extend Visit') {
-      final isMultiple = controller.rxSelectMultiple.value;
-      final hasSelected = isMultiple
-          ? controller.rxSelectedItems.isNotEmpty
-          : visitor != null;
-      if (!hasSelected) {
-        AppSnackbar.warning(
-          title: 'Warning',
-          message: 'Please select a visitor first to extend visit period.',
-        );
-        return;
-      }
-      _showExtendVisitDialog(context);
       return;
     }
     if (actionName == 'Check In') {
@@ -8205,358 +8242,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
           );
         },
       ),
-    );
-  }
-
-  void _showExtendVisitDialog(BuildContext context) {
-    final visitor = controller.rxSelectedVisitor.value;
-    final hasMultiple =
-        controller.rxSelectMultiple.value &&
-        controller.rxSelectedItems.isNotEmpty;
-    if (visitor == null && !hasMultiple) {
-      AppSnackbar.warning(
-        title: 'Warning',
-        message: 'Please select a visitor first to extend visit period.',
-      );
-      return;
-    }
-
-    int? selectedPeriod;
-    bool applyToAll = false;
-    bool isSubmitting = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final periodOptions = [15, 30, 45, 60, 90, 120, 150, 180];
-
-            return Dialog(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              insetPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 24,
-              ),
-              child: Container(
-                width: 490,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header: Title & Close Button
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 16, 14),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Extend Visit',
-                            style: GoogleFonts.inter(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E293B),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () => Navigator.of(dialogContext).pop(),
-                            borderRadius: BorderRadius.circular(20),
-                            child: const Padding(
-                              padding: EdgeInsets.all(4),
-                              child: Icon(
-                                Icons.close_rounded,
-                                size: 22,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Duration Pill Buttons in 2 Rows matching screenshot
-                          Center(
-                            child: Wrap(
-                              spacing: 10,
-                              runSpacing: 12,
-                              alignment: WrapAlignment.center,
-                              children: periodOptions.map((period) {
-                                final isSelected = selectedPeriod == period;
-
-                                return Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      setModalState(() {
-                                        selectedPeriod = period;
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 150,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 9,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? const Color(0xFF004385)
-                                            : const Color(0xFFEDEDED),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? const Color(0xFF004385)
-                                              : const Color(0xFFE2E8F0),
-                                          width: 1,
-                                        ),
-                                        boxShadow: isSelected
-                                            ? [
-                                                BoxShadow(
-                                                  color: const Color(
-                                                    0xFF004385,
-                                                  ).withValues(alpha: 0.25),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                      child: Text(
-                                        '$period min',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w700
-                                              : FontWeight.w500,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : const Color(0xFF334155),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // "Apply to another visitor" Checkbox Row
-                          InkWell(
-                            onTap: () {
-                              setModalState(() {
-                                applyToAll = !applyToAll;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(6),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 18,
-                                    height: 18,
-                                    decoration: BoxDecoration(
-                                      color: applyToAll
-                                          ? const Color(0xFF004385)
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                        color: applyToAll
-                                            ? const Color(0xFF004385)
-                                            : const Color(0xFF94A3B8),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: applyToAll
-                                        ? const Center(
-                                            child: Icon(
-                                              Icons.check_rounded,
-                                              size: 13,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Apply to another visitor',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF334155),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 22),
-
-                          // Extend Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 44,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: selectedPeriod != null
-                                    ? const Color(0xFF004385)
-                                    : const Color(0xFFEDEDED),
-                                foregroundColor: selectedPeriod != null
-                                    ? Colors.white
-                                    : const Color(0xFF94A3B8),
-                                elevation: selectedPeriod != null ? 2 : 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              onPressed:
-                                  (selectedPeriod == null || isSubmitting)
-                                  ? null
-                                  : () async {
-                                      setModalState(() => isSubmitting = true);
-                                      final periodVal = selectedPeriod!;
-                                      final success = await controller
-                                          .extendVisitorPeriod(
-                                            period: periodVal,
-                                            applyToAll: applyToAll,
-                                          );
-                                      setModalState(() => isSubmitting = false);
-                                      if (success && dialogContext.mounted) {
-                                        Navigator.of(dialogContext).pop();
-                                      }
-                                    },
-                              child: isSubmitting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Text(
-                                      'Extend',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: selectedPeriod != null
-                                            ? Colors.white
-                                            : const Color(0xFF94A3B8),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ignore: unused_element
-  void _showExtendSuccessDialog(BuildContext context, int minutes) {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (successContext) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            width: 360,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: InkWell(
-                    onTap: () => Navigator.of(successContext).pop(),
-                    child: const Icon(
-                      Icons.close_rounded,
-                      size: 18,
-                      color: Colors.red,
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.check_rounded,
-                      size: 32,
-                      color: Color(0xFF10B981),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Success!',
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF10B981),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Visit extended by $minutes minutes',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 

@@ -838,19 +838,6 @@ class DioClient {
       return ApiResult.success(mockActionRes as T);
     }
 
-    if (path.contains('/operator-invitation/extend-period')) {
-      final mockExtendRes = {
-        'status': 'success',
-        'status_code': 200,
-        'title': 'success',
-        'msg': 'Period extended successfully',
-      };
-      if (fromJson != null) {
-        return ApiResult.success(fromJson(mockExtendRes));
-      }
-      return ApiResult.success(mockExtendRes as T);
-    }
-
     if (path.contains('/operator-invitation/search')) {
       final mockSearch = _getMockSearchResult();
       if (fromJson != null) {
