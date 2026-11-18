@@ -7,10 +7,7 @@ import 'package:get/get.dart';
 class MobileScannerPage extends StatefulWidget {
   final CameraFacing initialFacing;
 
-  const MobileScannerPage({
-    super.key,
-    required this.initialFacing,
-  });
+  const MobileScannerPage({super.key, required this.initialFacing});
 
   @override
   State<MobileScannerPage> createState() => _MobileScannerPageState();
@@ -27,9 +24,7 @@ class _MockScannerPageState extends State<MobileScannerPage> {
   void initState() {
     super.initState();
     if (!_isDesktop) {
-      cameraController = MobileScannerController(
-        facing: widget.initialFacing,
-      );
+      cameraController = MobileScannerController(facing: widget.initialFacing);
     }
   }
 
@@ -49,7 +44,10 @@ class _MockScannerPageState extends State<MobileScannerPage> {
           backgroundColor: const Color(0xFF0F172A),
           foregroundColor: Colors.white,
           elevation: 0,
-          title: const Text('Desktop Scanner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Desktop Scanner',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
         ),
         body: Center(
           child: Container(
@@ -69,7 +67,9 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF0F172A),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+                    ),
                   ),
                   child: const Icon(
                     Icons.qr_code_scanner_rounded,
@@ -117,9 +117,15 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF38BDF8), width: 2),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF38BDF8),
+                        width: 2,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                   onSubmitted: (val) {
                     final trimmed = val.trim().toUpperCase();
@@ -141,12 +147,17 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                       ),
                     ),
                     onPressed: () {
-                      final trimmed = _desktopCodeController.text.trim().toUpperCase();
+                      final trimmed = _desktopCodeController.text
+                          .trim()
+                          .toUpperCase();
                       if (trimmed.isNotEmpty) {
                         Get.back(result: trimmed);
                       }
                     },
-                    child: const Text('Submit Code', style: TextStyle(fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'Submit Code',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ],
@@ -162,7 +173,10 @@ class _MockScannerPageState extends State<MobileScannerPage> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Scan QR / Barcode', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Scan QR / Barcode',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         actions: [
           // Torch state toggle button
           IconButton(
@@ -192,7 +206,7 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                 }
               },
             ),
-          
+
           // Reticle Scanner Overlay Tech Corners
           Center(
             child: SizedBox(
@@ -202,59 +216,84 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 1.5,
+                      ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   Positioned(
-                    top: 0, left: 0,
+                    top: 0,
+                    left: 0,
                     child: Container(
-                      width: 28, height: 28,
+                      width: 28,
+                      height: 28,
                       decoration: const BoxDecoration(
                         border: Border(
                           top: BorderSide(color: Color(0xFF0F62FE), width: 4),
                           left: BorderSide(color: Color(0xFF0F62FE), width: 4),
                         ),
-                        borderRadius: BorderRadius.only(topLeft: Radius.circular(10)),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(10),
+                        ),
                       ),
                     ),
                   ),
                   Positioned(
-                    top: 0, right: 0,
+                    top: 0,
+                    right: 0,
                     child: Container(
-                      width: 28, height: 28,
+                      width: 28,
+                      height: 28,
                       decoration: const BoxDecoration(
                         border: Border(
                           top: BorderSide(color: Color(0xFF0F62FE), width: 4),
                           right: BorderSide(color: Color(0xFF0F62FE), width: 4),
                         ),
-                        borderRadius: BorderRadius.only(topRight: Radius.circular(10)),
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(10),
+                        ),
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: 0, left: 0,
+                    bottom: 0,
+                    left: 0,
                     child: Container(
-                      width: 28, height: 28,
+                      width: 28,
+                      height: 28,
                       decoration: const BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Color(0xFF0F62FE), width: 4),
+                          bottom: BorderSide(
+                            color: Color(0xFF0F62FE),
+                            width: 4,
+                          ),
                           left: BorderSide(color: Color(0xFF0F62FE), width: 4),
                         ),
-                        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10)),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(10),
+                        ),
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: 0, right: 0,
+                    bottom: 0,
+                    right: 0,
                     child: Container(
-                      width: 28, height: 28,
+                      width: 28,
+                      height: 28,
                       decoration: const BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Color(0xFF0F62FE), width: 4),
+                          bottom: BorderSide(
+                            color: Color(0xFF0F62FE),
+                            width: 4,
+                          ),
                           right: BorderSide(color: Color(0xFF0F62FE), width: 4),
                         ),
-                        borderRadius: BorderRadius.only(bottomRight: Radius.circular(10)),
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -262,7 +301,7 @@ class _MockScannerPageState extends State<MobileScannerPage> {
               ),
             ),
           ),
-          
+
           // Instructions text bottom overlay
           const Positioned(
             bottom: 50,
@@ -282,10 +321,7 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                 SizedBox(height: 6),
                 Text(
                   'Sistem akan memindai kode secara otomatis',
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: Colors.white60, fontSize: 11),
                   textAlign: TextAlign.center,
                 ),
               ],
