@@ -353,6 +353,97 @@ class DashboardRepository {
     );
   }
 
+  // --- Invitation Access Controls (/api/invitation-ac) ---
+  Future<ApiResult<Map<String, dynamic>>> getInvitationAccessControls() async {
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/invitation-ac',
+    );
+    if (getApi is Success) return getApi;
+    return await _dioClient.get<Map<String, dynamic>>('/invitation-ac');
+  }
+
+  // --- Extend Access Card (/api/operator-invitation/extend/access-card) ---
+  Future<ApiResult<Map<String, dynamic>>> extendAccessCard({
+    required String trxVisitorId,
+    required String trxCardId,
+    required String registeredSiteId,
+    required String cardNumber,
+    required List<String> accessControls,
+  }) async {
+    final body = {
+      'trx_visitor_id': trxVisitorId.trim(),
+      'trx_card_id': trxCardId.trim(),
+      'registered_site_id': registeredSiteId.trim(),
+      'card_number': cardNumber.trim(),
+      'access_controls': accessControls,
+    };
+
+    final postApi = await _dioClient.post<Map<String, dynamic>>(
+      '/api/operator-invitation/extend/access-card',
+      data: body,
+    );
+    if (postApi is Success) return postApi;
+    return await _dioClient.post<Map<String, dynamic>>(
+      '/operator-invitation/extend/access-card',
+      data: body,
+    );
+  }
+
+  // --- Get Extend / Granted Access Card Records (/api/operator-invitation/extend/access-card) ---
+  Future<ApiResult<Map<String, dynamic>>> getExtendAccessCardRecords({
+    String? registeredSiteId,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (registeredSiteId != null && registeredSiteId.trim().isNotEmpty) {
+      queryParams['registered-site'] = registeredSiteId.trim();
+      queryParams['registered_site_id'] = registeredSiteId.trim();
+    }
+
+    final getApi = await _dioClient.get<Map<String, dynamic>>(
+      '/api/operator-invitation/extend/access-card',
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
+    if (getApi is Success) return getApi;
+
+    return await _dioClient.get<Map<String, dynamic>>(
+      '/operator-invitation/extend/access-card',
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
+  }
+
+  // --- Revoke Access Card (DELETE /api/operator-invitation/revoke/access-card) ---
+  Future<ApiResult<Map<String, dynamic>>> revokeAccessCard({
+    required String trxVisitorId,
+    required String trxCardId,
+    required String registeredSiteId,
+    required String cardNumber,
+    required List<String> accessControls,
+  }) async {
+    final body = {
+      'trx_visitor_id': trxVisitorId.trim(),
+      'trx_card_id': trxCardId.trim(),
+      'registered_site_id': registeredSiteId.trim(),
+      'card_number': cardNumber.trim(),
+      'access_controls': accessControls,
+    };
+
+    // 1. Primary: DELETE /api/operator-invitation/revoke/access-card
+    final deleteApi = await _dioClient.delete<Map<String, dynamic>>(
+      '/api/operator-invitation/revoke/access-card',
+      data: body,
+    );
+    if (deleteApi is Success) return deleteApi;
+
+    // 2. Fallback: DELETE /operator-invitation/revoke/access-card
+    final deleteDirect = await _dioClient.delete<Map<String, dynamic>>(
+      '/operator-invitation/revoke/access-card',
+      data: body,
+    );
+    if (deleteDirect is Success) return deleteDirect;
+
+    return deleteApi;
+  }
+
   // --- Invitation Sites (/api/invitation-site) ---
   Future<ApiResult<Map<String, dynamic>>> getInvitationSites() async {
     final getApi = await _dioClient.get<Map<String, dynamic>>(
@@ -539,21 +630,30 @@ class DashboardRepository {
 
   // --- User Permissions (/user-permission) ---
   Future<ApiResult<Map<String, dynamic>>> getUserPermissions() async {
+    const quickTimeout = Duration(seconds: 10);
+    final quickOptions = Options(
+      receiveTimeout: quickTimeout,
+      sendTimeout: quickTimeout,
+    );
+
     // 1. Try GET /api/operator-invitation/user-permission
     final getOpPerm = await _dioClient.get<Map<String, dynamic>>(
       '/api/operator-invitation/user-permission',
+      options: quickOptions,
     );
     if (getOpPerm is Success) return getOpPerm;
 
     // 2. Try GET /api/user-permission
     final getApiPerm = await _dioClient.get<Map<String, dynamic>>(
       '/api/user-permission',
+      options: quickOptions,
     );
     if (getApiPerm is Success) return getApiPerm;
 
     // 3. Try GET /user-permission
     return await _dioClient.get<Map<String, dynamic>>(
       '/user-permission',
+      options: quickOptions,
     );
   }
 

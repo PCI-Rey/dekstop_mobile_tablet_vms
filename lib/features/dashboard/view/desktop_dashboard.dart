@@ -14,6 +14,9 @@ import '../widgets/add_pra_registration_modal.dart';
 import '../widgets/add_walk_in_modal.dart';
 import '../widgets/fill_pra_registration_modal.dart';
 import '../widgets/parking_vehicle_modal.dart';
+import '../widgets/extend_access_card_modal.dart';
+import '../widgets/revoke_access_card_modal.dart';
+import '../widgets/detail_access_card_modal.dart';
 import 'desktop_overview_analytics.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/config/constants.dart';
@@ -745,8 +748,24 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   visitorName: visitorName,
                                 );
                               },
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.04,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
                                 child: hasSelfie
                                     ? Image.network(
                                         cdnUrl,
@@ -781,11 +800,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
 
                   const SizedBox(width: 12),
 
-                  // Visitor Details Table (Clean Typography with Visitor Type Badge & Detail Rows)
+                  // Visitor Details Table (Responsive 2-Column Grid on Fullscreen / 1-Column on Windowed)
                   Expanded(
                     flex: 12,
-                    child: Builder(
-                      builder: (context) {
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth >= 310;
+                        final hasVisitor = visitor != null;
+
                         final visitorTypeName =
                             (visitor?['visitor_type_name'] ??
                                     visitor?['visitor_type'] ??
@@ -793,16 +815,68 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     visitor?['type_visitor'] ??
                                     visitor?['category'] ??
                                     visitor?['occupancy'] ??
-                                    '-')
+                                    '')
+                                .toString()
+                                .trim();
+
+                        final rawStatus =
+                            (visitor?['visitor_status'] ??
+                                    visitor?['status'] ??
+                                    '')
                                 .toString()
                                 .trim();
 
                         final visitorName =
-                            (visitor?['name'] ??
-                                    visitor?['visitor_name'] ??
-                                    'Name')
+                            (visitor?['name'] ?? visitor?['visitor_name'] ?? '')
                                 .toString()
                                 .trim();
+
+                        final orgVal =
+                            (visitor?['organization'] ??
+                                    visitor?['company'] ??
+                                    visitor?['org'] ??
+                                    visitor?['visitor_organization_name'] ??
+                                    '-')
+                                .toString();
+
+                        final emailVal =
+                            (visitor?['email'] ??
+                                    visitor?['visitor_email'] ??
+                                    '-')
+                                .toString();
+
+                        final phoneVal =
+                            (visitor?['phone'] ??
+                                    visitor?['visitor_phone'] ??
+                                    '-')
+                                .toString();
+
+                        final idVal =
+                            (visitor?['id_card_no'] ??
+                                    visitor?['identity_id'] ??
+                                    visitor?['id_number'] ??
+                                    visitor?['nik'] ??
+                                    visitor?['id'] ??
+                                    '-')
+                                .toString();
+
+                        final genderVal =
+                            (visitor?['gender'] ??
+                                    visitor?['visitor_gender'] ??
+                                    '-')
+                                .toString();
+
+                        final typeVal =
+                            (visitor != null
+                                    ? (visitor['occupancy'] ??
+                                          (visitorTypeName.isNotEmpty &&
+                                                  visitorTypeName != '-'
+                                              ? visitorTypeName
+                                              : visitor['visitor_type_name'] ??
+                                                    visitor['visitor_type'] ??
+                                                    '-'))
+                                    : '-')
+                                .toString();
 
                         return SingleChildScrollView(
                           physics: const ClampingScrollPhysics(),
@@ -810,21 +884,66 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
+                              // Header Row: Name on Left, Badges, QR Button on Right
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Expanded(
-                                    child: Text(
-                                      visitorName.isNotEmpty
-                                          ? visitorName
-                                          : 'Name',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 15.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF1E293B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    child: Wrap(
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        Text(
+                                          hasVisitor && visitorName.isNotEmpty
+                                              ? visitorName
+                                              : (hasVisitor
+                                                    ? 'Visitor'
+                                                    : 'Name'),
+                                          style: GoogleFonts.inter(
+                                            fontSize: isWide ? 16.5 : 15.0,
+                                            fontWeight: FontWeight.w800,
+                                            color: hasVisitor
+                                                ? const Color(0xFF0F2B48)
+                                                : const Color(0xFF1E293B),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (hasVisitor &&
+                                            visitorTypeName.isNotEmpty &&
+                                            visitorTypeName != '-' &&
+                                            visitorTypeName != 'null')
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 7,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE0F2FE),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: const Color(0xFFBAE6FD),
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              visitorTypeName,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF0284C7),
+                                              ),
+                                            ),
+                                          ),
+                                        if (hasVisitor &&
+                                            rawStatus.isNotEmpty &&
+                                            rawStatus != '-' &&
+                                            rawStatus != 'null')
+                                          _buildVisitorStatusBadge(rawStatus),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -862,87 +981,56 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
-                              if (visitor != null &&
-                                  visitorTypeName.isNotEmpty &&
-                                  visitorTypeName != '-') ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE0F2FE),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    visitorTypeName,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF0284C7),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                              ],
+                              const SizedBox(height: 3),
                               const Divider(
-                                height: 6,
+                                height: 8,
                                 thickness: 1,
                                 color: Color(0xFFF1F5F9),
                               ),
-                              _buildDetailRow(
-                                Icons.apartment_rounded,
-                                'Organization',
-                                visitor?['organization'] ??
-                                    visitor?['company'] ??
-                                    visitor?['org'] ??
-                                    visitor?['visitor_organization_name'] ??
-                                    '-',
-                              ),
-                              _buildDetailRow(
-                                Icons.email_outlined,
-                                'Email',
-                                visitor?['email'] ??
-                                    visitor?['visitor_email'] ??
-                                    '-',
-                              ),
-                              _buildDetailRow(
-                                Icons.phone_outlined,
-                                'Phone',
-                                visitor?['phone'] ??
-                                    visitor?['visitor_phone'] ??
-                                    '-',
-                              ),
-                              _buildDetailRow(
-                                Icons.credit_card_outlined,
-                                'Citizenship ID',
-                                visitor?['id_card_no'] ??
-                                    visitor?['identity_id'] ??
-                                    visitor?['id_number'] ??
-                                    visitor?['nik'] ??
-                                    visitor?['id'] ??
-                                    '-',
-                              ),
-                              _buildDetailRow(
-                                Icons.transgender_rounded,
-                                'Gender',
-                                visitor?['gender'] ??
-                                    visitor?['visitor_gender'] ??
-                                    '-',
-                              ),
-                              _buildDetailRow(
-                                Icons.person_outline_rounded,
-                                'Visitor Type',
-                                visitor != null
-                                    ? (visitor['occupancy'] ??
-                                          (visitorTypeName.isNotEmpty &&
-                                                  visitorTypeName != '-'
-                                              ? visitorTypeName
-                                              : visitor['visitor_type_name'] ??
-                                                    visitor['visitor_type'] ??
-                                                    '-'))
-                                    : '-',
+                              const SizedBox(height: 2),
+
+                              // Clean Vertical 1-Column Details Table (Matching Web VMS Senior Reference)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildDetailRow(
+                                    Icons.apartment_rounded,
+                                    'Organization',
+                                    orgVal,
+                                    labelWidth: 86,
+                                  ),
+                                  _buildDetailRow(
+                                    Icons.email_outlined,
+                                    'Email',
+                                    emailVal,
+                                    labelWidth: 86,
+                                  ),
+                                  _buildDetailRow(
+                                    Icons.phone_outlined,
+                                    'Phone',
+                                    phoneVal,
+                                    labelWidth: 86,
+                                  ),
+                                  _buildDetailRow(
+                                    Icons.credit_card_outlined,
+                                    'Citizenship ID',
+                                    idVal,
+                                    labelWidth: 86,
+                                  ),
+                                  _buildDetailRow(
+                                    Icons.transgender_rounded,
+                                    'Gender',
+                                    genderVal,
+                                    labelWidth: 86,
+                                  ),
+                                  _buildDetailRow(
+                                    Icons.person_outline_rounded,
+                                    'Visitor Type',
+                                    typeVal,
+                                    labelWidth: 86,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -962,10 +1050,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             flex: 17,
             child: _buildCardContainer(
               key: _keyVisitorTabs,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -984,58 +1069,78 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ],
               ),
             ),
-          ),        ],
+          ),
+        ],
       );
     });
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String? value) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String? value, {
+    double labelWidth = 86,
+  }) {
     final displayValue =
         (value == null || value.trim().isEmpty || value.trim() == 'null')
         ? '-'
         : value.trim();
+    final isPlaceholder = displayValue == '-';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      padding: const EdgeInsets.symmetric(vertical: 3.2),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1.5),
-            child: Icon(icon, size: 13.5, color: const Color(0xFF475569)),
+          Icon(
+            icon,
+            size: 14.5,
+            color: isPlaceholder
+                ? const Color(0xFF94A3B8)
+                : const Color(0xFF64748B),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 6),
           SizedBox(
-            width: 86,
+            width: labelWidth,
             child: Text(
               label,
               maxLines: 1,
               softWrap: false,
               style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF475569),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isPlaceholder
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF64748B),
               ),
             ),
           ),
           Text(
             ':  ',
             style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF475569),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isPlaceholder
+                  ? const Color(0xFF94A3B8)
+                  : const Color(0xFF64748B),
             ),
           ),
           Expanded(
-            child: Text(
-              displayValue,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF1E293B),
-                height: 1.2,
+            child: Tooltip(
+              message: displayValue,
+              waitDuration: const Duration(milliseconds: 600),
+              child: Text(
+                displayValue,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: isPlaceholder ? FontWeight.w400 : FontWeight.w600,
+                  color: isPlaceholder
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF1E293B),
+                  height: 1.2,
+                ),
               ),
             ),
           ),
@@ -1044,12 +1149,58 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
+  Widget _buildVisitorStatusBadge(String status) {
+    final lower = status.toLowerCase();
+    Color bg;
+    Color border;
+    Color text;
+
+    if (lower.contains('checkin') || lower == 'in') {
+      bg = const Color(0xFFECFDF5);
+      border = const Color(0xFFA7F3D0);
+      text = const Color(0xFF059669);
+    } else if (lower.contains('checkout') || lower == 'out') {
+      bg = const Color(0xFFFEF2F2);
+      border = const Color(0xFFFECACA);
+      text = const Color(0xFFDC2626);
+    } else if (lower.contains('available') || lower.contains('approved')) {
+      bg = const Color(0xFFF0FDF4);
+      border = const Color(0xFFBBF7D0);
+      text = const Color(0xFF16A34A);
+    } else if (lower.contains('block') || lower.contains('blacklist')) {
+      bg = const Color(0xFFF1F5F9);
+      border = const Color(0xFFCBD5E1);
+      text = const Color(0xFF334155);
+    } else {
+      bg = const Color(0xFFEFF6FF);
+      border = const Color(0xFFBFDBFE);
+      text = const Color(0xFF1D4ED8);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: border, width: 0.8),
+      ),
+      child: Text(
+        status,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: text,
+        ),
+      ),
+    );
+  }
+
   Widget _buildGroupNameMetadataField(Map<String, dynamic>? visitor) {
-    final groupName =
-        (visitor?['group_name'] ?? visitor?['name_group'] ?? '-')
-            .toString()
-            .trim();
-    final isGroup = visitor?['is_group'] == true ||
+    final groupName = (visitor?['group_name'] ?? visitor?['name_group'] ?? '-')
+        .toString()
+        .trim();
+    final isGroup =
+        visitor?['is_group'] == true ||
         visitor?['group'] == true ||
         (groupName.isNotEmpty && groupName != '-');
 
@@ -1161,10 +1312,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildVisitInformationTab(Map<String, dynamic>? visitor) {
-    final rawStatus =
-        (visitor?['visitor_status'] ?? visitor?['status'] ?? '')
-            .toString()
-            .toLowerCase();
+    final rawStatus = (visitor?['visitor_status'] ?? visitor?['status'] ?? '')
+        .toString()
+        .toLowerCase();
     final isBlocked =
         visitor?['is_block'] == true ||
         rawStatus == 'block' ||
@@ -1185,9 +1335,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     _buildMetadataField(
                       Icons.groups_outlined,
                       'Visitor Code',
-                      visitor?['visitor_code'] ??
-                          visitor?['ticket_no'] ??
-                          '-',
+                      visitor?['visitor_code'] ?? visitor?['ticket_no'] ?? '-',
                     ),
                     _buildMetadataField(
                       Icons.badge_outlined,
@@ -1202,8 +1350,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       (visitor != null && visitor['is_group'] != null)
                           ? (visitor['is_group'] == true ? 'Yes' : 'No')
                           : (visitor?['group'] != null
-                              ? (visitor!['group'] == true ? 'Yes' : 'No')
-                              : '-'),
+                                ? (visitor!['group'] == true ? 'Yes' : 'No')
+                                : '-'),
                     ),
                     (visitor != null &&
                             (visitor['visitor_status'] != null ||
@@ -1368,13 +1516,39 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildCardTab(Map<String, dynamic>? visitor) {
-    final cardsList =
+    final rawCards =
         (visitor?['cards'] as List?) ?? (visitor?['card'] as List?) ?? [];
+
+    // Filter strictly for cards where current_used is true
+    final cardsList = rawCards.where((c) {
+      if (c is! Map) return false;
+      final cu = c['current_used'];
+      return cu == true ||
+          cu == 1 ||
+          cu.toString().trim().toLowerCase() == 'true' ||
+          cu.toString().trim() == '1';
+    }).toList();
+
     if (cardsList.isEmpty) {
       return Center(
-        child: Text(
-          'No card available',
-          style: GoogleFonts.inter(fontSize: 12, color: _textMuted),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.credit_card_off_outlined,
+              size: 36,
+              color: Color(0xFF94A3B8),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No active card in use',
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1392,196 +1566,473 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
         itemCount: cardsList.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 6),
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final card = Map<String, dynamic>.from(cardsList[index] as Map);
-          final cardNum = (card['card_number'] ?? card['card_barcode'] ?? '-')
+          final rawCardNum = (card['card_number'] ?? card['card_barcode'] ?? '')
+              .toString()
+              .trim();
+          final cardNum = rawCardNum.isEmpty || rawCardNum == 'null'
+              ? '-'
+              : rawCardNum;
+
+          final rawBleNum =
+              (card['ble_number'] ??
+                      card['visitor_ble_card'] ??
+                      card['card_barcode'] ??
+                      '')
+                  .toString()
+                  .trim();
+          final bleNum = rawBleNum.isEmpty || rawBleNum == 'null'
+              ? '-'
+              : rawBleNum;
+
+          final isCurrent = card['current_used'] == true || index == 0;
+          final cardStatus = (card['card_status'] ?? card['status'] ?? 'Issued')
               .toString();
-          final cardType = (card['card_type'] ?? 'Barcode').toString();
-          final cardStatus = (card['card_status'] ?? 'Available').toString();
-          final isCurrent = card['current_used'] == true;
+
+          final rawIssued =
+              card['created_at'] ??
+              card['issued_at'] ??
+              visitor?['checkin_at'] ??
+              visitor?['check_in'];
+          final issuedDateStr =
+              rawIssued != null &&
+                  rawIssued.toString().isNotEmpty &&
+                  rawIssued.toString() != '-'
+              ? controller.formatApiDate(rawIssued)
+              : '16 November 2026, 16:33';
 
           final statusLower = cardStatus.toLowerCase();
-          final bool isRevoked = statusLower.contains('revoked') ||
+          final bool isRevoked =
+              statusLower.contains('revoked') ||
               statusLower.contains('block') ||
               statusLower.contains('lost');
-          final bool isIssued = statusLower.contains('issued') ||
-              statusLower.contains('active');
 
-          final Color statusBgColor = isIssued
-              ? const Color(0xFF10B981) // Emerald Green for active/issued
-              : isRevoked
-                  ? const Color(0xFFEF4444) // Red for revoked/blocked
-                  : const Color(0xFFF59E0B); // Amber for others
+          Widget buildCopyPill(String value, String label) {
+            if (value == '-' || value.isEmpty) return const SizedBox.shrink();
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(4),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: value));
+                  AppSnackbar.info(
+                    title: 'Copied',
+                    message: '$label copied to clipboard',
+                  );
+                },
+                child: Tooltip(
+                  message: 'Copy $label',
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: const Color(0xFFDBEAFE),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.copy_rounded,
+                          size: 11,
+                          color: Color(0xFF005696),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Copy',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF005696),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
 
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isRevoked ? const Color(0xFFF8FAFC) : Colors.white,
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1.0,
+                color: isCurrent
+                    ? const Color(0xFF005696)
+                    : const Color(0xFFE2E8F0),
+                width: isCurrent ? 1.5 : 1.0,
               ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.qr_code_scanner_rounded,
-                  size: 22,
-                  color: isRevoked
-                      ? const Color(0xFF94A3B8)
-                      : const Color(0xFF004385),
+              boxShadow: [
+                BoxShadow(
+                  color: isCurrent
+                      ? const Color(0xFF005696).withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              cardNum,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Row 1: Card Number, BLE Number + Current Card badge ─────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Card Number',
                               style: GoogleFonts.inter(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: isRevoked
-                                    ? const Color(0xFF64748B)
-                                    : const Color(0xFF1E293B),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF1E293B),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          if (cardNum.isNotEmpty && cardNum != '-')
-                            Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
+                            if (cardNum != '-') ...[
+                              const SizedBox(width: 8),
+                              buildCopyPill(cardNum, 'Card Number'),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(4),
+                          onTap: cardNum != '-'
+                              ? () {
                                   Clipboard.setData(
                                     ClipboardData(text: cardNum),
                                   );
-                                  AppSnackbar.success(
-                                    title: 'Card Copied',
-                                    message:
-                                        'Card number $cardNum copied to clipboard.',
+                                  AppSnackbar.info(
+                                    title: 'Copied',
+                                    message: 'Card Number copied to clipboard',
                                   );
-                                },
-                                borderRadius: BorderRadius.circular(4),
-                                child: Tooltip(
-                                  message: 'Copy card number',
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF004385,
-                                      ).withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.copy_rounded,
-                                          size: 11,
-                                          color: Color(0xFF004385),
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          'Copy',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFF004385),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                }
+                              : null,
+                          child: Text(
+                            cardNum,
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'BLE Number',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF1E293B),
                               ),
                             ),
-                          const SizedBox(width: 6),
-                          if (isCurrent)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00ACC1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.check,
-                                    size: 10,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    'Current Card',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
+                            if (bleNum != '-') ...[
+                              const SizedBox(width: 8),
+                              buildCopyPill(bleNum, 'BLE Number'),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(4),
+                          onTap: bleNum != '-'
+                              ? () {
+                                  Clipboard.setData(
+                                    ClipboardData(text: bleNum),
+                                  );
+                                  AppSnackbar.info(
+                                    title: 'Copied',
+                                    message: 'BLE Number copied to clipboard',
+                                  );
+                                }
+                              : null,
+                          child: Text(
+                            bleNum,
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isCurrent)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF004385),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Current Card',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        cardType,
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          color: const Color(0xFF64748B),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
+
+                const SizedBox(height: 14),
+
+                // ── Row 2: Status -> Issued ───────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Status',
                       style: GoogleFonts.inter(
-                        fontSize: 10,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF64748B),
+                        color: const Color(0xFF1E293B),
                       ),
                     ),
-                    const SizedBox(height: 2),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                        horizontal: 14,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: statusBgColor,
-                        borderRadius: BorderRadius.circular(10),
+                        color: isRevoked
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF10B981),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         cardStatus,
                         style: GoogleFonts.inter(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // ── Row 3: Issued Date (Calendar) + Detail Access Button ───
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.calendar_month_outlined,
+                              size: 18,
+                              color: Color(0xFF005696),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Issued',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              issuedDateStr,
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          DetailAccessModal.show(
+                            context,
+                            cardNumber: cardNum,
+                            card: card,
+                            visitor: visitor,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF005696),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.key_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Detail Access',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // ── Row 4: Extend Access & Revoke Access Action Buttons ────
+                Row(
+                  children: [
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            ExtendAccessCardModal.show(
+                              context,
+                              cardNumber: cardNum,
+                              card: card,
+                              visitor: visitor,
+                            );
+                          },
+                          child: Container(
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF005696),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.key_rounded,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Extend Access',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () {
+                            RevokeAccessCardModal.show(
+                              context,
+                              cardNumber: cardNum,
+                              card: card,
+                              visitor: visitor,
+                            );
+                          },
+                          child: Container(
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEF4444),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.handyman_rounded,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Revoke Access',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1675,11 +2126,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
   }
 
   Widget _buildVisitorTabBar() {
-    final tabs = [
-      'Visit Information',
-      'Card Information',
-      'Visitor Tracker',
-    ];
+    final tabs = ['Visit Information', 'Card Information', 'Visitor Tracker'];
 
     return Container(
       height: 35,
@@ -1830,30 +2277,33 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       barrierDismissible: true,
       barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (dialogContext) {
-        final invitationCode = (visitor?['invitation_code'] != null &&
+        final invitationCode =
+            (visitor?['invitation_code'] != null &&
                 visitor!['invitation_code'].toString().trim().isNotEmpty &&
                 visitor['invitation_code'].toString().trim() != '-')
             ? visitor['invitation_code'].toString().trim()
             : (qrData != null && qrData.isNotEmpty ? qrData : '-');
 
         final rawCheckIn = visitor?['check_in'] ?? visitor?['checkin_at'];
-        final checkInTime = (rawCheckIn != null &&
+        final checkInTime =
+            (rawCheckIn != null &&
                 rawCheckIn.toString().trim().isNotEmpty &&
                 rawCheckIn.toString().trim() != 'null' &&
                 rawCheckIn.toString().trim() != '-')
             ? (rawCheckIn.toString().contains('T')
-                ? controller.formatApiDate(rawCheckIn)
-                : rawCheckIn.toString().trim())
+                  ? controller.formatApiDate(rawCheckIn)
+                  : rawCheckIn.toString().trim())
             : '-';
 
         final rawCheckOut = visitor?['check_out'] ?? visitor?['checkout_at'];
-        final checkOutTime = (rawCheckOut != null &&
+        final checkOutTime =
+            (rawCheckOut != null &&
                 rawCheckOut.toString().trim().isNotEmpty &&
                 rawCheckOut.toString().trim() != 'null' &&
                 rawCheckOut.toString().trim() != '-')
             ? (rawCheckOut.toString().contains('T')
-                ? controller.formatApiDate(rawCheckOut)
-                : rawCheckOut.toString().trim())
+                  ? controller.formatApiDate(rawCheckOut)
+                  : rawCheckOut.toString().trim())
             : '-';
 
         final hasQr = qrData != null && qrData.isNotEmpty && qrData != '-';
@@ -2071,9 +2521,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             final _ = controller.rxUserPermissions.length;
 
             final showParking = controller.canParking;
-            final showOpen = controller.canTriggerOpen;
-            final canPraRegister = controller.canPraRegister;
-            final canWalkIn = controller.canWalkIn;
             final canCheckIn = controller.canCheckIn;
             final canCheckOut = controller.canCheckOut;
             final canCardIssue = controller.canCardIssue;
@@ -2103,26 +2550,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         onTap: () => _handleAction('Scan QR'),
                         isEnabled: true,
                       ),
-                      if (canPraRegister) ...[
-                        const SizedBox(height: 4),
-                        _buildActionButton(
-                          label: 'Pra Register',
-                          icon: Icons.person_add_alt_1_outlined,
-                          bgColor: const Color(0xFF005696),
-                          onTap: () => _handleAction('Pra Register'),
-                          isEnabled: true,
-                        ),
-                      ],
-                      if (canWalkIn) ...[
-                        const SizedBox(height: 4),
-                        _buildActionButton(
-                          label: 'Walk In',
-                          icon: Icons.person_add_alt_1_outlined,
-                          bgColor: const Color(0xFF005696),
-                          onTap: () => _handleAction('Walk In'),
-                          isEnabled: true,
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -2158,16 +2585,6 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           icon: Icons.logout_rounded,
                           bgColor: const Color(0xFFEF4444),
                           onTap: () => _handleAction('Check Out'),
-                          isEnabled: true,
-                        ),
-                      ],
-                      if (showOpen) ...[
-                        const SizedBox(height: 4),
-                        _buildActionButton(
-                          label: 'Open',
-                          icon: Icons.meeting_room_outlined,
-                          bgColor: const Color(0xFFDC2626),
-                          onTap: () => _handleAction('Open Door'),
                           isEnabled: true,
                         ),
                       ],
@@ -3118,10 +3535,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     );
   }
 
-  Widget _buildFeedRow(
-    List<Map<String, dynamic>> rowItems,
-    double cardHeight,
-  ) {
+  Widget _buildFeedRow(List<Map<String, dynamic>> rowItems, double cardHeight) {
     return SizedBox(
       height: cardHeight,
       child: Row(
@@ -3136,9 +3550,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ),
               )
             else
-              const Expanded(
-                child: SizedBox(),
-              ),
+              const Expanded(child: SizedBox()),
             if (i < 4) const SizedBox(width: 5),
           ],
         ],
@@ -3377,7 +3789,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                     );
                   },
                 ),
-                SizedBox(height: isSpacious ? 8.0 : (isVeryCompact ? 3.5 : 5.5)),
+                SizedBox(
+                  height: isSpacious ? 8.0 : (isVeryCompact ? 3.5 : 5.5),
+                ),
 
                 // Checkbox Indicator
                 Container(
@@ -3428,11 +3842,11 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
       return LayoutBuilder(
         builder: (context, constraints) {
           final colH = constraints.maxHeight;
-          final isCompact = colH < 620;
-          final hostFlex = isCompact ? 5 : 4;
-          final occFlex = isCompact ? 5 : 5;
-          final idFlex = isCompact ? 8 : 10;
-          final alertFlex = isCompact ? 5 : 5;
+          final isCompact = colH < 720;
+          final hostFlex = isCompact ? 6 : 5;
+          final occFlex = 5;
+          final idFlex = isCompact ? 7 : 8;
+          final alertFlex = 5;
 
           return Column(
             children: [
@@ -3441,7 +3855,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 flex: hostFlex,
                 child: _buildCardContainer(
                   key: _keyHostInfo,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: isCompact ? 6 : 8,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -3458,7 +3875,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                             ),
                           ),
                           if (host != null &&
-                              (host['name'] != null || host['host_name'] != null))
+                              (host['name'] != null ||
+                                  host['host_name'] != null))
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
@@ -3517,8 +3935,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                         .trim();
 
                                 return Container(
-                                  width: isCompact ? 50 : 56,
-                                  height: isCompact ? 50 : 56,
+                                  width: isCompact ? 44 : 50,
+                                  height: isCompact ? 44 : 50,
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFEFF6FF),
                                     shape: BoxShape.circle,
@@ -3536,102 +3954,104 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                       ? Image.network(
                                           AppConstants.getCdnImageUrl(hostFace),
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              Center(
-                                                child: Icon(
-                                                  Icons.person,
-                                                  size: isCompact ? 28 : 32,
-                                                  color: const Color(0xFF003082),
-                                                ),
-                                              ),
+                                          errorBuilder: (_, __, ___) => Center(
+                                            child: Icon(
+                                              Icons.person,
+                                              size: isCompact ? 24 : 28,
+                                              color: const Color(0xFF003082),
+                                            ),
+                                          ),
                                         )
                                       : Center(
                                           child: Icon(
                                             Icons.person,
-                                            size: isCompact ? 28 : 32,
+                                            size: isCompact ? 24 : 28,
                                             color: const Color(0xFF003082),
                                           ),
                                         ),
                                 );
                               },
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (host != null &&
-                                      (host['name'] != null ||
-                                          host['host_name'] != null)) ...[
-                                    Text(
-                                      host['name'] ??
-                                          host['host_name'] ??
-                                          'Host Name',
-                                      style: GoogleFonts.inter(
-                                        fontSize: isCompact ? 13 : 13.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF1E293B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      host['organization'] ??
-                                          host['host_organization_name'] ??
-                                          host['host_dept'] ??
-                                          'Organization SPU',
-                                      style: GoogleFonts.inter(
-                                        fontSize: isCompact ? 11 : 11.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF64748B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ] else ...[
-                                    Text(
-                                      '-',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF1E293B),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                  const SizedBox(height: 3),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.phone_rounded,
-                                        size: 13,
-                                        color: Color(0xFF1E293B),
-                                      ),
-                                      const SizedBox(width: 5),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    if (host != null &&
+                                        (host['name'] != null ||
+                                            host['host_name'] != null)) ...[
                                       Text(
-                                        ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
+                                        host['name'] ??
+                                            host['host_name'] ??
+                                            'Host Name',
                                         style: GoogleFonts.inter(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: isCompact ? 13 : 13.5,
+                                          fontWeight: FontWeight.w800,
                                           color: const Color(0xFF1E293B),
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        host['organization'] ??
+                                            host['host_organization_name'] ??
+                                            host['host_dept'] ??
+                                            'Organization SPU',
+                                        style: GoogleFonts.inter(
+                                          fontSize: isCompact ? 11 : 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ] else ...[
+                                      Text(
+                                        '-',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.mail_rounded,
-                                        size: 13,
-                                        color: Color(0xFF1E293B),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Expanded(
-                                        child: Text(
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.phone_rounded,
+                                          size: 13,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          ' :  ${host?['phone'] ?? host?['host_phone'] ?? "-"}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.mail_rounded,
+                                          size: 13,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
                                           ' :  ${host?['email'] ?? host?['host_email'] ?? "-"}',
                                           style: GoogleFonts.inter(
                                             fontSize: 11,
@@ -3641,10 +4061,10 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -3661,465 +4081,491 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               Expanded(
                 flex: occFlex,
                 child: _buildCardContainer(
-              key: _keyLiveOccupancy,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Live Occupancy',
-                        style: GoogleFonts.inter(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F2B48),
-                        ),
-                      ),
-                      Container(
-                        height: 28,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(0xFF00529C),
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Today',
-                              style: GoogleFonts.inter(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1E293B),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.arrow_drop_down,
-                              size: 18,
-                              color: Color(0xFF64748B),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  key: _keyLiveOccupancy,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
                   ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Obx(() {
-                        if (controller.rxIsOccupancyLoading.value &&
-                            controller.rxUpcomingPurpose.isEmpty) {
-                          return const Center(
-                            child: SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF003082),
-                              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Live Occupancy',
+                            style: GoogleFonts.inter(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F2B48),
                             ),
-                          );
-                        }
-
-                        final items = controller.rxUpcomingPurpose;
-                        if (items.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'No live occupancy data available.',
-                              style: GoogleFonts.inter(
-                                fontSize: 11.5,
-                                color: const Color(0xFF94A3B8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        }
-
-                        final bgColors = [
-                          const Color(
-                            0xFF99D636,
-                          ), // Vibrant Lime Green (exact match from screenshot)
-                          const Color(0xFF38B6FF), // Sky Blue
-                          const Color(0xFFFFA726), // Warm Amber Orange
-                          const Color(0xFFAB47BC), // Purple
-                          const Color(0xFF10B981), // Emerald Green
-                        ];
-
-                        return ScrollConfiguration(
-                          behavior: ScrollConfiguration.of(context).copyWith(
-                            dragDevices: {
-                              PointerDeviceKind.touch,
-                              PointerDeviceKind.mouse,
-                              PointerDeviceKind.stylus,
-                              PointerDeviceKind.trackpad,
-                            },
                           ),
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(
-                              parent: AlwaysScrollableScrollPhysics(),
+                          Container(
+                            height: 28,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF00529C),
+                                width: 1.2,
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            itemCount: items.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 10),
-                            itemBuilder: (context, index) {
-                              final item = items[index];
-                              final label =
-                                  (item['name'] ?? item['purpose'] ?? 'Purpose')
-                                      .toString();
-                              final count =
-                                  (item['count'] ?? item['total'] ?? 0)
-                                      .toString();
-                              final bgColor = bgColors[index % bgColors.length];
-
-                              return Align(
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 135,
-                                    minWidth: 120,
-                                    maxHeight: 92,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Today',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1E293B),
                                   ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(10),
-                                      onTap: () {
-                                        final categoryId =
-                                            (item['id'] ??
-                                                    item['visitor_type_id'] ??
-                                                    '')
-                                                .toString();
-                                        final categoryName =
-                                            (item['name'] ??
-                                                    item['purpose'] ??
-                                                    'Visitors')
-                                                .toString();
-                                        final initialCount = int.tryParse(
-                                          (item['count'] ?? item['total'] ?? 0)
-                                              .toString(),
-                                        );
-                                        _showUpcomingVisitorsDialog(
-                                          context,
-                                          categoryName: categoryName,
-                                          categoryId: categoryId,
-                                          initialCount: initialCount,
-                                        );
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 13,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: bgColor,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: bgColor.withValues(
-                                                alpha: 0.35,
-                                              ),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 2),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.arrow_drop_down,
+                                  size: 18,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Obx(() {
+                            if (controller.rxIsOccupancyLoading.value &&
+                                controller.rxUpcomingPurpose.isEmpty) {
+                              return const Center(
+                                child: SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Color(0xFF003082),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final items = controller.rxUpcomingPurpose;
+                            if (items.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'No live occupancy data available.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF94A3B8),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final bgColors = [
+                              const Color(
+                                0xFF99D636,
+                              ), // Vibrant Lime Green (exact match from screenshot)
+                              const Color(0xFF38B6FF), // Sky Blue
+                              const Color(0xFFFFA726), // Warm Amber Orange
+                              const Color(0xFFAB47BC), // Purple
+                              const Color(0xFF10B981), // Emerald Green
+                            ];
+
+                            return ScrollConfiguration(
+                              behavior: ScrollConfiguration.of(context)
+                                  .copyWith(
+                                    dragDevices: {
+                                      PointerDeviceKind.touch,
+                                      PointerDeviceKind.mouse,
+                                      PointerDeviceKind.stylus,
+                                      PointerDeviceKind.trackpad,
+                                    },
+                                  ),
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(
+                                  parent: AlwaysScrollableScrollPhysics(),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                itemCount: items.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(width: 10),
+                                itemBuilder: (context, index) {
+                                  final item = items[index];
+                                  final label =
+                                      (item['name'] ??
+                                              item['purpose'] ??
+                                              'Purpose')
+                                          .toString();
+                                  final count =
+                                      (item['count'] ?? item['total'] ?? 0)
+                                          .toString();
+                                  final bgColor =
+                                      bgColors[index % bgColors.length];
+
+                                  return Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 135,
+                                        minWidth: 120,
+                                        maxHeight: 92,
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          onTap: () {
+                                            final categoryId =
+                                                (item['id'] ??
+                                                        item['visitor_type_id'] ??
+                                                        '')
+                                                    .toString();
+                                            final categoryName =
+                                                (item['name'] ??
+                                                        item['purpose'] ??
+                                                        'Visitors')
+                                                    .toString();
+                                            final initialCount = int.tryParse(
+                                              (item['count'] ??
+                                                      item['total'] ??
+                                                      0)
+                                                  .toString(),
+                                            );
+                                            _showUpcomingVisitorsDialog(
+                                              context,
+                                              categoryName: categoryName,
+                                              categoryId: categoryId,
+                                              initialCount: initialCount,
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 13,
+                                              vertical: 8,
                                             ),
-                                          ],
-                                        ),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.centerLeft,
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  label,
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 13.0,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: Colors.white,
+                                            decoration: BoxDecoration(
+                                              color: bgColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: bgColor.withValues(
+                                                    alpha: 0.35,
                                                   ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  textAlign: TextAlign.left,
-                                                ),
-                                                const SizedBox(height: 5),
-                                                Text(
-                                                  count,
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 26,
-                                                    fontWeight: FontWeight.w900,
-                                                    color: Colors.white,
-                                                    height: 1.0,
-                                                  ),
-                                                  textAlign: TextAlign.left,
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
                                                 ),
                                               ],
+                                            ),
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                alignment: Alignment.centerLeft,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      label,
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 13.0,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: Colors.white,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      textAlign: TextAlign.left,
+                                                    ),
+                                                    const SizedBox(height: 5),
+                                                    Text(
+                                                      count,
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 26,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color: Colors.white,
+                                                        height: 1.0,
+                                                      ),
+                                                      textAlign: TextAlign.left,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
+                                  );
+                                },
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              // ── 3. Identity Image Card (Keyed for Tour Step 9) ─────────────────
+              Expanded(
+                flex: idFlex,
+                child: _buildCardContainer(
+                  key: _keyIdentityImage,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Identity Image',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F2B48),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Builder(
+                          builder: (context) {
+                            final rawKtpImg =
+                                (visitor?['identity_image'] ??
+                                        visitor?['indentity_image'] ??
+                                        visitor?['ktp_image'] ??
+                                        visitor?['id_card_image'] ??
+                                        visitor?['identity_file'] ??
+                                        visitor?['document_image'] ??
+                                        visitor?['visitor']?['indentity_image'] ??
+                                        visitor?['visitor']?['identity_image'] ??
+                                        visitor?['raw']?['identity_image'] ??
+                                        visitor?['raw']?['indentity_image'] ??
+                                        visitor?['raw']?['ktp_image'] ??
+                                        visitor?['raw']?['identity_file'] ??
+                                        '')
+                                    .toString()
+                                    .trim();
+
+                            // Identity image strictly displays KTP / Identity Document ONLY (no selfie fallback)
+                            String resolvedImg = '';
+                            if (rawKtpImg.isNotEmpty &&
+                                rawKtpImg != '-' &&
+                                rawKtpImg != 'null' &&
+                                !rawKtpImg.startsWith('assets/')) {
+                              resolvedImg = rawKtpImg;
+                            }
+
+                            final hasImg = resolvedImg.isNotEmpty;
+
+                            if (!hasImg) {
+                              return Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.badge_outlined,
+                                        size: 26,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'No Identity Image',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontStyle: FontStyle.italic,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               );
-                            },
-                          ),
-                        );
-                      }),
-                    ),
+                            }
+
+                            final cdnUrl = AppConstants.getCdnImageUrl(
+                              resolvedImg,
+                            );
+                            final visitorName =
+                                (visitor?['visitor_name'] ??
+                                        visitor?['name'] ??
+                                        '')
+                                    .toString()
+                                    .trim();
+
+                            return InkWell(
+                              onTap: () => _showIdentityImagePreview(
+                                context,
+                                cdnUrl,
+                                visitorName: visitorName,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.network(
+                                      cdnUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.broken_image_rounded,
+                                              size: 26,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Failed to load image',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 11,
+                                                color: const Color(0xFF94A3B8),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 6,
+                                      bottom: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.5,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.fullscreen_rounded,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
 
-          const SizedBox(height: 5),
+              const SizedBox(height: 5),
 
-          // ── 3. Identity Image Card (Keyed for Tour Step 9) ─────────────────
-          Expanded(
-            flex: idFlex,
-            child: _buildCardContainer(
-              key: _keyIdentityImage,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // ── 4. Alerts Card (Keyed for Tour Step 10) ────────────────────────
+              Expanded(
+                flex: alertFlex,
+                child: _buildCardContainer(
+                  key: _keyAlerts,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Identity Image',
+                        'Alerts',
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F2B48),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        final rawKtpImg =
-                            (visitor?['identity_image'] ??
-                                    visitor?['indentity_image'] ??
-                                    visitor?['ktp_image'] ??
-                                    visitor?['id_card_image'] ??
-                                    visitor?['identity_file'] ??
-                                    visitor?['document_image'] ??
-                                    visitor?['visitor']?['indentity_image'] ??
-                                    visitor?['visitor']?['identity_image'] ??
-                                    visitor?['raw']?['identity_image'] ??
-                                    visitor?['raw']?['indentity_image'] ??
-                                    visitor?['raw']?['ktp_image'] ??
-                                    visitor?['raw']?['identity_file'] ??
-                                    '')
-                                .toString()
-                                .trim();
-
-                        // Identity image strictly displays KTP / Identity Document ONLY (no selfie fallback)
-                        String resolvedImg = '';
-                        if (rawKtpImg.isNotEmpty &&
-                            rawKtpImg != '-' &&
-                            rawKtpImg != 'null' &&
-                            !rawKtpImg.startsWith('assets/')) {
-                          resolvedImg = rawKtpImg;
-                        }
-
-                        final hasImg = resolvedImg.isNotEmpty;
-
-                        if (!hasImg) {
-                          return Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.badge_outlined,
-                                    size: 26,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'No Identity Image',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontStyle: FontStyle.italic,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }
-
-                        final cdnUrl = AppConstants.getCdnImageUrl(resolvedImg);
-                        final visitorName =
-                            (visitor?['visitor_name'] ?? visitor?['name'] ?? '')
-                                .toString()
-                                .trim();
-
-                        return InkWell(
-                          onTap: () => _showIdentityImagePreview(
-                            context,
-                            cdnUrl,
-                            visitorName: visitorName,
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Stack(
-                              fit: StackFit.expand,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.network(
-                                  cdnUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.broken_image_rounded,
-                                          size: 26,
-                                          color: Color(0xFF94A3B8),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Failed to load image',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11,
-                                            color: const Color(0xFF94A3B8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  size: 32,
+                                  color: Color(0xFF94A3B8),
                                 ),
-                                Positioned(
-                                  right: 6,
-                                  bottom: 6,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.fullscreen_rounded,
-                                      size: 16,
-                                      color: Colors.white,
-                                    ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'No alerts available',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF1E293B),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          // ── 4. Alerts Card (Keyed for Tour Step 10) ────────────────────────
-          Expanded(
-            flex: alertFlex,
-            child: _buildCardContainer(
-              key: _keyAlerts,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Alerts',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F2B48),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.warning_amber_rounded,
-                              size: 32,
-                              color: Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'No alerts available',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF1E293B),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       );
-    },
-  );
-});
-}
+    });
+  }
 
   void _showIdentityImagePreview(
     BuildContext context,

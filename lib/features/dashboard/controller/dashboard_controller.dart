@@ -330,6 +330,18 @@ class DashboardController extends GetxController {
   final rxAvailableCards = <Map<String, dynamic>>[].obs;
   final rxIsAvailableCardsLoading = false.obs;
 
+  // Invitation Access Controls (/api/invitation-ac)
+  final rxInvitationAccessControls = <Map<String, dynamic>>[].obs;
+  final rxIsAccessControlsLoading = false.obs;
+
+  // Granted Access Controls for Revoke (/api/operator-invitation/extend/access-card)
+  final rxGrantedAccessControls = <Map<String, dynamic>>[].obs;
+  final rxIsGrantedAccessLoading = false.obs;
+
+  // Detail Access Controls (/api/operator-invitation/extend/access-card)
+  final rxDetailAccessControls = <Map<String, dynamic>>[].obs;
+  final rxIsDetailAccessLoading = false.obs;
+
   // --- Parking & Vehicle Count (/operator-invitation/vehicle-count) ---
   final rxIsVehicleCountLoading = false.obs;
   final rxVehicleSummary = <String, dynamic>{}.obs;
@@ -1685,6 +1697,386 @@ class DashboardController extends GetxController {
         );
       }
     }
+  }
+
+  // --- Invitation Access Controls (/api/invitation-ac) ---
+  Future<void> fetchInvitationAccessControls() async {
+    rxIsAccessControlsLoading.value = true;
+    final result = await _dashboardRepository.getInvitationAccessControls();
+    rxIsAccessControlsLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'];
+      if (rawList is List) {
+        rxInvitationAccessControls.assignAll(
+          rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+        );
+      }
+    }
+  }
+
+  // --- Fetch Granted Access Controls for Revoke (/api/operator-invitation/extend/access-card) ---
+  Future<void> fetchGrantedAccessControls({
+    String? targetRegisteredSiteId,
+    String? targetVisitorId,
+  }) async {
+    String siteId = targetRegisteredSiteId ?? rxSelectedSiteId.value.trim();
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+    }
+    if (siteId.isEmpty) {
+      siteId = '1D6C9704-F6AB-47BD-A6B0-3E1FB3D6FAEA';
+    }
+
+    rxIsGrantedAccessLoading.value = true;
+    final result = await _dashboardRepository.getExtendAccessCardRecords(
+      registeredSiteId: siteId,
+    );
+    rxIsGrantedAccessLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'];
+      if (rawList is List) {
+        final listMaps =
+            rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+
+        // 1. Filter strictly items where visitor_give_access == 'Grant'
+        var granted = listMaps.where((item) {
+          final status = (item['visitor_give_access'] ?? '')
+              .toString()
+              .trim()
+              .toLowerCase();
+          return status == 'grant';
+        }).toList();
+
+        // 2. If target visitor ID is provided, narrow down to this visitor if matches found
+        if (targetVisitorId != null && targetVisitorId.trim().isNotEmpty) {
+          final vTarget = targetVisitorId.trim().toLowerCase();
+          final filteredByVisitor = granted.where((item) {
+            final vId = (item['trx_visitor_id'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            if (vId == vTarget) return true;
+            final trxVisitor = item['trx_visitor'];
+            if (trxVisitor is Map) {
+              final subId = (trxVisitor['transaction_visitor_id'] ??
+                      trxVisitor['id'] ??
+                      '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
+              if (subId == vTarget) return true;
+            }
+            return false;
+          }).toList();
+
+          if (filteredByVisitor.isNotEmpty) {
+            granted = filteredByVisitor;
+          }
+        }
+
+        // 3. Deduplicate by access_control_id so each door is unique in the grid
+        final uniqueMap = <String, Map<String, dynamic>>{};
+        for (final item in granted) {
+          final id = (item['access_control_id'] ?? item['id'] ?? item['Id'] ?? '')
+              .toString();
+          if (id.isNotEmpty && !uniqueMap.containsKey(id)) {
+            uniqueMap[id] = item;
+          }
+        }
+
+        rxGrantedAccessControls.assignAll(uniqueMap.values.toList());
+      }
+    }
+  }
+
+  // --- Fetch Detail Access Controls (/api/operator-invitation/extend/access-card) ---
+  Future<void> fetchDetailAccessControls({
+    String? targetRegisteredSiteId,
+    String? targetVisitorId,
+  }) async {
+    String siteId = targetRegisteredSiteId ?? rxSelectedSiteId.value.trim();
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+    }
+    if (siteId.isEmpty) {
+      siteId = '1D6C9704-F6AB-47BD-A6B0-3E1FB3D6FAEA';
+    }
+
+    rxIsDetailAccessLoading.value = true;
+    final result = await _dashboardRepository.getExtendAccessCardRecords(
+      registeredSiteId: siteId,
+    );
+    rxIsDetailAccessLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final resData = result.data;
+      final rawList = resData['collection'] ?? resData['data'];
+      if (rawList is List) {
+        final listMaps =
+            rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+
+        var accessList = listMaps;
+
+        // 1. If target visitor ID is provided, narrow down to this visitor if matches exist
+        if (targetVisitorId != null && targetVisitorId.trim().isNotEmpty) {
+          final vTarget = targetVisitorId.trim().toLowerCase();
+          final filteredByVisitor = listMaps.where((item) {
+            final vId = (item['trx_visitor_id'] ?? '')
+                .toString()
+                .trim()
+                .toLowerCase();
+            if (vId == vTarget) return true;
+            final trxVisitor = item['trx_visitor'];
+            if (trxVisitor is Map) {
+              final subId = (trxVisitor['transaction_visitor_id'] ??
+                      trxVisitor['id'] ??
+                      '')
+                  .toString()
+                  .trim()
+                  .toLowerCase();
+              if (subId == vTarget) return true;
+            }
+            return false;
+          }).toList();
+
+          if (filteredByVisitor.isNotEmpty) {
+            accessList = filteredByVisitor;
+          }
+        }
+
+        // 2. Deduplicate by access_control_id, keeping the latest status record
+        final uniqueMap = <String, Map<String, dynamic>>{};
+        for (final item in accessList) {
+          final id = (item['access_control_id'] ??
+                  item['id'] ??
+                  item['Id'] ??
+                  '')
+              .toString();
+          if (id.isEmpty) continue;
+
+          if (!uniqueMap.containsKey(id)) {
+            uniqueMap[id] = item;
+          } else {
+            final existing = uniqueMap[id]!;
+            final existingRevoke =
+                DateTime.tryParse(existing['revoke_at']?.toString() ?? '');
+            final existingGrant =
+                DateTime.tryParse(existing['grant_at']?.toString() ?? '');
+            final newRevoke =
+                DateTime.tryParse(item['revoke_at']?.toString() ?? '');
+            final newGrant =
+                DateTime.tryParse(item['grant_at']?.toString() ?? '');
+
+            final existingLatest = (existingRevoke != null &&
+                    (existingGrant == null ||
+                        existingRevoke.isAfter(existingGrant)))
+                ? existingRevoke
+                : existingGrant;
+            final newLatest = (newRevoke != null &&
+                    (newGrant == null ||
+                        newRevoke.isAfter(newGrant)))
+                ? newRevoke
+                : newGrant;
+
+            if (newLatest != null &&
+                (existingLatest == null ||
+                    newLatest.isAfter(existingLatest))) {
+              uniqueMap[id] = item;
+            } else if (newLatest == null && existingLatest == null) {
+              final existingSort =
+                  int.tryParse(existing['sort']?.toString() ?? '0') ?? 0;
+              final newSort =
+                  int.tryParse(item['sort']?.toString() ?? '0') ?? 0;
+              if (newSort >= existingSort) {
+                uniqueMap[id] = item;
+              }
+            }
+          }
+        }
+
+        rxDetailAccessControls.assignAll(uniqueMap.values.toList());
+      }
+    }
+  }
+
+  // --- Extend Access Card (/api/operator-invitation/extend/access-card) ---
+  Future<bool> extendAccessCardAction({
+    required String cardNumber,
+    required List<String> accessControls,
+    Map<String, dynamic>? targetCard,
+    String? targetTrxVisitorId,
+    String? targetRegisteredSiteId,
+  }) async {
+    final visitor = rxSelectedVisitor.value;
+    String trxId = targetTrxVisitorId ?? '';
+    if (trxId.isEmpty && visitor != null) {
+      trxId = (visitor['trx_id'] ??
+              visitor['id'] ??
+              visitor['transaction_visitor_id'] ??
+              visitor['raw']?['id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    String trxCardId = '';
+    if (targetCard != null) {
+      trxCardId = (targetCard['id'] ?? targetCard['trx_card_id'] ?? '').toString().trim();
+    }
+    if (trxCardId.isEmpty && visitor != null) {
+      final rawCards = (visitor['card'] as List?) ?? (visitor['cards'] as List?) ?? [];
+      final activeCard = rawCards.firstWhereOrNull((c) {
+        final cNum = (c['card_number'] ?? c['card_barcode'] ?? '').toString().trim();
+        return c['current_used'] == true || cNum == cardNumber.trim();
+      });
+      if (activeCard != null) {
+        trxCardId = (activeCard['id'] ?? activeCard['trx_card_id'] ?? '').toString().trim();
+      }
+    }
+
+    String siteId = targetRegisteredSiteId ?? rxSelectedSiteId.value.trim();
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+    }
+    if (siteId.isEmpty) {
+      siteId = '1D6C9704-F6AB-47BD-A6B0-3E1FB3D6FAEA';
+    }
+
+    if (trxId.isEmpty || cardNumber.isEmpty) {
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Could not determine visitor or card information.',
+      );
+      return false;
+    }
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.extendAccessCard(
+      trxVisitorId: trxId,
+      trxCardId: trxCardId,
+      registeredSiteId: siteId,
+      cardNumber: cardNumber,
+      accessControls: accessControls,
+    );
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final nowFormatted = formatLocalTime(DateTime.now());
+      rxTimeline.insert(0, {
+        'time': nowFormatted,
+        'title': 'Access Extended',
+        'desc': 'Card $cardNumber: access controls updated (${accessControls.length} doors)',
+        'status': 'extend',
+      });
+
+      AppSnackbar.success(
+        title: 'Access Extended',
+        message: 'Access card $cardNumber extended successfully.',
+      );
+
+      syncCurrentInvitationState();
+      return true;
+    } else if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      AppSnackbar.error(
+        title: 'Extend Access Failed',
+        message: err.isNotEmpty ? err : 'Failed to extend access card',
+      );
+      return false;
+    }
+    return false;
+  }
+
+  // --- Revoke Access Card Action (/api/operator-invitation/revoke/access-card) ---
+  Future<bool> revokeAccessCardAction({
+    required String cardNumber,
+    required List<String> accessControls,
+    Map<String, dynamic>? targetCard,
+    String? targetTrxVisitorId,
+    String? targetRegisteredSiteId,
+  }) async {
+    final visitor = rxSelectedVisitor.value;
+    String trxId = targetTrxVisitorId ?? '';
+    if (trxId.isEmpty && visitor != null) {
+      trxId = (visitor['trx_id'] ??
+              visitor['id'] ??
+              visitor['transaction_visitor_id'] ??
+              visitor['raw']?['id'] ??
+              '')
+          .toString()
+          .trim();
+    }
+
+    String trxCardId = '';
+    if (targetCard != null) {
+      trxCardId = (targetCard['id'] ?? targetCard['trx_card_id'] ?? '').toString().trim();
+    }
+    if (trxCardId.isEmpty && visitor != null) {
+      final rawCards = (visitor['card'] as List?) ?? (visitor['cards'] as List?) ?? [];
+      final activeCard = rawCards.firstWhereOrNull((c) {
+        final cNum = (c['card_number'] ?? c['card_barcode'] ?? '').toString().trim();
+        return c['current_used'] == true || cNum == cardNumber.trim();
+      });
+      if (activeCard != null) {
+        trxCardId = (activeCard['id'] ?? activeCard['trx_card_id'] ?? '').toString().trim();
+      }
+    }
+
+    String siteId = targetRegisteredSiteId ?? rxSelectedSiteId.value.trim();
+    if (siteId.isEmpty && rxRegisteredSites.isNotEmpty) {
+      siteId = (rxRegisteredSites.first['id'] ?? '').toString().trim();
+    }
+    if (siteId.isEmpty) {
+      siteId = '1D6C9704-F6AB-47BD-A6B0-3E1FB3D6FAEA';
+    }
+
+    if (trxId.isEmpty || cardNumber.isEmpty) {
+      AppSnackbar.error(
+        title: 'Validation Error',
+        message: 'Could not determine visitor or card information.',
+      );
+      return false;
+    }
+
+    rxIsActionLoading.value = true;
+    final result = await _dashboardRepository.revokeAccessCard(
+      trxVisitorId: trxId,
+      trxCardId: trxCardId,
+      registeredSiteId: siteId,
+      cardNumber: cardNumber,
+      accessControls: accessControls,
+    );
+    rxIsActionLoading.value = false;
+
+    if (result is Success<Map<String, dynamic>>) {
+      final nowFormatted = formatLocalTime(DateTime.now());
+      rxTimeline.insert(0, {
+        'time': nowFormatted,
+        'title': 'Access Revoked',
+        'desc': 'Card $cardNumber: access controls revoked (${accessControls.length} doors)',
+        'status': 'revoke',
+      });
+
+      AppSnackbar.success(
+        title: 'Access Revoked',
+        message: 'Access card $cardNumber revoked successfully.',
+      );
+
+      syncCurrentInvitationState();
+      return true;
+    } else if (result is Failure) {
+      final err = (result as Failure).exception.message;
+      AppSnackbar.error(
+        title: 'Revoke Access Failed',
+        message: err.isNotEmpty ? err : 'Failed to revoke access card',
+      );
+      return false;
+    }
+    return false;
   }
 
   // --- Return Access Card (/api/operator-invitation/return-access-card) ---

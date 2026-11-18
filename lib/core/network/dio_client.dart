@@ -423,6 +423,66 @@ class DioClient {
     }
   }
 
+  // Wrapper for DELETE requests
+  Future<ApiResult<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    T Function(dynamic json)? fromJson,
+  }) async {
+    int attempts = 0;
+    const maxAttempts = 3;
+
+    while (true) {
+      attempts++;
+      try {
+        final isDemo = await _isDemoServer();
+        if (isDemo) {
+          return await _handleDemoPost(path, data, fromJson);
+        }
+
+        final activeDio = await dio;
+        final response = await activeDio.delete(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+          options: options,
+        );
+
+        if (fromJson != null) {
+          return ApiResult.success(fromJson(response.data));
+        } else {
+          return ApiResult.success(response.data as T);
+        }
+      } on DioException catch (e) {
+        final errStr = '${e.message ?? ''} ${e.error ?? ''}';
+        final isTransient = e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.sendTimeout ||
+            errStr.contains('semaphore') ||
+            errStr.contains('SocketException') ||
+            errStr.contains('Software caused connection abort');
+
+        if (isTransient && attempts < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(NetworkException.fromDioException(e));
+      } catch (e) {
+        final errStr = e.toString();
+        if (attempts < maxAttempts &&
+            (errStr.contains('semaphore') ||
+                errStr.contains('SocketException') ||
+                errStr.contains('TimeoutException'))) {
+          await Future.delayed(Duration(milliseconds: 350 * attempts));
+          continue;
+        }
+        return ApiResult.failure(UnknownException(e.toString()));
+      }
+    }
+  }
+
   Future<bool> _isDemoServer() async {
     final url = await _storageService.getServerUrl();
     return url.contains('example.com') || url.isEmpty;
