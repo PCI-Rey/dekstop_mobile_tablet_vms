@@ -160,6 +160,22 @@ class _MockScannerPageState extends State<MobileScannerPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.tablet_android_rounded,
+                      size: 14,
+                      color: Color(0xFF64748B),
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Live camera scanner activates automatically on Android Tablet',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

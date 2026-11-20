@@ -196,11 +196,18 @@ class _LoginViewState extends State<LoginView> {
                             onTap: () {}, // Absorb taps inside login card
                             behavior: HitTestBehavior.opaque,
                             child: Container(
-                              constraints: const BoxConstraints(maxWidth: 460),
-                              margin: const EdgeInsets.all(24.0),
+                              constraints: const BoxConstraints(maxWidth: 440),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                                vertical: 12.0,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 28.0,
+                                vertical: 20.0,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(28),
+                                borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.12),
@@ -209,10 +216,7 @@ class _LoginViewState extends State<LoginView> {
                                   ),
                                 ],
                               ),
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(36.0),
-                                child: _buildLoginForm(context),
-                              ),
+                              child: _buildLoginForm(context),
                             ),
                           ),
                         ),
@@ -331,64 +335,67 @@ class _LoginViewState extends State<LoginView> {
   Widget _buildLoginForm(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Welcome Header
         const Text(
           'Welcome Back!',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: _textColorDark,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 3),
         const Text(
           'Please login to continue',
-          style: TextStyle(fontSize: 14, color: _textColorMuted),
+          style: TextStyle(fontSize: 13, color: _textColorMuted),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 14),
 
         // Username Field
         _buildInputFieldLabel('Username'),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         TextField(
           controller: controller.usernameController,
-          style: const TextStyle(color: _textColorDark, fontSize: 15),
+          style: const TextStyle(color: _textColorDark, fontSize: 14),
           decoration: _buildInputDecoration(
             hintText: 'Enter your username',
             prefixIcon: Icons.person_outline_rounded,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Password Field
         _buildInputFieldLabel('Password'),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Obx(
           () => TextField(
             controller: controller.passwordController,
             obscureText: controller.rxIsObscurePassword.value,
-            style: const TextStyle(color: _textColorDark, fontSize: 15),
+            style: const TextStyle(color: _textColorDark, fontSize: 14),
             decoration: _buildInputDecoration(
               hintText: 'Enter your password',
               prefixIcon: Icons.lock_outline_rounded,
               suffixIcon: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onPressed: () => controller.rxIsObscurePassword.toggle(),
                 icon: Icon(
                   controller.rxIsObscurePassword.value
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   color: _textColorMuted,
-                  size: 20,
+                  size: 18,
                 ),
               ),
             ),
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Captcha Field
         Obx(
@@ -402,7 +409,7 @@ class _LoginViewState extends State<LoginView> {
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
 
         // Primary Login Button
         Obx(() {
@@ -415,19 +422,19 @@ class _LoginViewState extends State<LoginView> {
           );
         }),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Separator Divider
         Row(
           children: [
             Expanded(child: Divider(color: Colors.grey.shade300)),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Text(
                 'OR',
                 style: TextStyle(
                   color: Colors.grey.shade600,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -436,22 +443,22 @@ class _LoginViewState extends State<LoginView> {
           ],
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Tapping Card Action Button (Operator Tablet Kiosk Aesthetic)
         Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => Get.toNamed(AppRoutes.cardTap),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             splashColor: _blue.withValues(alpha: 0.1),
             highlightColor: _blue.withValues(alpha: 0.05),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: _blue.withValues(alpha: 0.22),
                   width: 1.5,
@@ -459,8 +466,8 @@ class _LoginViewState extends State<LoginView> {
                 boxShadow: [
                   BoxShadow(
                     color: _blue.withValues(alpha: 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -468,7 +475,7 @@ class _LoginViewState extends State<LoginView> {
                 children: [
                   // Glowing Contactless Icon Container
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -478,7 +485,7 @@ class _LoginViewState extends State<LoginView> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: _blue.withValues(alpha: 0.2),
                       ),
@@ -486,10 +493,10 @@ class _LoginViewState extends State<LoginView> {
                     child: const Icon(
                       Icons.contactless_rounded,
                       color: _blue,
-                      size: 26,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
 
                   // Title, Tech Chip, Subtitle
                   Expanded(
@@ -502,28 +509,28 @@ class _LoginViewState extends State<LoginView> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: _textColorDark,
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.2,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: 2),
                         Text(
                           'Tap card on terminal reader',
                           style: TextStyle(
                             color: Colors.grey.shade600,
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w400,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
 
                   // Circular Action Arrow Button
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -538,7 +545,7 @@ class _LoginViewState extends State<LoginView> {
                     child: const Icon(
                       Icons.arrow_forward_ios_rounded,
                       color: _blue,
-                      size: 13,
+                      size: 11,
                     ),
                   ),
                 ],
@@ -554,7 +561,7 @@ class _LoginViewState extends State<LoginView> {
     return Text(
       label,
       style: const TextStyle(
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: _textColorDark,
       ),
@@ -568,18 +575,19 @@ class _LoginViewState extends State<LoginView> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(color: _textColorMuted, fontSize: 14),
-      prefixIcon: Icon(prefixIcon, color: _blue, size: 20),
+      hintStyle: const TextStyle(color: _textColorMuted, fontSize: 13),
+      prefixIcon: Icon(prefixIcon, color: _blue, size: 18),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: _fieldFillColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade200),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _blue, width: 1.5),
       ),
     );
@@ -593,19 +601,19 @@ class _LoginViewState extends State<LoginView> {
       onTap: onPressed,
       child: Container(
         width: double.infinity,
-        height: 52,
+        height: 44,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [_blue, _blueDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: _blue.withValues(alpha: 0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -614,7 +622,7 @@ class _LoginViewState extends State<LoginView> {
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
             ),

@@ -14,11 +14,12 @@ import '../widgets/add_pra_registration_modal.dart';
 import '../widgets/add_walk_in_modal.dart';
 import '../widgets/fill_pra_registration_modal.dart';
 import '../widgets/parking_vehicle_modal.dart';
-import '../widgets/extend_access_card_modal.dart';
-import '../widgets/revoke_access_card_modal.dart';
-import '../widgets/detail_access_card_modal.dart';
+// import '../widgets/extend_access_card_modal.dart';
+// import '../widgets/revoke_access_card_modal.dart';
+// import '../widgets/detail_access_card_modal.dart';
 import 'desktop_overview_analytics.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../scan/view/mobile_scanner_view.dart';
 import '../../../core/config/constants.dart';
 import '../../../core/shared/routes/app_pages.dart';
 import '../../../core/shared/widgets/app_snackbar.dart';
@@ -1519,15 +1520,8 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
     final rawCards =
         (visitor?['cards'] as List?) ?? (visitor?['card'] as List?) ?? [];
 
-    // Filter strictly for cards where current_used is true
-    final cardsList = rawCards.where((c) {
-      if (c is! Map) return false;
-      final cu = c['current_used'];
-      return cu == true ||
-          cu == 1 ||
-          cu.toString().trim().toLowerCase() == 'true' ||
-          cu.toString().trim() == '1';
-    }).toList();
+    // Display all cards without filtering by current_used
+    final cardsList = rawCards.whereType<Map>().toList();
 
     if (cardsList.isEmpty) {
       return Center(
@@ -1541,7 +1535,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No active card in use',
+              'No card recorded',
               style: GoogleFonts.inter(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
@@ -1570,7 +1564,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
         itemCount: cardsList.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          final card = Map<String, dynamic>.from(cardsList[index] as Map);
+          final card = Map<String, dynamic>.from(cardsList[index]);
           final rawCardNum = (card['card_number'] ?? card['card_barcode'] ?? '')
               .toString()
               .trim();
@@ -1589,7 +1583,12 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
               ? '-'
               : rawBleNum;
 
-          final isCurrent = card['current_used'] == true || index == 0;
+          final cu = card['current_used'];
+          final isCurrent =
+              cu == true ||
+              cu == 1 ||
+              cu.toString().trim().toLowerCase() == 'true' ||
+              cu.toString().trim() == '1';
           final cardStatus = (card['card_status'] ?? card['status'] ?? 'Issued')
               .toString();
 
@@ -1900,144 +1899,144 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                         ),
                       ],
                     ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap: () {
-                          DetailAccessModal.show(
-                            context,
-                            cardNumber: cardNum,
-                            card: card,
-                            visitor: visitor,
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF005696),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.key_rounded,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Detail Access',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Detail Access action button (temporarily hidden)
+                    // Material(
+                    //   color: Colors.transparent,
+                    //   child: InkWell(
+                    //     borderRadius: BorderRadius.circular(8),
+                    //     onTap: () {
+                    //       DetailAccessModal.show(
+                    //         context,
+                    //         cardNumber: cardNum,
+                    //         card: card,
+                    //         visitor: visitor,
+                    //       );
+                    //     },
+                    //     child: Container(
+                    //       padding: const EdgeInsets.symmetric(
+                    //         horizontal: 14,
+                    //         vertical: 8,
+                    //       ),
+                    //       decoration: BoxDecoration(
+                    //         color: const Color(0xFF005696),
+                    //         borderRadius: BorderRadius.circular(8),
+                    //       ),
+                    //       child: Row(
+                    //         mainAxisSize: MainAxisSize.min,
+                    //         children: [
+                    //           const Icon(
+                    //             Icons.key_rounded,
+                    //             size: 14,
+                    //             color: Colors.white,
+                    //           ),
+                    //           const SizedBox(width: 6),
+                    //           Text(
+                    //             'Detail Access',
+                    //             style: GoogleFonts.inter(
+                    //               fontSize: 12,
+                    //               fontWeight: FontWeight.w600,
+                    //               color: Colors.white,
+                    //             ),
+                    //           ),
+                    //         ],
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
 
-                const SizedBox(height: 14),
-
-                // ── Row 4: Extend Access & Revoke Access Action Buttons ────
-                Row(
-                  children: [
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () {
-                            ExtendAccessCardModal.show(
-                              context,
-                              cardNumber: cardNum,
-                              card: card,
-                              visitor: visitor,
-                            );
-                          },
-                          child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF005696),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.key_rounded,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Extend Access',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () {
-                            RevokeAccessCardModal.show(
-                              context,
-                              cardNumber: cardNum,
-                              card: card,
-                              visitor: visitor,
-                            );
-                          },
-                          child: Container(
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEF4444),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.handyman_rounded,
-                                  size: 15,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Revoke Access',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                // Extend Access & Revoke Access action buttons (temporarily hidden)
+                // const SizedBox(height: 14),
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: Material(
+                //         color: Colors.transparent,
+                //         child: InkWell(
+                //           borderRadius: BorderRadius.circular(8),
+                //           onTap: () {
+                //             ExtendAccessCardModal.show(
+                //               context,
+                //               cardNumber: cardNum,
+                //               card: card,
+                //               visitor: visitor,
+                //             );
+                //           },
+                //           child: Container(
+                //             height: 40,
+                //             decoration: BoxDecoration(
+                //               color: const Color(0xFF005696),
+                //               borderRadius: BorderRadius.circular(8),
+                //             ),
+                //             child: Row(
+                //               mainAxisAlignment: MainAxisAlignment.center,
+                //               children: [
+                //                 const Icon(
+                //                   Icons.key_rounded,
+                //                   size: 15,
+                //                   color: Colors.white,
+                //                 ),
+                //                 const SizedBox(width: 6),
+                //                 Text(
+                //                   'Extend Access',
+                //                   style: GoogleFonts.inter(
+                //                     fontSize: 12.5,
+                //                     fontWeight: FontWeight.w600,
+                //                     color: Colors.white,
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //     ),
+                //     const SizedBox(width: 10),
+                //     Expanded(
+                //       child: Material(
+                //         color: Colors.transparent,
+                //         child: InkWell(
+                //           borderRadius: BorderRadius.circular(8),
+                //           onTap: () {
+                //             RevokeAccessCardModal.show(
+                //               context,
+                //               cardNumber: cardNum,
+                //               card: card,
+                //               visitor: visitor,
+                //             );
+                //           },
+                //           child: Container(
+                //             height: 40,
+                //             decoration: BoxDecoration(
+                //               color: const Color(0xFFEF4444),
+                //               borderRadius: BorderRadius.circular(8),
+                //             ),
+                //             child: Row(
+                //               mainAxisAlignment: MainAxisAlignment.center,
+                //               children: [
+                //                 const Icon(
+                //                   Icons.handyman_rounded,
+                //                   size: 15,
+                //                   color: Colors.white,
+                //                 ),
+                //                 const SizedBox(width: 6),
+                //                 Text(
+                //                   'Revoke Access',
+                //                   style: GoogleFonts.inter(
+                //                     fontSize: 12.5,
+                //                     fontWeight: FontWeight.w600,
+                //                     color: Colors.white,
+                //                   ),
+                //                 ),
+                //               ],
+                //             ),
+                //           ),
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           );
@@ -8308,16 +8307,20 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
             ),
             backgroundColor: Colors.white,
             insetPadding: const EdgeInsets.symmetric(
-              horizontal: 32,
-              vertical: 24,
+              horizontal: 24,
+              vertical: 16,
             ),
             child: Container(
               width: 500,
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.88,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Header: Title + Close Button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -8509,13 +8512,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                       ),
                     ),
                   ] else ...[
-                    // Mode 1: Camera Scanner (Guarded for desktop platforms)
+                    // Mode 1: Camera Scanner
                     if (!kIsWeb &&
                         (Platform.isWindows ||
                             Platform.isLinux ||
                             Platform.isMacOS)) ...[
+                      // ── Windows Desktop Mode (Hardware Scanner / Manual Input) ──
                       Container(
-                        height: 220,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: const Color(0xFF0F172A),
@@ -8523,14 +8526,14 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                           border: Border.all(color: const Color(0xFF1E293B)),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
+                          horizontal: 16,
+                          vertical: 14,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1E293B),
                                 shape: BoxShape.circle,
@@ -8543,7 +8546,7 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               child: const Icon(
                                 Icons.qr_code_scanner_rounded,
                                 color: Color(0xFF38BDF8),
-                                size: 32,
+                                size: 30,
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -8551,13 +8554,13 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                               'Desktop Hardware Scanner Mode',
                               style: GoogleFonts.inter(
                                 color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.5,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'USB Barcode / QR Scanners type directly into the system.\nPlease switch to "Input Manual" tab to scan or enter code.',
+                              'USB Barcode / QR Scanners type directly into the field below.\nOr enter invitation code manually.',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.inter(
                                 color: const Color(0xFF94A3B8),
@@ -8565,49 +8568,54 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                 height: 1.35,
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              onPressed: () => setModalState(() => tabMode = 0),
-                              icon: const Icon(
-                                Icons.keyboard_outlined,
-                                size: 14,
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: searchInputController,
+                              autofocus: true,
+                              textCapitalization: TextCapitalization.characters,
+                              inputFormatters: [UpperCaseTextFormatter()],
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
                               ),
-                              label: const Text('Switch to Input Manual'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF004385),
-                                foregroundColor: Colors.white,
-                                textStyle: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
+                              decoration: InputDecoration(
+                                hintText: 'Scan barcode or enter code...',
+                                hintStyle: GoogleFonts.inter(
+                                  color: const Color(0xFF64748B),
+                                  fontSize: 12,
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
+                                prefixIcon: const Icon(
+                                  Icons.qr_code_scanner_rounded,
+                                  color: Color(0xFF38BDF8),
+                                  size: 17,
                                 ),
-                                shape: RoundedRectangleBorder(
+                                filled: true,
+                                fillColor: const Color(0xFF1E293B),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF334155),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF38BDF8),
+                                    width: 1.5,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ] else ...[
-                      Container(
-                        height: 220,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: MobileScanner(
-                          onDetect: (capture) async {
-                            final barcodes = capture.barcodes;
-                            for (final b in barcodes) {
-                              final code =
-                                  b.rawValue?.trim().toUpperCase() ?? '';
-                              if (code.isNotEmpty) {
+                              onSubmitted: (val) async {
+                                final code = searchInputController.text
+                                    .trim()
+                                    .toUpperCase();
+                                if (code.isEmpty) return;
                                 setModalState(() => isSearching = true);
                                 final success = await controller
                                     .searchInvitationCode(code);
@@ -8624,12 +8632,183 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                                     title: 'Success',
                                     message: 'Data retrieved successfully',
                                   );
+                                } else {
+                                  AppSnackbar.error(
+                                    title: 'Search Failed',
+                                    message:
+                                        'No visitor data found for invitation code: $code',
+                                  );
                                 }
-                                break;
-                              }
-                            }
-                          },
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.tablet_android_rounded,
+                                  size: 13,
+                                  color: Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Live camera scanner activates automatically on Android Tablet',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF64748B),
+                                    fontSize: 10.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
+                      ),
+                    ] else ...[
+                      // ── Android Tablet Mode (Live Camera Scanner) ──
+                      Column(
+                        children: [
+                          Container(
+                            height: 190,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Stack(
+                              children: [
+                                MobileScanner(
+                                  onDetect: (capture) async {
+                                    final barcodes = capture.barcodes;
+                                    for (final b in barcodes) {
+                                      final code =
+                                          b.rawValue?.trim().toUpperCase() ??
+                                          '';
+                                      if (code.isNotEmpty) {
+                                        setModalState(() => isSearching = true);
+                                        final success = await controller
+                                            .searchInvitationCode(code);
+                                        setModalState(
+                                          () => isSearching = false,
+                                        );
+                                        if (success) {
+                                          Get.back();
+                                          final loaded = controller
+                                              .rxSelectedVisitor
+                                              .value;
+                                          if (loaded != null &&
+                                              onVisitorLoaded != null) {
+                                            onVisitorLoaded(loaded);
+                                          }
+                                          AppSnackbar.success(
+                                            title: 'Success',
+                                            message:
+                                                'Data retrieved successfully',
+                                          );
+                                        }
+                                        break;
+                                      }
+                                    }
+                                  },
+                                ),
+                                // Reticle Scanner Visual Overlay
+                                Center(
+                                  child: Container(
+                                    width: 150,
+                                    height: 150,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: const Color(0xFF0F62FE),
+                                        width: 2.5,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.65,
+                                        ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        'Point tablet camera at QR Code',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 34,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final code = await Get.to<String>(
+                                  () => const MobileScannerPage(
+                                    initialFacing: CameraFacing.back,
+                                  ),
+                                );
+                                if (code != null && code.isNotEmpty) {
+                                  setModalState(() => isSearching = true);
+                                  final success = await controller
+                                      .searchInvitationCode(code);
+                                  setModalState(() => isSearching = false);
+                                  if (success) {
+                                    Get.back();
+                                    final loaded =
+                                        controller.rxSelectedVisitor.value;
+                                    if (loaded != null &&
+                                        onVisitorLoaded != null) {
+                                      onVisitorLoaded(loaded);
+                                    }
+                                    AppSnackbar.success(
+                                      title: 'Success',
+                                      message: 'Data retrieved successfully',
+                                    );
+                                  }
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.fullscreen_rounded,
+                                size: 16,
+                              ),
+                              label: Text(
+                                'Open Fullscreen Camera',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF004385),
+                                side: const BorderSide(
+                                  color: Color(0xFF004385),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -8740,8 +8919,9 @@ class _DesktopDashboardState extends State<DesktopDashboard> {
                 ],
               ),
             ),
-          );
-        },
+          ),
+        );
+      },
       ),
     );
   }

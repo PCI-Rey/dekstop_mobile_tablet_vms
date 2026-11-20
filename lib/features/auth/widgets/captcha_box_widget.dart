@@ -79,11 +79,11 @@ class _CaptchaBoxWidgetState extends State<CaptchaBoxWidget>
       children: [
         // 1. Label
         const Padding(
-          padding: EdgeInsets.only(left: 2, bottom: 8),
+          padding: EdgeInsets.only(left: 2, bottom: 5),
           child: Text(
             'CAPTCHA',
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               color: _textColorDark,
               letterSpacing: 0.5,
@@ -97,7 +97,7 @@ class _CaptchaBoxWidgetState extends State<CaptchaBoxWidget>
             // Captcha Box Display
             Expanded(
               child: Container(
-                height: 48,
+                height: 42,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -238,14 +238,14 @@ class _CaptchaBoxWidgetState extends State<CaptchaBoxWidget>
           ],
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
 
         // 3. Captcha Input Field
         TextField(
           controller: widget.controller,
           textCapitalization: TextCapitalization.characters,
           style: const TextStyle(
-            fontSize: 14.5,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.0,
             color: _textColorDark,
@@ -253,7 +253,7 @@ class _CaptchaBoxWidgetState extends State<CaptchaBoxWidget>
           decoration: InputDecoration(
             hintText: 'Enter the code above',
             hintStyle: const TextStyle(
-              fontSize: 13.5,
+              fontSize: 13,
               fontWeight: FontWeight.normal,
               color: _textColorMuted,
               letterSpacing: 0.0,
@@ -261,14 +261,14 @@ class _CaptchaBoxWidgetState extends State<CaptchaBoxWidget>
             prefixIcon: const Icon(
               Icons.shield_outlined,
               color: _blue,
-              size: 20,
+              size: 19,
             ),
             filled: true,
             fillColor: _fieldFillColor,
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
-              vertical: 14,
+              vertical: 10,
             ),
             errorText: widget.errorText,
             errorStyle: const TextStyle(

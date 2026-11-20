@@ -10,6 +10,11 @@
     <!-- Permissions for Bluetooth Thermal Printing (Android 12 & above / API 31 & above) -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Camera Permissions for QR / Barcode Scanning on Tablet -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <application
         android:label="VMS TABLET"
         android:name="${applicationName}"

@@ -3753,12 +3753,60 @@ class DashboardController extends GetxController {
   }
 
   Future<bool> searchInvitationCode(String code) async {
-    final cleanCode = code.trim().toUpperCase();
+    final cleanCode = code
+        .trim()
+        .toUpperCase()
+        .replaceAll(RegExp(r'[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]'), '-');
     if (cleanCode.isEmpty) return false;
 
     rxIsActionLoading.value = true;
-    final result = await _dashboardRepository.searchInvitation(cleanCode);
+    var result = await _dashboardRepository.searchInvitation(cleanCode);
     rxIsActionLoading.value = false;
+
+    // Check if initial search returned records
+    bool hasResult = false;
+    if (result is Success<Map<String, dynamic>>) {
+      final data = result.data;
+      final collection = (data['collection'] is Map)
+          ? data['collection'] as Map<String, dynamic>
+          : (data['data'] is Map ? data['data'] as Map<String, dynamic> : data);
+      final list =
+          (collection['data'] as List?) ?? (data['data'] as List?) ?? [];
+      if (list.isNotEmpty) {
+        hasResult = true;
+      }
+    }
+
+    // Smart Fallback for visually ambiguous characters on tablet keyboards
+    // (e.g. '1' vs 'I', 'O' vs '0', 'B' vs '8')
+    if (!hasResult) {
+      final candidates = <String>[];
+      if (cleanCode.contains('1')) candidates.add(cleanCode.replaceAll('1', 'I'));
+      if (cleanCode.contains('I')) candidates.add(cleanCode.replaceAll('I', '1'));
+      if (cleanCode.contains('0')) candidates.add(cleanCode.replaceAll('0', 'O'));
+      if (cleanCode.contains('O')) candidates.add(cleanCode.replaceAll('O', '0'));
+      if (cleanCode.contains('8')) candidates.add(cleanCode.replaceAll('8', 'B'));
+      if (cleanCode.contains('B')) candidates.add(cleanCode.replaceAll('B', '8'));
+
+      for (final alt in candidates) {
+        if (alt == cleanCode) continue;
+        rxIsActionLoading.value = true;
+        final altResult = await _dashboardRepository.searchInvitation(alt);
+        rxIsActionLoading.value = false;
+        if (altResult is Success<Map<String, dynamic>>) {
+          final data = altResult.data;
+          final collection = (data['collection'] is Map)
+              ? data['collection'] as Map<String, dynamic>
+              : (data['data'] is Map ? data['data'] as Map<String, dynamic> : data);
+          final list =
+              (collection['data'] as List?) ?? (data['data'] as List?) ?? [];
+          if (list.isNotEmpty) {
+            result = altResult;
+            break;
+          }
+        }
+      }
+    }
 
     if (result is Success<Map<String, dynamic>>) {
       final data = result.data;
